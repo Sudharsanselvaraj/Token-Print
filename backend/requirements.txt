@@ -1,0 +1,14 @@
+# NeuroScope backend dependencies.
+# torch / transformers / scikit-learn are pinned to the versions verified present
+# on this machine so behavior matches what was tested. The web stack is left
+# unpinned (latest is fine).
+
+fastapi
+uvicorn[standard]
+websockets
+numpy
+
+# ML stack (pinned to the locally-verified versions)
+torch==2.11.0
+transformers==4.51.3
+scikit-learn==1.5.1

@@ -1,0 +1,16 @@
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+
+# Node / Next
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+tools/node_modules
+
+# Model cache (downloaded at runtime)
+.cache/
+
+# OS
+.DS_Store
