@@ -1,107 +1,122 @@
-# LLMStudio
+<div align="center">
+  <img src=".github/assets/llmstudio-logo.png" alt="LLMStudio" width="440" />
+</div>
 
-A browser-based 3D inspector for language-model internals. Everything shown is
-**real data** — parsed from real model files or produced by a real forward pass.
-Nothing is illustrative or hardcoded.
+<h3 align="center">See a language model think — real internals, real forward pass, real-time 3D.</h3>
 
-Three modes, selected from the top bar:
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e.svg?style=flat" alt="License: MIT" /></a>
+  <img src="https://img.shields.io/badge/data-100%25%20real%20forward%20pass-0a0a0a.svg?style=flat" alt="Real data only" />
+  <img src="https://img.shields.io/badge/backend-FastAPI%20·%20PyTorch-009688.svg?style=flat" alt="Backend: FastAPI + PyTorch" />
+  <img src="https://img.shields.io/badge/frontend-Next.js%20·%20React%20Three%20Fiber-111111.svg?style=flat" alt="Frontend: Next.js + R3F" />
+  <a href="https://github.com/Sudharsanselvaraj/LLM-Inspector-Studio/stargazers"><img src="https://img.shields.io/github/stars/Sudharsanselvaraj/LLM-Inspector-Studio?style=flat&color=eab308" alt="Stars" /></a>
+</p>
 
-1. **Architecture** — a 3D point cloud of a model's real tensors (layers as
-   depth-colored slabs), an architecture stat grid, and a scrollable tensor list
-   with hover/click inspection. Two real sources:
-   - the **live Qwen model** (via `GET /architecture`, from `named_parameters()`),
-   - **drag-and-drop `.gguf` files**, parsed client-side by a real GGUF binary
-     parser (no upload — only the file's header is read).
-2. **Generation** — a real greedy generation streamed over WebSocket. A vertical
-   layer tower highlights the operation currently being walked, the follow camera
-   tracks it, and a right panel shows the real operation name, parameter count,
-   cumulative "parameters used", the architecture-correct LaTeX formula, and a
-   real weight-matrix preview. Play / step through the recorded op trace; a token
-   strip fills with the real generated tokens.
-3. **Walkthrough** — a chaptered explanation (Overview → Tokenization → Embedding
-   → Layer Norm → Self-Attention → MLP → Softmax) where every number is read from
-   a real forward pass and the 3D view advances in lockstep.
+---
 
-Architecture-aware formulas: the family is detected from the model's
-architecture, so Qwen/Llama show **RMSNorm · RoPE · SwiGLU · GQA** and GPT-2-style
-models show **LayerNorm · learned positions · GELU** — never the wrong set.
+**LLMStudio** is a browser-based 3D inspector for the internals of a language model. Load a
+live model or drop in a `.gguf` file and explore its tensors, run a real greedy generation
+op-by-op, or walk through the transformer step by step. Every number you see is **real** —
+parsed straight from a model file or produced by an actual forward pass. Nothing is
+illustrative, sampled from noise, or hardcoded.
 
-## Architecture
+> [!TIP]
+> New here? Open the **Architecture** tab and hit **Use live Qwen model** — you'll get a
+> point cloud of the real `Qwen/Qwen2.5-0.5B-Instruct` tensors (494,032,768 params, 290
+> tensors) with hover-to-inspect names, shapes, and dtypes.
 
-- **Backend** (`backend/`) — FastAPI. `GET /architecture` (real tensors + config,
-  no forward pass), `POST /analyze` (real attention + PCA geometry), `WS
-  /ws/generate` (streamed greedy generation; `trace:true` adds the real per-op
-  catalog). Loads `Qwen/Qwen2.5-0.5B-Instruct` once on Apple **MPS**
-  (`attn_implementation="eager"`, float32).
-- **Frontend** (`frontend/`) — Next.js (app-router, TS) + React Three Fiber.
-  `AppShell` = top bar + left sidebar + full-bleed canvas + right panel.
-  `lib/gguf/` client-side GGUF parser; `lib/formulas.ts` KaTeX formula sets;
-  `lib/pointcloud.ts` tensor→points; scenes under `components/scenes/`.
-
-## Running it
+## Quickstart
 
 ```bash
-# backend
+# 1. Backend — loads Qwen2.5-0.5B-Instruct once (Apple MPS / CPU fallback)
 cd backend
 python3 -m venv .venv --system-site-packages
 source .venv/bin/activate && pip install -r requirements.txt
 python -m uvicorn app.main:app --app-dir . --port 8000
+```
 
-# frontend
+```bash
+# 2. Frontend — Next.js + React Three Fiber
 cd frontend
 npm install
-npm run dev            # http://localhost:3000   (or: npm run build && npm run start)
+npm run dev            # http://localhost:3000
 ```
+
+Open **http://localhost:3000** and pick a mode from the top bar. No model file is required
+for the live-model view; drag any local `.gguf` onto the drop zone to inspect it instead
+(the file is parsed in-browser — nothing is uploaded).
+
+## The three modes
+
+| Mode | What it shows | Where the data comes from |
+| ---- | ------------- | ------------------------- |
+| **Architecture** | A 3D point cloud of every real tensor (layers as depth-colored slabs), an architecture stat grid, and a searchable tensor list with hover/click inspection. | `GET /architecture` (live Qwen `named_parameters()`) **or** a client-side `.gguf` binary parser. |
+| **Generation** | A real greedy generation streamed over WebSocket. A layer tower highlights the current operation, a right panel shows its name, param count, cumulative "parameters used", the architecture-correct LaTeX formula, and a real weight-matrix preview. Play / step through the recorded trace. | `WS /ws/generate` with `trace:true` — a real per-op catalog + real per-token top-k. |
+| **Walkthrough** | A chaptered explanation (Overview → Tokenization → Embedding → Layer Norm → Self-Attention → MLP → Softmax) where the 3D view advances in lockstep and every worked number is read from a forward pass. | One real `POST /analyze` (attention + PCA geometry). |
+
+Formulas are **architecture-aware**: the family is detected from the model, so Qwen/Llama
+render **RMSNorm · RoPE · SwiGLU · GQA** and GPT-2-style models render **LayerNorm · learned
+positions · GELU** — never the wrong set.
+
+## Architecture
+
+- **Backend** (`backend/`) — FastAPI. `GET /architecture` (real tensors + config, no forward
+  pass), `POST /analyze` (real attention + PCA geometry), `WS /ws/generate` (streamed greedy
+  generation; `trace:true` adds the real per-op catalog). Loads `Qwen/Qwen2.5-0.5B-Instruct`
+  once on Apple **MPS** (`attn_implementation="eager"`, float32 — eager is mandatory for real
+  attention data).
+- **Frontend** (`frontend/`) — Next.js (app-router, TS) + React Three Fiber. `AppShell` =
+  top bar + left sidebar + full-bleed canvas + right panel. `lib/gguf/` client-side GGUF
+  parser; `lib/formulas.ts` KaTeX formula sets; `lib/pointcloud.ts` tensor→points; scenes
+  under `components/scenes/`.
+
+> [!NOTE]
+> The point cloud uses `THREE.Points` (one draw call), not instanced meshes — the right tool
+> for hundreds of thousands of points on an integrated GPU. The GGUF parser reads only the
+> file **header** (`File.slice`), so multi-GB models parse instantly and nothing is uploaded.
 
 ## Proving the data is real
 
-- **`backend/scripts/verify_architecture.py`** style / `GET /architecture`:
-  qwen2, **494,032,768** params = sum of all 290 tensors exactly.
-- **GGUF parser** (`frontend/lib/gguf/`) verified against real local GGUF v3
-  files (Ollama blobs): **qwen3** (399 tensors, Q4_K, 8.19B) and **llama** 3.2
-  (255 tensors, Q4_K, 3.21B) — tensor counts match the binary header; each shows
-  its own real vocab / RoPE base / context.
-- **`backend/scripts/verify_trace.py`** — the op catalog is real: 243 ops in true
-  forward order, q_proj L0 = 803,712 params (matches the module), cumulative
-  "parameters used" = 630M.
-- **`backend/scripts/verify_real_data.py`** / **`verify_geometry.py`** — attention
-  and PCA geometry match an independent forward pass; deterministic.
+LLMStudio's whole claim is that **every number is real**. It's checked, not asserted:
 
-Visual capture uses a real (headed) Chrome window via `tools/*.mjs` — headless
-Chrome on this machine doesn't reliably composite WebGL into screenshots.
+- **`GET /architecture`** — qwen2 reports **494,032,768** params, exactly the sum of all
+  **290** tensors.
+- **GGUF parser** — verified against real local GGUF v3 files: **qwen3** (399 tensors, Q4_K,
+  8.19B) and **llama 3.2** (255 tensors, Q4_K, 3.21B). Tensor counts match the binary header;
+  each shows its own real vocab / RoPE base / context.
+- **`backend/scripts/verify_trace.py`** — the op catalog is real: **243 ops** in true forward
+  order, `q_proj` L0 = **803,712** params (matches the module), cumulative "parameters used" =
+  **630M**.
+- **`backend/scripts/verify_real_data.py`** / **`verify_geometry.py`** — attention and PCA
+  geometry match an independent forward pass; deterministic across runs.
 
-## Notes & honest limitations
-
-- The tensor point cloud needs only tensor shapes/offsets/types, so the GGUF
-  parser reads just the file header. **Value inspection** is offered for F32/F16
-  tensors; quantized tensors are labeled "needs dequantization" rather than faked.
-- Point clouds use `THREE.Points` (one draw call) rather than instanced meshes —
-  the right tool for hundreds of thousands of points on this GPU.
-- The **live-generation model is Qwen** (real, loaded); GPT-2's formula set is
-  wired and selected by architecture but not run locally (no local GPT-2).
-- The walkthrough's **model-scale selector** rescales the 3D using each reference
-  model's real published parameter count; all worked numbers come from the loaded
-  Qwen model's real forward pass.
-- Local GGUF test files are all dense; verifying MoE fields (`expert_count`) would
-  need a small MoE GGUF download.
-
-The logo/name is **LLMStudio** (`frontend/public/llmstudio-logo.png`).
+See [`docs/verification.md`](docs/verification.md) for the full evidence with exact numbers.
 
 ## Documentation
 
-Full docs live in [`docs/`](docs/):
+| Doc | What's inside |
+| --- | ------------- |
+| [Architecture](docs/architecture.md) | How the backend, frontend, and data flow fit together |
+| [API reference](docs/api.md) | The REST + WebSocket endpoints |
+| [GGUF format](docs/gguf-format.md) | Exactly what the client-side parser reads |
+| [Development](docs/development.md) | Setup and where things live |
+| [Verification](docs/verification.md) | How "the data is real" is proven |
 
-- [Architecture](docs/architecture.md) — how the pieces fit together
-- [API reference](docs/api.md) — the REST + WebSocket endpoints
-- [GGUF format](docs/gguf-format.md) — what the client-side parser reads
-- [Development](docs/development.md) — setup and where things live
-- [Verification](docs/verification.md) — how "the data is real" is proven
+## Honest limitations
+
+- The tensor point cloud needs only shapes/offsets/types, so the GGUF parser never
+  dequantizes. **Value preview** is offered for F32/F16 tensors; quantized tensors are
+  labeled "needs dequantization" rather than faked.
+- The **live-generation model is Qwen** (real, loaded); GPT-2's formula set is wired and
+  selected by architecture but not run locally (no local GPT-2).
+- The walkthrough's **model-scale selector** rescales the 3D using each reference model's real
+  published parameter count; all worked numbers come from the loaded Qwen forward pass.
 
 ## Contributing
 
-Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Please also
-read the [Code of Conduct](CODE_OF_CONDUCT.md). Security issues: see
-[SECURITY.md](SECURITY.md) (report privately, not via public issues).
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[Code of Conduct](CODE_OF_CONDUCT.md). Found a wrong number? That's a top-priority bug.
+Security issues: see [SECURITY.md](SECURITY.md) (report privately, not via public issues).
 
 ## License
 
