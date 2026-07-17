@@ -86,3 +86,23 @@ Chrome on this machine doesn't reliably composite WebGL into screenshots.
   need a small MoE GGUF download.
 
 The logo/name is **LLMStudio** (`frontend/public/llmstudio-logo.png`).
+
+## Documentation
+
+Full docs live in [`docs/`](docs/):
+
+- [Architecture](docs/architecture.md) — how the pieces fit together
+- [API reference](docs/api.md) — the REST + WebSocket endpoints
+- [GGUF format](docs/gguf-format.md) — what the client-side parser reads
+- [Development](docs/development.md) — setup and where things live
+- [Verification](docs/verification.md) — how "the data is real" is proven
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Please also
+read the [Code of Conduct](CODE_OF_CONDUCT.md). Security issues: see
+[SECURITY.md](SECURITY.md) (report privately, not via public issues).
+
+## License
+
+[MIT](LICENSE) © Sudharsan Selvaraj.
