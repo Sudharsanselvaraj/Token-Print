@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/data-100%25%20real%20forward%20pass-0a0a0a.svg?style=flat" alt="Real data only" />
   <img src="https://img.shields.io/badge/backend-FastAPI%20·%20PyTorch-009688.svg?style=flat" alt="Backend: FastAPI + PyTorch" />
   <img src="https://img.shields.io/badge/frontend-Next.js%20·%20React%20Three%20Fiber-111111.svg?style=flat" alt="Frontend: Next.js + R3F" />
-  <a href="https://github.com/Sudharsanselvaraj/LLM-Inspector-Studio/stargazers"><img src="https://img.shields.io/github/stars/Sudharsanselvaraj/LLM-Inspector-Studio?style=flat&color=eab308" alt="Stars" /></a>
+  <a href="https://github.com/Sudharsanselvaraj/LLM-Studio/stargazers"><img src="https://img.shields.io/github/stars/Sudharsanselvaraj/LLM-Studio?style=flat&color=eab308" alt="Stars" /></a>
 </p>
 
 ---
@@ -50,13 +50,23 @@ for the live-model view; drag any local `.gguf` onto the drop zone to inspect it
 
 | Mode | What it shows | Where the data comes from |
 | ---- | ------------- | ------------------------- |
-| **Architecture** | A 3D point cloud of every real tensor (layers as depth-colored slabs), an architecture stat grid, and a searchable tensor list with hover/click inspection. | `GET /architecture` (live Qwen `named_parameters()`) **or** a client-side `.gguf` binary parser. |
-| **Generation** | A real greedy generation streamed over WebSocket. A layer tower highlights the current operation, a right panel shows its name, param count, cumulative "parameters used", the architecture-correct LaTeX formula, and a real weight-matrix preview. Play / step through the recorded trace. | `WS /ws/generate` with `trace:true` — a real per-op catalog + real per-token top-k. |
-| **Walkthrough** | A chaptered explanation (Overview → Tokenization → Embedding → Layer Norm → Self-Attention → MLP → Softmax) where the 3D view advances in lockstep and every worked number is read from a forward pass. | One real `POST /analyze` (attention + PCA geometry). |
+| **Architecture** | A 3D point cloud of every real tensor (layers as depth-colored panels), a searchable tensor list with hover/click inspection, and a real-data **model overview card** (params, layers, attn/KV heads, hidden, FFN, vocab, context) shown until a tensor is selected. | `GET /architecture` (live Qwen `named_parameters()`) **or** a client-side `.gguf` binary parser. |
+| **Generation** | A real greedy generation streamed over WebSocket that **autoplays** token-by-token, layer-by-layer. The stack renders **distinctive per-operation geometry** — one blade per real attention head (clustered into KV groups for GQA), a SwiGLU funnel sized by the real FFN ratio, and RMSNorm waists — with a follow-mode camera, speed multiplier, skip-to-layer/token, and a live **pre-fill vs decode** KV-cache readout. The right panel shows the architecture-correct LaTeX formula, param count, weight preview, and optional raw dev values; a real **top-k probability skyline** sits at the output. | `WS /ws/generate` with `trace:true` — a real per-op catalog + per-token top-k, phase, and per-layer activation stats. |
+| **Walkthrough** | A chaptered explanation (Overview → Tokenization → Embedding → Layer Norm → Self-Attention → MLP → Softmax) that **autoplays chapters**, advancing the 3D view in lockstep with eased camera moves. Structural chapters reuse the real Qwen block geometry; the tokenizer/embedding/attention chapters show real per-token PCA and attention data. Every worked number is read from a forward pass. | One real `POST /analyze` (attention + PCA geometry). |
 
 Formulas are **architecture-aware**: the family is detected from the model, so Qwen/Llama
 render **RMSNorm · RoPE · SwiGLU · GQA** and GPT-2-style models render **LayerNorm · learned
 positions · GELU** — never the wrong set.
+
+**Geometry is data-driven, not decorative.** In the generation stack every proportion traces
+to a real dimension: the blade count equals the real head count (14 query heads clustered into
+2 KV groups — that's GQA you can see), the MLP funnel's belly is sized by the real
+`ffn_size / hidden_size` ratio (≈5.4× for Qwen2.5-0.5B), and each block shows its two RMSNorm
+waists. The **KV-cache phase** is real too: step 0 is a pre-fill over the whole prompt
+(39 positions), every later step is a single-token decode reusing the cached prefix — the
+UI labels and visibly shrinks the work accordingly. Autoplay pacing is normalized (never
+fabricated in-between frames); a dropped WebGL context recovers automatically and falls back
+to a readable message rather than a broken canvas.
 
 ## Architecture
 
@@ -67,8 +77,10 @@ positions · GELU** — never the wrong set.
   attention data).
 - **Frontend** (`frontend/`) — Next.js (app-router, TS) + React Three Fiber. `AppShell` =
   top bar + left sidebar + full-bleed canvas + right panel. `lib/gguf/` client-side GGUF
-  parser; `lib/formulas.ts` KaTeX formula sets; `lib/pointcloud.ts` tensor→points; scenes
-  under `components/scenes/`.
+  parser; `lib/formulas.ts` KaTeX formula sets; `lib/pointcloud.ts` tensor→points;
+  `lib/playback.ts` (layer/op mapping + KV phase); `components/PlaybackEngine.tsx` (the single
+  autoplay ticker); `components/scenes/TransformerStack.tsx` (data-driven block geometry);
+  `SceneLoader.tsx` (WebGL context-loss recovery + fallback); scenes under `components/scenes/`.
 
 > [!NOTE]
 > The point cloud uses `THREE.Points` (one draw call), not instanced meshes — the right tool
