@@ -148,12 +148,51 @@ export default function RightPanel() {
             </div>
           )}
         </div>
-      ) : (
-        <div className="rp-empty">
-          Hover or click a tensor cluster — or a row in the list — to inspect its
-          real name, shape, and dtype.
+      ) : arch ? (
+        <div className="rp-overview">
+          <div className="rp-modelname">{arch.metadata.name}</div>
+          <div className="rp-modelsub">
+            {fmtCount(arch.metadata.total_params)} parameters · {arch.tensor_count}{" "}
+            tensors · {arch.metadata.torch_dtype ?? arch.metadata.quantization ?? ""}
+          </div>
+
+          <div className="rp-statgrid">
+            <Stat label="Layers" value={arch.metadata.num_layers} />
+            <Stat label="Attn heads" value={arch.metadata.num_heads} />
+            <Stat label="KV heads" value={arch.metadata.num_kv_heads} />
+            <Stat label="Hidden" value={arch.metadata.hidden_size} />
+            <Stat label="Head dim" value={arch.metadata.head_dim} />
+            <Stat label="FFN" value={fmtCount(arch.metadata.ffn_size)} />
+            <Stat label="Vocab" value={fmtCount(arch.metadata.vocab_size)} />
+            <Stat label="Context" value={fmtCount(arch.metadata.context_length)} />
+          </div>
+
+          <div className="rp-legend">
+            <div className="rp-legend-label">Colour · layer depth</div>
+            <div className="legend-bar" />
+            <div className="legend-row">
+              <span>Layer 0</span>
+              <span>Layer {Math.max(0, arch.metadata.num_layers - 1)}</span>
+            </div>
+          </div>
+
+          <div className="rp-hint">
+            Each point is a real parameter. Hover or click any cluster — or a row
+            in the list — to inspect a real tensor&rsquo;s name, shape, and dtype.
+          </div>
         </div>
+      ) : (
+        <div className="rp-empty">Loading the model&rsquo;s real structure…</div>
       )}
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rp-stat">
+      <span>{label}</span>
+      <b>{value}</b>
     </div>
   );
 }
