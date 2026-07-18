@@ -13,6 +13,14 @@
   <a href="https://github.com/Sudharsanselvaraj/LLM-Studio/stargazers"><img src="https://img.shields.io/github/stars/Sudharsanselvaraj/LLM-Studio?style=flat&color=eab308" alt="Stars" /></a>
 </p>
 
+<p align="center">
+  <video src="https://github.com/Sudharsanselvaraj/LLM-Studio/raw/main/.github/assets/demo.mp4" poster="https://github.com/Sudharsanselvaraj/LLM-Studio/raw/main/.github/assets/demo-poster.jpg" controls muted loop width="820">
+    <a href="https://github.com/Sudharsanselvaraj/LLM-Studio/raw/main/.github/assets/demo.mp4"><img src="https://github.com/Sudharsanselvaraj/LLM-Studio/raw/main/.github/assets/demo-poster.jpg" alt="LLMStudio demo — click to watch" width="820" /></a>
+  </video>
+</p>
+
+<p align="center"><sub>▶ Real Qwen2.5-0.5B internals — architecture point cloud, live generation, and the guided walkthrough.</sub></p>
+
 ---
 
 **LLMStudio** is a browser-based 3D inspector for the internals of a language model. Load a
