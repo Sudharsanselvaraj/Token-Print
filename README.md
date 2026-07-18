@@ -17,8 +17,6 @@
   <img src=".github/assets/demo.gif" alt="LLMStudio — live demo" width="820" />
 </p>
 
-<p align="center"><sub>▶ <a href="https://github.com/Sudharsanselvaraj/LLM-Studio/blob/main/.github/assets/demo.mp4">Watch the full-quality demo</a> — real Qwen2.5-0.5B internals: architecture point cloud, live generation, guided walkthrough.</sub></p>
-
 ---
 
 **LLMStudio** is a browser-based 3D inspector for the internals of a language model. Load a
