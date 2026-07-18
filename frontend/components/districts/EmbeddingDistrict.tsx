@@ -50,7 +50,7 @@ export default function EmbeddingDistrict() {
       {/* Faint wireframe box framing the projected space [-8, 8]. */}
       <mesh>
         <boxGeometry args={[17, 17, 17]} />
-        <meshBasicMaterial color="#1b2340" wireframe transparent opacity={0.35} />
+        <meshBasicMaterial color="#33343a" wireframe transparent opacity={0.35} />
       </mesh>
 
       <Billboard position={[0, 10.5, 0]}>
