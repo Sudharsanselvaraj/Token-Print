@@ -5,6 +5,7 @@
 <h3 align="center">See a language model think — real internals, real forward pass, real-time 3D.</h3>
 
 <p align="center">
+  <a href="https://github.com/Sudharsanselvaraj/LLM-Studio/actions/workflows/ci.yml"><img src="https://github.com/Sudharsanselvaraj/LLM-Studio/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e.svg?style=flat" alt="License: MIT" /></a>
   <img src="https://img.shields.io/badge/data-100%25%20real%20forward%20pass-0a0a0a.svg?style=flat" alt="Real data only" />
   <img src="https://img.shields.io/badge/backend-FastAPI%20·%20PyTorch-009688.svg?style=flat" alt="Backend: FastAPI + PyTorch" />
