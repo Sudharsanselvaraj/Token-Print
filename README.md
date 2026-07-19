@@ -1,11 +1,11 @@
 <div align="center">
-  <img src="TokenPrint logo.png" alt="LLMStudio" width="440" />
+  <img src="TokenPrint logo.png" alt="TokenPrint" width="440" />
 </div>
 
 <h3 align="center">See a language model think — real internals, real forward pass, real-time 3D.</h3>
 
 <p align="center">
-  <a href="https://github.com/Sudharsanselvaraj/LLM-Studio/actions/workflows/ci.yml"><img src="https://github.com/Sudharsanselvaraj/LLM-Studio/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml"><img src="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e.svg?style=flat" alt="License: MIT" /></a>
   <img src="https://img.shields.io/badge/data-100%25%20real%20forward%20pass-0a0a0a.svg?style=flat" alt="Real data only" />
   <img src="https://img.shields.io/badge/backend-FastAPI%20·%20PyTorch-009688.svg?style=flat" alt="Backend: FastAPI + PyTorch" />
@@ -18,7 +18,7 @@
   <img src=".github/assets/demo.gif" alt="TokenPrint — live demo" width="820" />
 </p>
 
-**LLMStudio** is a browser-based 3D inspector for the internals of a language model. Load a
+**TokenPrint** is a browser-based 3D inspector for the internals of a language model. Load a
 live model or drop in a `.gguf` file and explore its tensors, run a real greedy generation
 op-by-op, or walk through the transformer step by step. Every number you see is **real** —
 parsed straight from a model file or produced by an actual forward pass. Nothing is
@@ -93,7 +93,7 @@ to a readable message rather than a broken canvas.
 
 ## Proving the data is real
 
-LLMStudio's whole claim is that **every number is real**. It's checked, not asserted:
+TokenPrint's whole claim is that **every number is real**. It's checked, not asserted:
 
 - **`GET /architecture`** — qwen2 reports **494,032,768** params, exactly the sum of all
   **290** tensors.

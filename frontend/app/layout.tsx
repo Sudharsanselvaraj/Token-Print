@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "LLMStudio — LLM Internals Inspector",
+  title: "TokenPrint — LLM Internals Inspector",
   description:
     "Explore a real language model's architecture, tensors, and live generation in 3D — all from real data.",
 };

@@ -17,7 +17,7 @@ assignees: ""
 
 ## Real-data note
 
-LLMStudio only shows values derived from real model data or a real forward pass.
+TokenPrint only shows values derived from real model data or a real forward pass.
 If your idea needs data we don't currently expose, describe where it would come
 from (a model file field, a forward-pass quantity, etc.).
 

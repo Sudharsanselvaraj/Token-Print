@@ -1,6 +1,6 @@
 # Deployment
 
-LLMStudio is two deployable pieces with very different needs:
+TokenPrint is two deployable pieces with very different needs:
 
 - **Frontend** — a static-ish Next.js app. Deploys anywhere (Vercel, Netlify,
   Cloudflare Pages, a static host).

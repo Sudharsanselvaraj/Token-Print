@@ -1,6 +1,6 @@
 # Architecture
 
-LLMStudio is split cleanly into three concerns: **parsing**, **inference**, and
+TokenPrint is split cleanly into three concerns: **parsing**, **inference**, and
 **rendering**. The backend serves JSON and never renders; the frontend renders
 and never fabricates numbers.
 

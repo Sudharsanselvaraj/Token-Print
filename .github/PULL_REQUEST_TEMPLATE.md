@@ -1,4 +1,4 @@
-<!-- Thanks for contributing to LLMStudio! -->
+<!-- Thanks for contributing to TokenPrint! -->
 
 ## What & why
 
@@ -15,7 +15,7 @@ Closes #
 
 ## The "is it real?" checklist
 
-LLMStudio's rule: every value shown is derived from real model data or a real
+TokenPrint's rule: every value shown is derived from real model data or a real
 forward pass.
 
 - [ ] No hardcoded/placeholder numbers are presented as real model data.

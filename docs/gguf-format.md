@@ -1,6 +1,6 @@
 # GGUF parsing
 
-LLMStudio ships a pure-TypeScript GGUF parser
+TokenPrint ships a pure-TypeScript GGUF parser
 (`frontend/lib/gguf/parser.ts`) that runs entirely in the browser. Dragging a
 `.gguf` file reads only the **front** of the file — nothing is uploaded.
 

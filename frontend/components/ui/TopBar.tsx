@@ -20,7 +20,7 @@ export default function TopBar() {
     <div className="topbar">
       <div className="brand">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/llmstudio-logo.png" alt="LLMStudio" className="brand-logo" />
+        <img src="/tokenprint-logo.png" alt="TokenPrint" className="brand-logo" />
       </div>
 
       <div className="mode-tabs">

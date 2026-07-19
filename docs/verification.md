@@ -1,6 +1,6 @@
 # Verification — proving the data is real
 
-LLMStudio's core claim is that **every number is real**. Here's how that's
+TokenPrint's core claim is that **every number is real**. Here's how that's
 checked, with the actual numbers observed on the reference model
 (`Qwen/Qwen2.5-0.5B-Instruct`) and real local GGUF files.
 

@@ -1,6 +1,6 @@
-# Contributing to LLMStudio
+# Contributing to TokenPrint
 
-Thanks for your interest in contributing! LLMStudio is a browser-based 3D
+Thanks for your interest in contributing! TokenPrint is a browser-based 3D
 inspector for language-model internals. The guiding principle of the project is
 simple and non-negotiable:
 

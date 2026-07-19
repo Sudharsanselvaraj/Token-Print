@@ -1,6 +1,6 @@
 # Security Policy
 
-LLMStudio is a **local developer / research tool**. It runs a small language
+TokenPrint is a **local developer / research tool**. It runs a small language
 model behind a local FastAPI server and renders its internals in the browser. It
 is not designed to be exposed to the public internet.
 
@@ -19,7 +19,7 @@ This project is pre-1.0 and moves fast. Security fixes are applied to the
 **Please do not open a public issue for security vulnerabilities.**
 
 Instead, report privately via GitHub's
-[**Report a vulnerability**](https://github.com/Sudharsanselvaraj/LLM-Inspector-Studio/security/advisories/new)
+[**Report a vulnerability**](https://github.com/Sudharsanselvaraj/Token-Print/security/advisories/new)
 (Security → Advisories → *Report a vulnerability*).
 
 Please include:
@@ -50,7 +50,7 @@ Things that are **out of scope / by design**:
 - Running the backend on a public or untrusted network. CORS is restricted to
   `localhost:3000` and the server is meant for local use; exposing it publicly is
   the operator's responsibility.
-- The model's generated text. LLMStudio visualizes real model internals; model
+- The model's generated text. TokenPrint visualizes real model internals; model
   outputs are the model's, not a vulnerability in this tool.
 - Resource use inherent to loading a model or rendering millions of points.
 

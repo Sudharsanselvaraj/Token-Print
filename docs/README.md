@@ -1,6 +1,6 @@
-# LLMStudio documentation
+# TokenPrint documentation
 
-LLMStudio is a browser-based 3D inspector for language-model internals. Every
+TokenPrint is a browser-based 3D inspector for language-model internals. Every
 value it shows comes from real parsed model files or a real forward pass —
 nothing is illustrative or hardcoded.
 
