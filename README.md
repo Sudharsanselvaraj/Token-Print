@@ -122,6 +122,21 @@ See [`docs/verification.md`](docs/verification.md) for the full evidence with ex
 | [Development](docs/development.md) | Setup and where things live |
 | [Deployment](docs/deployment.md) | Hosting the frontend + backend |
 | [Verification](docs/verification.md) | How "the data is real" is proven |
+| [Roadmap](ROADMAP.md) | Where TokenPrint is headed — the ecosystem gaps and the next four milestones |
+
+## Roadmap
+
+TokenPrint is becoming an **interactive visual debugger for transformer execution** —
+the tool that answers *"what is my model doing right now, and why?"*. The full plan,
+including an analysis of the gaps in today's visualizer ecosystem and why each
+milestone is sequenced the way it is, lives in [ROADMAP.md](ROADMAP.md). Short version:
+
+1. **v0.2 — Record & replay**: save any real generation as a shareable trace file; a
+   hosted demo replays real traces with zero install.
+2. **v0.3 — Logit lens**: watch the prediction form layer by layer, on your prompt.
+3. **v0.4 — Debugger**: layer breakpoints, pause-and-inspect tensors, per-head
+   attention heatmaps.
+4. **v0.5 — Interventions**: ablate a head, re-run, diff the traces.
 
 ## Honest limitations
 
