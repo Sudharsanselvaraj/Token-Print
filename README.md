@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/backend-FastAPI%20·%20PyTorch-009688.svg?style=flat" alt="Backend: FastAPI + PyTorch" />
   </a>
   <a href="https://github.com/Sudharsanselvaraj/Token-Print">
-  <img src="https://img.shields.io/badge/stars-29-0a0a0a.svg?style=flat" alt="Stars" />
+  <img src="https://img.shields.io/github/stars/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a&label=stars" alt="Stars" />
 </a>
 </p>
 
