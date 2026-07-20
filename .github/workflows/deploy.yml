@@ -36,17 +36,24 @@ jobs:
 
       - run: npm run build
 
+      - name: Skip deploy when Pages is disabled
+        if: ${{ github.event.repository.has_pages != true }}
+        run: echo "GitHub Pages is disabled for this repository; skipping deploy steps."
+
       # enablement:true turns Pages on (build_type=workflow) the first time this
       # runs, so a fresh clone/fork deploys without a manual Settings → Pages step.
       - uses: actions/configure-pages@v4
+        if: ${{ github.event.repository.has_pages == true }}
         with:
           enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        if: ${{ github.event.repository.has_pages == true }}
         with:
           path: frontend/out
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        if: ${{ github.event.repository.has_pages == true }}
