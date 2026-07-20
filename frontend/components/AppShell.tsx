@@ -63,11 +63,9 @@ export default function AppShell() {
         <SceneLoader />
         {mode === "generation" && <GenerationTopControls />}
         {mode === "generation" && <TokenStrip />}
-        {mode === "generation" && <PredictionGame />}
         {mode === "walkthrough" && <EvolutionTimeline />}
         {mode === "walkthrough" && <TokenDetailView />}
         {mode === "generation" && <KvCacheTimeline />}
-        {mode === "generation" && <PredictionGame />}
         {devMode && <DebugInspector />}
         {devMode && <HeadInspector />}
         {devMode && <DataExport />}

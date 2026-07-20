@@ -14,7 +14,11 @@ interface GameStep {
   revealed: boolean;
 }
 
-export default function PredictionGame() {
+interface Props {
+  docked?: boolean;
+}
+
+export default function PredictionGame({ docked }: Props) {
   const genFrames = useStore((s) => s.genFrames);
   const genText = useStore((s) => s.genText);
   const genStatus = useStore((s) => s.genStatus);
@@ -73,9 +77,11 @@ export default function PredictionGame() {
     }
   }, [currentStep, steps.length]);
 
+  const wrap = docked ? "game-docked" : "game-panel";
+
   if (genStatus === "idle" || genFrames.length === 0) {
     return (
-      <div className="game-panel">
+      <div className={wrap}>
         <div className="game-title">Prediction Game</div>
         <div className="game-empty">
           Run a generation first, then test your prediction skills.
@@ -86,7 +92,7 @@ export default function PredictionGame() {
 
   if (!gameStarted) {
     return (
-      <div className="game-panel">
+      <div className={wrap}>
         <div className="game-title">Prediction Game</div>
         <div className="game-desc">
           For each generated token, guess what the model picked from its top-10
@@ -103,7 +109,7 @@ export default function PredictionGame() {
     const total = steps.reduce((sum, s) => sum + s.score, 0);
     const maxPossible = steps.length * 100;
     return (
-      <div className="game-panel">
+      <div className={wrap}>
         <div className="game-title">Game Over</div>
         <div className="game-score-big">
           {total} / {maxPossible}
@@ -122,7 +128,7 @@ export default function PredictionGame() {
   if (!s) return null;
 
   return (
-    <div className="game-panel">
+    <div className={wrap}>
       <div className="game-title">
         Step {currentStep + 1} / {steps.length}
       </div>

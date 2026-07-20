@@ -11,6 +11,7 @@ import {
 import { activeLayerOf, phaseInfo } from "@/lib/playback";
 import Formula from "./Formula";
 import LogitLensPanel from "./LogitLensPanel";
+import PredictionGame from "./PredictionGame";
 
 function WeightPreview({ data }: { data: number[][] }) {
   if (!data?.length) return null;
@@ -202,6 +203,7 @@ export default function GenerationPanel() {
         </div>
       )}
       <LogitLensPanel />
+      <PredictionGame docked />
     </div>
   );
 }

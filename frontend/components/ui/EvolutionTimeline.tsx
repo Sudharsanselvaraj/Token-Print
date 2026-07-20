@@ -3,9 +3,17 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useStore } from "@/lib/store";
 import type { LogitLensEntry } from "@/lib/types";
+import { CHAPTERS } from "@/lib/walkthrough";
 
 export default function EvolutionTimeline() {
   const data = useStore((s) => s.data);
+  const chapterIdx = useStore((s) => s.wtChapter);
+  const prev = useStore((s) => s.prevChapter);
+  const next = useStore((s) => s.nextChapter);
+  const wtPlaying = useStore((s) => s.wtPlaying);
+  const toggleWtPlay = useStore((s) => s.toggleWtPlay);
+  const playSpeed = useStore((s) => s.playSpeed);
+  const setPlaySpeed = useStore((s) => s.setPlaySpeed);
   const [pos, setPos] = useState(0);
   const [playing, setPlaying] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -54,6 +62,29 @@ export default function EvolutionTimeline() {
         </span>
       </div>
 
+      <div className="tl-nav">
+        <button className="tl-btn" onClick={prev} disabled={chapterIdx <= 0}>
+          ‹ Prev
+        </button>
+        <span className="tl-chapter-idx">Ch. {chapterIdx + 1} / {CHAPTERS.length}</span>
+        <button className="tl-btn" onClick={next} disabled={chapterIdx >= CHAPTERS.length - 1}>
+          Next ›
+        </button>
+        <button className="tl-btn" onClick={toggleWtPlay}>
+          {wtPlaying ? "■ Stop" : "▶ Play"}
+        </button>
+        <select
+          className="tl-speed"
+          value={playSpeed}
+          onChange={(e) => setPlaySpeed(Number(e.target.value))}
+        >
+          <option value={1600}>0.5×</option>
+          <option value={800}>1×</option>
+          <option value={400}>2×</option>
+          <option value={200}>4×</option>
+        </select>
+      </div>
+
       {/* Position scrubber */}
       <div className="tl-scrubber">
         <input
@@ -87,6 +118,7 @@ export default function EvolutionTimeline() {
             ▶ Play
           </button>
         )}
+        <span className="tl-pos-info">pos {clampedPos}</span>
       </div>
 
       {/* Layer-by-layer predictions for selected position */}
