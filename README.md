@@ -123,6 +123,7 @@ See [`docs/verification.md`](docs/verification.md) for the full evidence with ex
 | [Deployment](docs/deployment.md) | Hosting the frontend + backend |
 | [Verification](docs/verification.md) | How "the data is real" is proven |
 | [Roadmap](ROADMAP.md) | Where TokenPrint is headed — the ecosystem gaps and the next four milestones |
+| [Design review](docs/design-review.md) | Full design + engineering audit and the phased "visual debugger" roadmap |
 
 ## Roadmap
 
