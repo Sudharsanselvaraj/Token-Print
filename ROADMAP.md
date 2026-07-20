@@ -464,18 +464,31 @@ stays current.
 
 ## 7. Contributing
 
-Each milestone will be broken into labeled GitHub issues (`v0.2`, `v0.25`, `v0.3`,
-`good first issue`, `backend`, `frontend`). If you want to help, the friendliest entry
-points right now are:
+Every milestone is broken into GitHub issues, organized under
+[milestones](https://github.com/Sudharsanselvaraj/Token-Print/milestones) and labeled
+`backend` / `frontend` / `deploy` / `good first issue`:
 
-- **The trace format (v0.2)** — well-isolated, versioned from day one, testable
+| Milestone | Issues |
+| --- | --- |
+| v0.2 — Record & Replay | [#2](https://github.com/Sudharsanselvaraj/Token-Print/issues/2) trace format · [#3](https://github.com/Sudharsanselvaraj/Token-Print/issues/3) TraceSource replay · [#4](https://github.com/Sudharsanselvaraj/Token-Print/issues/4) hosted demo · [#5](https://github.com/Sudharsanselvaraj/Token-Print/issues/5) snapshot URLs |
+| v0.25 — Quantization Diff | [#6](https://github.com/Sudharsanselvaraj/Token-Print/issues/6) scoped dequantization · [#7](https://github.com/Sudharsanselvaraj/Token-Print/issues/7) dual-GGUF compare · [#8](https://github.com/Sudharsanselvaraj/Token-Print/issues/8) hot-spot ranking |
+| v0.3 — Logit Lens | [#9](https://github.com/Sudharsanselvaraj/Token-Print/issues/9) backend projection · [#10](https://github.com/Sudharsanselvaraj/Token-Print/issues/10) heatmap panel · [#11](https://github.com/Sudharsanselvaraj/Token-Print/issues/11) token timeline · [#12](https://github.com/Sudharsanselvaraj/Token-Print/issues/12) prediction game |
+| v0.4 — The debugger | [#13](https://github.com/Sudharsanselvaraj/Token-Print/issues/13) breakpoints backend · [#14](https://github.com/Sudharsanselvaraj/Token-Print/issues/14) inspector UI · [#15](https://github.com/Sudharsanselvaraj/Token-Print/issues/15) head inspector · [#16](https://github.com/Sudharsanselvaraj/Token-Print/issues/16) head fingerprinting · [#17](https://github.com/Sudharsanselvaraj/Token-Print/issues/17) raw export · [#18](https://github.com/Sudharsanselvaraj/Token-Print/issues/18) per-layer timings |
+| v0.5 — Interventions | [#19](https://github.com/Sudharsanselvaraj/Token-Print/issues/19) config-diff · [#20](https://github.com/Sudharsanselvaraj/Token-Print/issues/20) ablation hooks · [#21](https://github.com/Sudharsanselvaraj/Token-Print/issues/21) ablation UI + trace diff |
+| v0.6 — Surface features | [#22](https://github.com/Sudharsanselvaraj/Token-Print/issues/22) local checkpoints · [#23](https://github.com/Sudharsanselvaraj/Token-Print/issues/23) non-Latin tokenization · [#24](https://github.com/Sudharsanselvaraj/Token-Print/issues/24) KV-cache timeline |
+
+If you want to help, the friendliest entry points (tagged `good first issue`) are:
+
+- **Trace format ([#2](https://github.com/Sudharsanselvaraj/Token-Print/issues/2), v0.2)** — well-isolated, versioned from day one, testable
   against [docs/verification.md](docs/verification.md)'s "every number is real" rule.
-- **Scoped tensor dequantization for v0.25** — touches only `frontend/lib/gguf/parser.ts`
+- **Scoped tensor dequantization ([#6](https://github.com/Sudharsanselvaraj/Token-Print/issues/6), v0.25)** — touches only `frontend/lib/gguf/parser.ts`
   and `ggmlTypes.ts`, doesn't require touching the backend or the 3D scenes at all, and
   has a clear, checkable success condition (a real histogram from real bytes).
-- **The logit-lens backend projection (v0.3)** — a contained addition to
+- **The logit-lens backend projection ([#9](https://github.com/Sudharsanselvaraj/Token-Print/issues/9), v0.3)** — a contained addition to
   `backend/app/model.py`, testable the same way `verify_trace.py` already tests the op
   catalog.
-- **Attention head fingerprinting (v0.4)** — a pure function over data `analyze()`
+- **Attention head fingerprinting ([#16](https://github.com/Sudharsanselvaraj/Token-Print/issues/16), v0.4)** — a pure function over data `analyze()`
   already returns; no new inference required, easy to unit-test against known
   induction-head examples from the literature.
+- **Local checkpoint loading ([#22](https://github.com/Sudharsanselvaraj/Token-Print/issues/22), v0.6)** and **non-Latin tokenization view
+  ([#23](https://github.com/Sudharsanselvaraj/Token-Print/issues/23), v0.6)** — both small, contained, and independent of the heavier milestones.
