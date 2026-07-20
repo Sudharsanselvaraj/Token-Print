@@ -3,7 +3,7 @@
 TokenPrint is an interactive 3D visualization platform for exploring transformer architectures, tensors, and real-time LLM inference. 
 
 <div align="center">
-  <img src="assets/tokenprint-architecture.png" alt="TokenPrint Architecture Placeholder" width="600" />
+  <img src="https://raw.githubusercontent.com/Sudharsanselvaraj/Token-Print/main/.github/assets/tokenprint-logo.png" alt="TokenPrint Architecture" width="600" />
 </div>
 
 ## Overview
