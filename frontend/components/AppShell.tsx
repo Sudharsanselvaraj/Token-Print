@@ -8,7 +8,6 @@ import TopBar from "./ui/TopBar";
 import Sidebar from "./ui/Sidebar";
 import RightPanel from "./ui/RightPanel";
 import GenerationTopControls from "./ui/GenerationTopControls";
-import LogitLensPanel from "./ui/LogitLensPanel";
 import EvolutionTimeline from "./ui/EvolutionTimeline";
 import PredictionGame from "./ui/PredictionGame";
 import DebugInspector from "./ui/DebugInspector";
@@ -22,6 +21,7 @@ import KvCacheTimeline from "./ui/KvCacheTimeline";
 import TokenStrip from "./ui/TokenStrip";
 import { fmtShape } from "@/lib/format";
 import { roleLabel } from "@/lib/tensorName";
+import { useKeyboard } from "@/lib/useKeyboard";
 
 export default function AppShell() {
   const loadArchitecture = useStore((s) => s.loadArchitecture);
@@ -30,6 +30,8 @@ export default function AppShell() {
   const hovName = useStore((s) => s.hoveredTensor);
   const devMode = useStore((s) => s.devMode);
   const [mouse, setMouse] = useState({ x: 0, y: 0, inside: false });
+
+  useKeyboard();
 
   // Load the live Qwen model's architecture once on mount.
   useEffect(() => {
@@ -62,9 +64,7 @@ export default function AppShell() {
         {mode === "generation" && <GenerationTopControls />}
         {mode === "generation" && <TokenStrip />}
         {mode === "generation" && <PredictionGame />}
-        {mode === "walkthrough" && <LogitLensPanel />}
         {mode === "walkthrough" && <EvolutionTimeline />}
-        {mode === "walkthrough" && <LogitLensPanel />}
         {mode === "walkthrough" && <TokenDetailView />}
         {mode === "generation" && <KvCacheTimeline />}
         {mode === "generation" && <PredictionGame />}
@@ -92,7 +92,9 @@ export default function AppShell() {
             </div>
           </div>
         )}
-        <div className="canvas-hint">drag to orbit · scroll to zoom</div>
+        <div className="canvas-hint">
+          drag to orbit · scroll to zoom · <kbd>Space</kbd> play · <kbd>F10</kbd> op · <kbd>J</kbd><kbd>K</kbd> token
+        </div>
       </div>
       <RightPanel />
     </div>

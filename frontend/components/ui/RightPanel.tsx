@@ -11,6 +11,7 @@ import {
 } from "@/lib/formulas";
 import Formula from "./Formula";
 import GenerationPanel from "./GenerationPanel";
+import LogitLensPanel from "./LogitLensPanel";
 
 function valueNote(dtype: string): string {
   return /^(F32|F16|BF16|float)/i.test(dtype)
@@ -67,6 +68,7 @@ export default function RightPanel() {
               Every number in the reading pane is read from this real forward
               pass — no illustrative values.
             </div>
+            <LogitLensPanel />
           </>
         ) : (
           <div className="rp-empty">

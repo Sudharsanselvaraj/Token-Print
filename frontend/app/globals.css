@@ -2462,6 +2462,19 @@ code {
   padding: 12px 0;
 }
 
+/* --- Keyboard shortcut hints (Phase 1.7) ---------------------------------- */
+.canvas-hint kbd {
+  display: inline-block;
+  padding: 1px 4px;
+  font-size: 9px;
+  font-family: var(--mono, ui-monospace, monospace);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  margin: 0 1px;
+  line-height: 1.2;
+}
+
 /* --- Demo Traces (v0.2 #4) ------------------------------------------------- */
 .demo-list {
   display: flex;

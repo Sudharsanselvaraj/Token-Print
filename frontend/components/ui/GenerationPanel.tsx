@@ -10,6 +10,7 @@ import {
 } from "@/lib/formulas";
 import { activeLayerOf, phaseInfo } from "@/lib/playback";
 import Formula from "./Formula";
+import LogitLensPanel from "./LogitLensPanel";
 
 function WeightPreview({ data }: { data: number[][] }) {
   if (!data?.length) return null;
@@ -200,6 +201,7 @@ export default function GenerationPanel() {
           </div>
         </div>
       )}
+      <LogitLensPanel />
     </div>
   );
 }
