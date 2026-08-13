@@ -131,10 +131,6 @@ interface NeuroState {
   skipToNextLayer: () => void;
   skipToNextToken: () => void;
 
-  // Phase 4 — Light mode / a11y / depth dial.
-  lightMode: boolean;
-  toggleLightMode: () => void;
-
   // Phase 3 – Debugger internals.
   breakpoints: Set<number>; // op indices where autoplay pauses
   toggleBreakpoint: (opIndex: number) => void;
@@ -498,9 +494,6 @@ export const useStore = create<NeuroState>((set) => ({
         playIndex: rewind ? 0 : s.playIndex,
       };
     }),
-  lightMode: false,
-  toggleLightMode: () => set((s) => ({ lightMode: !s.lightMode })),
-
   toggleFollow: () => set((s) => ({ followMode: !s.followMode })),
   setUserOrbiting: (b: boolean) => set({ userOrbiting: b }),
   toggleView2D: () => set((s) => ({ view2D: !s.view2D })),

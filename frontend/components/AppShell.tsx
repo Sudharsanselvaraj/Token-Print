@@ -31,7 +31,6 @@ export default function AppShell() {
   const hovName = useStore((s) => s.hoveredTensor);
   const devMode = useStore((s) => s.devMode);
   const tileView = useStore((s) => s.tileView);
-  const lightMode = useStore((s) => s.lightMode);
   const [mouse, setMouse] = useState({ x: 0, y: 0, inside: false });
 
   useKeyboard();
@@ -71,7 +70,7 @@ export default function AppShell() {
   const hov = hovName ? arch?.tensors.find((t) => t.name === hovName) : null;
 
   return (
-    <div className={`app mode-${mode}${lightMode ? " light" : ""}`}>
+    <div className={`app mode-${mode}`}>
       <PlaybackEngine />
       <TopBar />
       <Sidebar />
