@@ -6,6 +6,8 @@ Phase 1 covers tokens + the full attention tensor. Phase 2 fields
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -17,6 +19,36 @@ class AnalyzeRequest(BaseModel):
         ...,
         description="The raw sentence to run a single forward pass on.",
         min_length=1,
+    )
+
+
+class RagChunk(BaseModel):
+    id: str = Field(..., description="Caller-provided chunk identifier.")
+    text: str = Field(..., description="Retrieved chunk text.", min_length=1)
+
+
+class RagAnalyzeRequest(BaseModel):
+    query: str = Field(..., description="User query to attribute against chunks.", min_length=1)
+    chunks: list[RagChunk] = Field(
+        ...,
+        min_length=1,
+        description="Retrieved chunks paired with stable IDs.",
+    )
+    reduction_mode: Literal["all_layers_mean", "last_layer", "both"] = Field(
+        default="both",
+        description=(
+            "Layer reduction mode for attribution. 'both' returns all-layers and "
+            "last-layer reductions; `attribution` defaults to all-layers."
+        ),
+    )
+    ungrounded_threshold: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Ungrounded flag threshold. A query token is flagged if its max chunk "
+            "attribution is below this threshold and below its query-self attribution."
+        ),
     )
 
 
@@ -83,6 +115,39 @@ class AnalyzeResponse(BaseModel):
     # Index 0 = embedding output; index L = after layer L.
     # Each entry: [layer_index] -> [{text, token_id, prob}, ...] (top 5)
     logit_lens: list[list[dict]] = []
+
+
+class RagAnalyzeResponse(AnalyzeResponse):
+    query: str
+    chunk_spans: dict[str, list[int]] = Field(
+        default_factory=dict,
+        description="Token spans per chunk id: {chunk_id: [start_token, end_token]}.",
+    )
+    query_span: list[int] = Field(
+        default_factory=list,
+        description="Token span for the query inside the composed RAG prompt.",
+    )
+    attribution_chunk_ids: list[str] = Field(
+        default_factory=list,
+        description="Column order for attribution matrices.",
+    )
+    attribution: list[list[float]] = Field(
+        default_factory=list,
+        description=(
+            "Per-query-token per-chunk attribution matrix shaped "
+            "[query_token][chunk_id] using all-layer mean."
+        ),
+    )
+    attribution_all_layers_mean: list[list[float]] = Field(default_factory=list)
+    attribution_last_layer: list[list[float]] = Field(default_factory=list)
+    query_self_attribution: list[float] = Field(
+        default_factory=list,
+        description="Attention mass from each query token back to query-token span.",
+    )
+    ungrounded: list[bool] = Field(
+        default_factory=list,
+        description="Ungrounded flag per query token.",
+    )
 
 
 class ModelInfo(BaseModel):

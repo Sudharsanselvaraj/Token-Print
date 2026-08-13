@@ -82,6 +82,61 @@ Body: `{ "sentence": "The cat sat on the mat." }` (capped ~40 tokens; returns
 }
 ```
 
+## `POST /rag/analyze`
+
+RAG attribution reduction on top of the existing real attention tensor from
+`ModelEngine.analyze()`. The backend composes:
+
+```
+Context:
+<chunk id=...>...</chunk>
+...
+<query>...</query>
+```
+
+and maps chunk/query text spans to token spans using tokenizer offset mappings.
+
+**Body:**
+
+```json
+{
+  "query": "What year was the company founded?",
+  "chunks": [
+    { "id": "0", "text": "The company was founded in 2018 in Chennai." },
+    { "id": "1", "text": "Its first product launched in 2020." }
+  ],
+  "reduction_mode": "both",
+  "ungrounded_threshold": 0.1
+}
+```
+
+**Response additions (on top of `/analyze`):**
+
+```jsonc
+{
+  "query": "What year was the company founded?",
+  "chunk_spans": { "0": [12, 20], "1": [24, 31] },
+  "query_span": [36, 45],
+  "attribution_chunk_ids": ["0", "1"],
+  "attribution": [ [0.42, 0.08], [0.45, 0.07] ],
+  "attribution_all_layers_mean": [ [0.42, 0.08], [0.45, 0.07] ],
+  "attribution_last_layer": [ [0.51, 0.04], [0.48, 0.05] ],
+  "query_self_attribution": [0.31, 0.29],
+  "ungrounded": [false, false]
+}
+```
+
+`attribution` shape is `[query_token][chunk_id]`. Values are attention mass from
+each query-token row onto each chunk span.
+
+> **Note**
+> Attention mass is a correlate of influence, not a proof of causal influence.
+> TokenPrint reports it as an attribution signal, not a causality claim.
+
+> **Tip**
+> Set `reduction_mode: "both"` so the UI can switch between all-layer and
+> last-layer views without recomputing.
+
 ## `WS /ws/generate`
 
 A real streamed greedy generation.

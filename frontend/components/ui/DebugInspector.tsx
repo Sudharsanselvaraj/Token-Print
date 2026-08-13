@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { fetchDebugSnapshot } from "@/lib/api";
 import type { DebugSnapshot } from "@/lib/types";
@@ -16,6 +16,12 @@ export default function DebugInspector() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const sentence = useStore((s) => s.data?.sentence);
+  const opPlaying = useStore((s) => s.opPlaying);
+  const opIndex = useStore((s) => s.opIndex);
+  const breakpoints = useStore((s) => s.breakpoints);
+  const genMeta = useStore((s) => s.genMeta);
+
+  const capturedAtBp = useRef<number | null>(null);
 
   const run = useCallback(async () => {
     if (!sentence) return;
@@ -31,13 +37,31 @@ export default function DebugInspector() {
     }
   }, [sentence]);
 
+  // Auto-capture when paused at a breakpoint.
+  useEffect(() => {
+    if (opPlaying) return; // only trigger when paused
+    if (!breakpoints.has(opIndex)) return;
+    if (!sentence) return;
+    // Avoid re-capturing the same breakpoint repeatedly.
+    if (capturedAtBp.current === opIndex) return;
+    capturedAtBp.current = opIndex;
+    run();
+  }, [opPlaying, opIndex, breakpoints, sentence, run]);
+
+  // Reset the dedup key when breakpoints change (user toggled one on/off).
+  useEffect(() => {
+    capturedAtBp.current = null;
+  }, [breakpoints]);
+
   const paths = snap ? Object.keys(snap).sort() : [];
   const entry = selectedPath && snap ? snap[selectedPath] : null;
+  const isPausedAtBp = !opPlaying && breakpoints.has(opIndex);
 
   return (
     <div className="debug-panel">
       <div className="debug-title">
         Debug Inspector
+        {isPausedAtBp && <span className="debug-bp-badge">⏸ breakpoint</span>}
         <button
           className="chip-btn"
           onClick={run}
@@ -52,8 +76,9 @@ export default function DebugInspector() {
 
       {!snap && !loading && (
         <div className="drop-note">
-          Click Capture to run the forward pass with all intermediate outputs
-          recorded.
+          {isPausedAtBp
+            ? "Paused at breakpoint — capturing snapshot…"
+            : "Click Capture to record intermediate outputs, or set a breakpoint to auto-capture on pause."}
         </div>
       )}
 

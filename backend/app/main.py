@@ -4,6 +4,7 @@ Endpoints:
   * GET  /health      — liveness + whether the model is loaded
   * GET  /model-info  — model metadata (layers, heads, hidden size, device)
   * POST /analyze     — real attention data for a sentence
+  * POST /rag/analyze — chunk-level attribution reduction over real attention
   * GET  /architecture — real tensor list (Explorer data source)
   * WS   /ws/generate — streamed greedy generation
   * GET  /trace       — download the last recorded generation as a JSON trace file
@@ -25,7 +26,16 @@ from fastapi.responses import Response
 from .ablation import Ablation
 from .debug import DebugCapture
 from .model import ModelEngine, TokenizedTooLong
-from .schemas import AblateRequest, AnalyzeRequest, AnalyzeResponse, ModelInfo
+from .reduce import chunk_attribution, query_self_attribution, ungrounded_flags
+from .schemas import (
+    AblateRequest,
+    AnalyzeRequest,
+    AnalyzeResponse,
+    ModelInfo,
+    RagAnalyzeRequest,
+    RagAnalyzeResponse,
+    RagChunk,
+)
 from .trace import TraceRecorder, serialize_trace, parse_trace
 
 logging.basicConfig(level=logging.INFO)
@@ -71,6 +81,76 @@ def _require_engine() -> ModelEngine:
     return engine
 
 
+def _build_rag_prompt_and_char_ranges(
+    query: str,
+    chunks: list[RagChunk],
+) -> tuple[str, dict[str, tuple[int, int]], tuple[int, int]]:
+    parts: list[str] = []
+    chunk_ranges: dict[str, tuple[int, int]] = {}
+    cursor = 0
+
+    def append(text: str) -> None:
+        nonlocal cursor
+        parts.append(text)
+        cursor += len(text)
+
+    append("Context:\n")
+    for chunk in chunks:
+        chunk_id = str(chunk.id)
+        append(f"<chunk id={chunk_id}>")
+        start = cursor
+        append(chunk.text)
+        end = cursor
+        append("</chunk>\n")
+        chunk_ranges[chunk_id] = (start, end)
+
+    append("\n<query>")
+    query_start = cursor
+    append(query)
+    query_end = cursor
+    append("</query>")
+    return "".join(parts), chunk_ranges, (query_start, query_end)
+
+
+def _char_range_to_token_span(
+    offsets: list[tuple[int, int]],
+    char_range: tuple[int, int],
+) -> tuple[int, int]:
+    start, end = char_range
+    token_idxs: list[int] = []
+    for idx, (tok_start, tok_end) in enumerate(offsets):
+        if tok_end <= tok_start:
+            continue
+        if tok_start < end and tok_end > start:
+            token_idxs.append(idx)
+    if not token_idxs:
+        return (-1, -1)
+    return (token_idxs[0], token_idxs[-1])
+
+
+def _token_spans_from_char_ranges(
+    tokenizer,
+    prompt: str,
+    chunk_char_ranges: dict[str, tuple[int, int]],
+    query_char_range: tuple[int, int],
+) -> tuple[dict[str, tuple[int, int]], tuple[int, int]]:
+    enc = tokenizer(prompt, return_offsets_mapping=True)
+    raw_offsets = enc.get("offset_mapping")
+    if raw_offsets is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Tokenizer does not expose offset_mapping for RAG attribution.",
+        )
+
+    offsets = [(int(s), int(e)) for s, e in raw_offsets]
+    chunk_spans = {
+        chunk_id: _char_range_to_token_span(offsets, span)
+        for chunk_id, span in chunk_char_ranges.items()
+    }
+    query_span = _char_range_to_token_span(offsets, query_char_range)
+    return chunk_spans, query_span
+
+
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok", "model_loaded": engine is not None}
@@ -106,6 +186,72 @@ async def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
     except TokenizedTooLong as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return AnalyzeResponse(**data)
+
+
+@app.post("/rag/analyze", response_model=RagAnalyzeResponse)
+async def rag_analyze(req: RagAnalyzeRequest) -> RagAnalyzeResponse:
+    eng = _require_engine()
+    prompt, chunk_char_ranges, query_char_range = _build_rag_prompt_and_char_ranges(
+        req.query,
+        req.chunks,
+    )
+    chunk_spans, query_span = _token_spans_from_char_ranges(
+        eng.tokenizer,
+        prompt,
+        chunk_char_ranges,
+        query_char_range,
+    )
+    if query_span[0] < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not map query text to tokens in composed RAG prompt.",
+        )
+
+    import anyio
+
+    try:
+        data = await anyio.to_thread.run_sync(eng.analyze, prompt)
+    except TokenizedTooLong as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    attribution_result = chunk_attribution(
+        attention=data["attention"],
+        target_span=query_span,
+        chunk_spans=chunk_spans,
+    )
+    query_self = query_self_attribution(
+        attention=data["attention"],
+        target_span=query_span,
+        query_span=query_span,
+    )
+
+    if req.reduction_mode == "last_layer":
+        primary_attribution = attribution_result["last_layer"]
+        primary_query_self = query_self["last_layer"]
+    else:
+        primary_attribution = attribution_result["all_layers_mean"]
+        primary_query_self = query_self["all_layers_mean"]
+
+    data.update(
+        {
+            "query": req.query,
+            "chunk_spans": {
+                chunk_id: [span[0], span[1]] for chunk_id, span in chunk_spans.items()
+            },
+            "query_span": [query_span[0], query_span[1]],
+            "attribution_chunk_ids": attribution_result["chunk_ids"],
+            "attribution": primary_attribution,
+            "attribution_all_layers_mean": attribution_result["all_layers_mean"],
+            "attribution_last_layer": attribution_result["last_layer"],
+            "query_self_attribution": primary_query_self,
+            "ungrounded": ungrounded_flags(
+                primary_attribution,
+                primary_query_self,
+                req.ungrounded_threshold,
+            ),
+        }
+    )
+    return RagAnalyzeResponse(**data)
 
 
 # --------------------------------------------------------------------------- #

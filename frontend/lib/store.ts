@@ -117,6 +117,7 @@ interface NeuroState {
   opPlaying: boolean;
   followMode: boolean;
   userOrbiting: boolean;
+  setUserOrbiting: (b: boolean) => void;
   view2D: boolean;
   playSpeed: number; // animation-speed multiplier (pacing only, never data)
   autoStarted: boolean; // has autoplay kicked off for the current trace?

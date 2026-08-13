@@ -1842,6 +1842,17 @@ code {
   color: var(--text);
   margin-bottom: 6px;
 }
+.debug-bp-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 6px;
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 500;
+  vertical-align: middle;
+}
 .debug-split {
   display: flex;
   flex-direction: column;
@@ -2308,6 +2319,76 @@ code {
 }
 .cd-all-val {
   color: #ccc;
+}
+
+/* Trace diff section */
+.cd-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--panel-border);
+}
+.cd-trace-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0;
+}
+.cd-upload-btn {
+  display: inline-block;
+  padding: 4px 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 10px;
+  cursor: pointer;
+  text-align: center;
+}
+.cd-upload-btn:hover { background: rgba(255,255,255,0.12); }
+.cd-trace-info { color: var(--muted); font-size: 9px; }
+.cd-trace-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 10px;
+  margin: 6px 0;
+  flex-wrap: wrap;
+}
+.cd-trace-file { color: var(--accent); font-family: var(--mono); font-size: 10px; }
+.cd-trace-divergences { color: #e74c3c; font-weight: 600; font-size: 10px; }
+.cd-trace-table {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.cd-trace-row {
+  display: grid;
+  grid-template-columns: 24px 1fr 16px 1fr;
+  gap: 4px;
+  align-items: center;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 9px;
+}
+.cd-trace-row.diverges {
+  background: rgba(231, 76, 60, 0.1);
+}
+.cd-trace-step { color: var(--muted); }
+.cd-trace-token { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cd-trace-vs { color: var(--muted); text-align: center; font-size: 9px; }
+.cd-trace-row.diverges .cd-trace-vs { color: #e74c3c; }
+.cd-clear-trace {
+  margin-top: 6px;
+  padding: 2px 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  cursor: pointer;
 }
 
 /* --- Ablation Panel (v0.5) ------------------------------------------------ */

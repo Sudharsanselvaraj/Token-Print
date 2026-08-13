@@ -1,7 +1,8 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
+import type { Trace, TokenFrame } from "@/lib/types";
 
 interface DiffField {
   key: string;
@@ -11,10 +12,22 @@ interface DiffField {
   changed: boolean;
 }
 
+interface FrameDiff {
+  step: number;
+  tokenA: string;
+  tokenB: string;
+  diverges: boolean;
+  probA: number;
+  probB: number;
+}
+
 export default function ConfigDiff() {
   const arch = useStore((s) => s.arch);
   const compare = useStore((s) => s.compareArch);
+  const genFrames = useStore((s) => s.genFrames);
+  const genMeta = useStore((s) => s.genMeta);
 
+  // --- Architecture metadata diff --- //
   const diffs = useMemo(() => {
     if (!arch?.metadata || !compare?.metadata) return null;
     const a = arch.metadata;
@@ -41,44 +54,145 @@ export default function ConfigDiff() {
     return fields;
   }, [arch, compare]);
 
-  if (!diffs) return null;
-  const changed = diffs.filter((d) => d.changed);
+  // --- Trace comparison --- //
+  const [traceB, setTraceB] = useState<TokenFrame[] | null>(null);
+  const [traceBName, setTraceBName] = useState<string>("");
+  const [traceBMeta, setTraceBMeta] = useState<string>("");
+
+  const loadTraceB = useCallback(async (file: File) => {
+    try {
+      const text = await file.text();
+      const trace: Trace = JSON.parse(text);
+      setTraceB(trace.frames ?? []);
+      setTraceBName(file.name);
+      setTraceBMeta(`${trace.meta.num_layers}L · ${trace.frames?.length ?? 0} tokens`);
+    } catch (e) {
+      setTraceB(null);
+      setTraceBName("parse error");
+      setTraceBMeta("");
+    }
+  }, []);
+
+  const traceDiffs: FrameDiff[] | null = useMemo(() => {
+    if (!traceB || genFrames.length === 0) return null;
+    const maxLen = Math.max(genFrames.length, traceB.length);
+    const diffs: FrameDiff[] = [];
+
+    for (let i = 0; i < maxLen; i++) {
+      const fA = genFrames[i];
+      const fB = traceB[i];
+      const tokenA = fA?.chosen.text ?? "—";
+      const tokenB = fB?.chosen.text ?? "—";
+      const probA = fA?.chosen.logprob ? Math.exp(fA.chosen.logprob) : 0;
+      const probB = fB?.chosen.logprob ? Math.exp(fB.chosen.logprob) : 0;
+      const diverges = tokenA !== tokenB;
+
+      diffs.push({ step: i, tokenA, tokenB, diverges, probA, probB });
+    }
+    return diffs;
+  }, [genFrames, traceB]);
+
+  const hasMeta = !!diffs;
+  const hasTrace = !!traceDiffs;
+  const changedMeta = diffs?.filter((d) => d.changed) ?? [];
 
   return (
     <div className="config-diff">
-      <div className="cd-title">Config Diff</div>
-      <div className="cd-files">
-        <span className="cd-file-a">{arch?.metadata.name}</span>
-        <span className="cd-vs">vs</span>
-        <span className="cd-file-b">{compare?.metadata.name}</span>
-      </div>
-      {changed.length === 0 ? (
-        <div className="cd-identical">Configs are identical</div>
-      ) : (
-        <div className="cd-diffs">
-          {changed.map((f) => (
-            <div key={f.key} className="cd-row">
-              <span className="cd-label">{f.label}</span>
-              <span className="cd-val-a">{String(f.a)}</span>
-              <span className="cd-arrow">→</span>
-              <span className="cd-val-b">{String(f.b)}</span>
+      {/* --- Architecture diff --- */}
+      {hasMeta && (
+        <>
+          <div className="cd-title">Config Diff</div>
+          <div className="cd-files">
+            <span className="cd-file-a">{arch?.metadata.name}</span>
+            <span className="cd-vs">vs</span>
+            <span className="cd-file-b">{compare?.metadata.name}</span>
+          </div>
+          {changedMeta.length === 0 ? (
+            <div className="cd-identical">Configs are identical</div>
+          ) : (
+            <div className="cd-diffs">
+              {changedMeta.map((f) => (
+                <div key={f.key} className="cd-row">
+                  <span className="cd-label">{f.label}</span>
+                  <span className="cd-val-a">{String(f.a)}</span>
+                  <span className="cd-arrow">→</span>
+                  <span className="cd-val-b">{String(f.b)}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+          <details className="cd-all">
+            <summary>All fields</summary>
+            <div className="cd-all-table">
+              {diffs!.map((f) => (
+                <div key={f.key} className={`cd-all-row${f.changed ? " changed" : ""}`}>
+                  <span className="cd-all-label">{f.label}</span>
+                  <span className="cd-all-val">{String(f.a)}</span>
+                </div>
+              ))}
+            </div>
+          </details>
+        </>
       )}
 
-      {/* Full table */}
-      <details className="cd-all">
-        <summary>All fields</summary>
-        <div className="cd-all-table">
-          {diffs.map((f) => (
-            <div key={f.key} className={`cd-all-row${f.changed ? " changed" : ""}`}>
-              <span className="cd-all-label">{f.label}</span>
-              <span className="cd-all-val">{String(f.a)}</span>
+      {/* --- Trace diff --- */}
+      <div className="cd-section">
+        <div className="cd-title">Trace Diff</div>
+        {!hasTrace && (
+          <div className="cd-trace-upload">
+            <label className="cd-upload-btn">
+              Load second trace to compare
+              <input
+                type="file"
+                accept=".json"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) loadTraceB(file);
+                }}
+              />
+            </label>
+            {genFrames.length > 0 && (
+              <span className="cd-trace-info">
+                Current: {genFrames.length} tokens · {genMeta?.num_layers}L
+              </span>
+            )}
+          </div>
+        )}
+
+        {hasTrace && traceDiffs && (
+          <>
+            <div className="cd-trace-meta">
+              <span className="cd-trace-file">{traceBName}</span>
+              <span className="cd-trace-file">{traceBMeta}</span>
+              <span className="cd-trace-divergences">
+                {traceDiffs.filter((d) => d.diverges).length} divergence(s)
+              </span>
             </div>
-          ))}
-        </div>
-      </details>
+
+            <div className="cd-trace-table">
+              {traceDiffs.map((d) => (
+                <div
+                  key={d.step}
+                  className={"cd-trace-row" + (d.diverges ? " diverges" : "")}
+                >
+                  <span className="cd-trace-step">{d.step}</span>
+                  <span className="cd-trace-token">{d.tokenA.replace(/\n/g, "⏎")}</span>
+                  <span className="cd-trace-vs">{d.diverges ? "≠" : "="}</span>
+                  <span className="cd-trace-token">{d.tokenB.replace(/\n/g, "⏎")}</span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="cd-clear-trace"
+              onClick={() => { setTraceB(null); setTraceBName(""); setTraceBMeta(""); }}
+            >
+              Clear comparison
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
