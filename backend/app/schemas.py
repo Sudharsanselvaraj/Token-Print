@@ -114,7 +114,7 @@ class AnalyzeResponse(BaseModel):
     # Per-layer top-5 decoded tokens after unembedding projection.
     # Index 0 = embedding output; index L = after layer L.
     # Each entry: [layer_index] -> [{text, token_id, prob}, ...] (top 5)
-    logit_lens: list[list[dict]] = []
+    logit_lens: list[list[list[dict]]] = []
 
 
 class RagAnalyzeResponse(AnalyzeResponse):
