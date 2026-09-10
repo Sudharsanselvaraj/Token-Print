@@ -6,6 +6,7 @@ import { useSnapshotUrl } from "@/lib/useSnapshotUrl";
 import type { Mode } from "@/lib/types";
 import { useState } from "react";
 import PluginManager from "./PluginManager";
+import ContributorDrawer from "./ContributorDrawer";
 
 const MODES: { id: Mode; label: string }[] = [
   { id: "explorer", label: "Architecture" },
@@ -29,6 +30,7 @@ export default function TopBar() {
   const data = useStore((s) => s.data);
 
   const [pluginManagerOpen, setPluginManagerOpen] = useState(false);
+  const [contributorDrawerOpen, setContributorDrawerOpen] = useState(false);
 
   const [copied, setCopied] = useState(false);
   const handleShare = () => {
@@ -116,6 +118,14 @@ export default function TopBar() {
           >
             🔌 Plugins
           </button>
+          <button
+            className="chip-btn"
+            style={{ borderColor: "#38bdf8", color: "#38bdf8" }}
+            onClick={() => setContributorDrawerOpen(true)}
+            title="Browse open issues & contribute to TokenPrint"
+          >
+            🤝 Contribute
+          </button>
           {(mode === "explorer") && (
             <button
               className={"chip-btn" + (tileView ? " on" : "")}
@@ -127,6 +137,7 @@ export default function TopBar() {
           )}
         </div>
         <PluginManager open={pluginManagerOpen} onClose={() => setPluginManagerOpen(false)} />
+        <ContributorDrawer open={contributorDrawerOpen} onClose={() => setContributorDrawerOpen(false)} />
     </div>
   );
 }
