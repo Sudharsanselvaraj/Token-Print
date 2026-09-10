@@ -22,7 +22,7 @@ export function registerDemoPlugins() {
     },
   });
 
-  PluginRegistry.enable("layer-norm-tracker");
+  // Plugins are registered and can be enabled via PluginManager UI
 }
 
 if (typeof window !== "undefined") {

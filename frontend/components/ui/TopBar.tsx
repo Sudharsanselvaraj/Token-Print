@@ -88,20 +88,6 @@ export default function TopBar() {
             {copied ? "✓ Copied" : "Share"}
           </button>
           <button
-            className={"chip-btn" + (sonificationEnabled ? " on" : "")}
-            onClick={toggleSonification}
-            title="Toggle data-driven activation sonification"
-          >
-            {sonificationEnabled ? "🔊 Sonify ON" : "🔇 Sonify"}
-          </button>
-          <button
-            className={"chip-btn" + (classroomMode ? " on" : "")}
-            onClick={toggleClassroomMode}
-            title="Toggle presentation/classroom mode"
-          >
-            {classroomMode ? "🎓 Classroom ON" : "🎓 Classroom"}
-          </button>
-          <button
             className="chip-btn"
             onClick={async () => {
               const { generateHealthReport } = await import("@/lib/healthReport");

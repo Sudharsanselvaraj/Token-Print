@@ -115,10 +115,26 @@ export default function ContributorDrawer({ open, onClose }: ContributorDrawerPr
   const filtered = filter === "All" ? ISSUES : ISSUES.filter((i) => i.level === filter);
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div
+      className="modal-backdrop"
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        backdropFilter: "blur(6px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 10000,
+      }}
+    >
       <div
         className="modal-content contributor-drawer"
-        style={{ width: "800px", maxWidth: "90vw" }}
+        style={{ width: "800px", maxWidth: "90vw", zIndex: 10001, background: "var(--bg, #0f1117)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
