@@ -41,7 +41,7 @@ export default function DecodeStats() {
               marginTop: 2,
             }}
           >
-            needle {done.needle_report.recalled ? "recalled ✓" : "not recalled ✗"}
+            needle {done.needle_report.recalled ? "recalled (success)" : "not recalled (failed)"}
             <div style={{ fontWeight: 400, color: "#8a97bd" }}>
               “{done.needle_report.needle}”
             </div>

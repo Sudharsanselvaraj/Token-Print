@@ -77,10 +77,10 @@ TokenPrint recognizes many transformer model families. Broad loading support doe
 
 TokenPrint follows a strict transparency standard. Every value displayed in the UI is tagged with its provenance level:
 
-* **`REAL` (`●`)** — Captured directly from live model execution, `named_parameters()`, or `.gguf` file headers.
-* **`DERIVED` (`◇`)** — Computed deterministically from real model data (e.g. PCA, layer norms, entropy).
+* **`REAL`** — Captured directly from live model execution, `named_parameters()`, or `.gguf` file headers.
+* **`DERIVED`** — Computed deterministically from real model data (e.g. PCA, layer norms, entropy).
 * **`CONCEPTUAL`** — Visual 3D geometry representing real model dimensions (e.g., GQA head grouping, SwiGLU funnel ratio).
-* **`SIMULATED` (`△`)** — Offline educational data or proxy values (explicitly flagged with `△ SIMULATION` badge).
+* **`SIMULATION`** — Educational fallback data or proxy values (explicitly flagged with `SIMULATION` badge).
 
 ## The four modes
 
@@ -184,22 +184,16 @@ answers *"what is my model doing right now, and why?"*. The full plan, including
 of the gaps in today's visualizer ecosystem, lives in [ROADMAP.md](ROADMAP.md); the phased
 design/engineering audit is in [docs/design-review.md](docs/design-review.md).
 
-**Shipped** — record & replay traces + snapshot URLs, quantization diff on two GGUFs, logit
-lens, breakpoint debugger, raw-component ablation with before→after diffs, local checkpoint
-loading, multilingual tokenization, and the honest-geometry scene rebuild.
+**Shipped** — real quantized GGUF execution via native `llama.cpp` backend, record & replay traces + snapshot URLs, quantization diff on two GGUFs, logit lens, breakpoint debugger, raw-component ablation with before→after diffs, local checkpoint loading, multilingual tokenization, clean minimal UI design system, and the honest-geometry scene rebuild.
 
-**Next** — real per-layer timings, true activation patching, cross-quant trace diffing, then
-MoE routing, in-browser WebGPU inference, and real quantized GGUF execution.
+**Next** — real per-layer timings, true activation patching, cross-quant trace diffing, MoE routing, and in-browser WebGPU inference.
 
 ## Honest limitations
 
 We would rather under-claim than overstate. Known gaps, stated plainly:
 
-- **Generation runs on full-precision PyTorch weights, not quantized GGUF.** The GGUF parser
-  reads real structure and metadata, and `dequant.ts` decodes real values for the quantization
-  compare view — but inference itself never executes a quantized model. Closing this needs a
-  llama.cpp integration.
-- The **live-generation model is Qwen** (real, loaded); GPT-2's formula set is wired and
+- **Quantized GGUF Backend Instrumentation:** Real quantized GGUF inference is supported via `llama.cpp` (`llama-cpp-python`). When executing via GGUF, tokens and top-k probabilities come directly from the quantized model; per-layer internal activations are not exposed by `llama.cpp`, so layer lighting is cleanly disabled to maintain data honesty.
+- The **live PyTorch model is Qwen** (real, loaded); GPT-2's formula set is wired and
   selected by architecture but not run locally.
 - **`TimingReadout` does not report real time.** It currently derives a proxy from PCA-space
   hidden-state magnitudes and labels it in milliseconds — this is a known bug

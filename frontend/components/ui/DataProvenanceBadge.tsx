@@ -15,28 +15,28 @@ const BADGE_CONFIG: Record<
   { symbol: string; text: string; bg: string; color: string; desc: string }
 > = {
   real: {
-    symbol: "●",
+    symbol: "",
     text: "REAL",
     bg: "rgba(34, 197, 94, 0.15)",
     color: "#4ade80",
     desc: "Captured directly from live PyTorch execution or binary file header.",
   },
   derived: {
-    symbol: "◇",
+    symbol: "",
     text: "DERIVED",
-    bg: "rgba(56, 189, 248, 0.15)",
-    color: "#38bdf8",
+    bg: "rgba(255, 255, 255, 0.1)",
+    color: "#e2e8f0",
     desc: "Computed mathematically from real model data (e.g. PCA, norms, entropy).",
   },
   conceptual: {
-    symbol: "📐",
+    symbol: "",
     text: "CONCEPTUAL",
     bg: "rgba(168, 85, 247, 0.15)",
     color: "#c084fc",
     desc: "Visual 3D geometry representing real architectural proportions.",
   },
   simulation: {
-    symbol: "△",
+    symbol: "",
     text: "SIMULATION",
     bg: "rgba(245, 158, 11, 0.15)",
     color: "#fbbf24",
@@ -72,7 +72,7 @@ export default function DataProvenanceBadge({
         ...style,
       }}
     >
-      <span>{cfg.symbol}</span>
+      {cfg.symbol ? <span>{cfg.symbol}</span> : null}
       <span>{label ?? cfg.text}</span>
     </span>
   );

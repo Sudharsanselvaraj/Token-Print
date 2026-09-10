@@ -70,7 +70,7 @@ export default function WalkthroughPane() {
           disabled={!dataReady || (idx >= CHAPTERS.length - 1 && !wtPlaying)}
           title="Autoplay chapters"
         >
-          {wtPlaying ? "⏸" : "▶"}
+          {wtPlaying ? "Pause" : "Play"}
         </button>
         <button
           className="chip-btn"

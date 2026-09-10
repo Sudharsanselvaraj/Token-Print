@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useStore } from "@/lib/store";
-import GgufControls from "./GgufControls";
 
 const DEFAULT_PROMPT = "Name one primary color. Answer in one word.";
 const DEFAULT_NEEDLE = "The secret color is mauve.";
@@ -142,7 +141,6 @@ export default function GenerationControls() {
         {!isGGUF && mode !== "greedy" && " The needle is injected as a MEMORY line and recall is reported on the done frame."}
         {isGGUF && " Layer-level hooks are unavailable in llama.cpp — those rows stay off to avoid simulation."}
       </div>
-      <GgufControls />
     </div>
   );
 }

@@ -19,28 +19,28 @@ export default function SettingsBar() {
         onClick={toggleQuality}
         title="Toggle bloom / cinematic post-processing"
       >
-        {quality === "cinematic" ? "✦ Cinematic" : "⚡ Performance"}
+        {quality === "cinematic" ? "Cinematic" : "Performance"}
       </button>
       <button
         className={"chip-btn" + (sonificationEnabled ? " on" : "")}
         onClick={toggleSonification}
         title="Toggle activation sonification"
       >
-        {sonificationEnabled ? "🎵 Sonify ON" : "🎵 Sonify"}
+        {sonificationEnabled ? "Sonify ON" : "Sonify"}
       </button>
       <button
         className={"chip-btn" + (classroomMode ? " on" : "")}
         onClick={toggleClassroomMode}
         title="Toggle classroom presentation mode"
       >
-        {classroomMode ? "🎓 Classroom ON" : "🎓 Classroom"}
+        {classroomMode ? "Classroom ON" : "Classroom"}
       </button>
       <button
         className={"chip-btn" + (!muted ? " on" : "")}
         onClick={toggleMuted}
         title="Toggle sound cues"
       >
-        {muted ? "🔇 Muted" : "🔊 Sound"}
+        {muted ? "Muted" : "Sound"}
       </button>
     </div>
   );

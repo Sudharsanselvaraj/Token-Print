@@ -62,7 +62,7 @@ export default function DemoData() {
             disabled={loading === d.id}
           >
             <div className="demo-card-title">
-              {loading === d.id ? <>Loading…</> : <>{d.title} ▶</>}
+              {loading === d.id ? <>Loading…</> : <>{d.title}</>}
             </div>
             <div className="demo-card-desc">{d.description}</div>
           </button>
@@ -72,10 +72,10 @@ export default function DemoData() {
           style={{ marginTop: 8, borderColor: "var(--accent)" }}
           onClick={() => setTraceGalleryOpen(true)}
         >
-          <strong>View Trace Gallery →</strong>
+          <strong>View Trace Gallery</strong>
         </button>
       </div>
-      {err && <div className="error">⚠ {err}</div>}
+      {err && <div className="error">{err}</div>}
     </div>
   );
 }

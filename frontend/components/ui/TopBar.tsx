@@ -85,7 +85,7 @@ export default function TopBar() {
             <span className="tstat muted">loading model…</span>
           )}
           <button className="share-btn" onClick={handleShare} title="Copy snapshot URL">
-            {copied ? "✓ Copied" : "Share"}
+            {copied ? "Copied" : "Share"}
           </button>
           <button
             className="chip-btn"
@@ -95,22 +95,21 @@ export default function TopBar() {
             }}
             title="Generate & download Model Health Report"
           >
-            📄 Report
+            Report
           </button>
           <button
             className="chip-btn"
             onClick={() => setPluginManagerOpen(true)}
             title="Manage TokenPrint extension plugins"
           >
-            🔌 Plugins
+            Plugins
           </button>
           <button
             className="chip-btn"
-            style={{ borderColor: "#38bdf8", color: "#38bdf8" }}
             onClick={() => setContributorDrawerOpen(true)}
             title="Browse open issues & contribute to TokenPrint"
           >
-            🤝 Contribute
+            Contribute
           </button>
           {(mode === "explorer") && (
             <button

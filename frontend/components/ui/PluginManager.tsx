@@ -56,14 +56,14 @@ export default function PluginManager({ open, onClose }: PluginManagerProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h2>🔌 Plugin Manager</h2>
+          <h2>Plugin Manager</h2>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
 
         <div className="pm-body">
           {plugins.length === 0 ? (
             <div className="pm-empty">
-              <div className="pm-empty-icon">🔌</div>
+              <div className="pm-empty-icon">—</div>
               <p>No plugins registered yet.</p>
               <p className="pm-hint">
                 External plugins can register themselves by calling:<br />

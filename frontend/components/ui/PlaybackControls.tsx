@@ -45,16 +45,16 @@ export default function PlaybackControls() {
 
       <div className="playback-row">
         <button className="pb-btn" disabled={disabled} onClick={() => stepPlay(-1)} title="Step back">
-          ⏮
+          Prev
         </button>
         <button className="pb-btn" disabled={disabled} onClick={togglePlay} title="Play / pause">
-          {isPlaying ? "⏸" : "▶"}
+          {isPlaying ? "Pause" : "Play"}
         </button>
         <button className="pb-btn" disabled={disabled} onClick={() => stepPlay(1)} title="Step forward">
-          ⏭
+          Next
         </button>
         <button className="pb-btn" disabled={disabled} onClick={replay} title="Replay from start">
-          ↻
+          Replay
         </button>
         <input
           type="range"

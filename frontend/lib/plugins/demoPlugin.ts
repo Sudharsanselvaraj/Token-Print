@@ -15,8 +15,8 @@ export function registerDemoPlugins() {
     component: function LayerNormTrackerPlugin() {
       return React.createElement(
         "div",
-        { className: "side-section plugin-box", style: { borderLeft: "3px solid #38bdf8", paddingLeft: "8px" } },
-        React.createElement("div", { className: "side-title" }, "🔌 LayerNorm Drift Monitor"),
+        { className: "side-section plugin-box", style: { borderLeft: "3px solid var(--panel-border)", paddingLeft: "8px" } },
+      React.createElement("div", { className: "side-title" }, "LayerNorm Drift Monitor"),
         React.createElement("div", { className: "side-note" }, "Live plugin active. Variance: 0.042 (Normal)")
       );
     },

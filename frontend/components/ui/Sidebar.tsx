@@ -8,6 +8,7 @@ import ComparePanel from "./ComparePanel";
 import ExplorerControls from "./ExplorerControls";
 import TensorList from "./TensorList";
 import GenerationControls from "./GenerationControls";
+import GgufControls from "./GgufControls";
 import DecodeStats from "./DecodeStats";
 import ModelModeBadge, { VisionAnalyzer } from "./ModelModeBadge";
 import WalkthroughPane from "./WalkthroughPane";
@@ -48,6 +49,7 @@ export default function Sidebar() {
           ) : (
             <>
               <GenerationControls />
+              <GgufControls />
               <DecodeStats />
               <ModelModeBadge />
             </>

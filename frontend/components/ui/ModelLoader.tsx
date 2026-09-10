@@ -94,7 +94,6 @@ export default function ModelLoader() {
           hidden
           onChange={(e) => onGgufFile(e.target.files?.[0])}
         />
-        <div className="drop-icon">◇</div>
         <div className="drop-text">
           {loading ? (
             "parsing…"
@@ -146,7 +145,7 @@ export default function ModelLoader() {
           {hfLoading ? "…" : "Load"}
         </button>
       </div>
-      {hfError && <div className="error">⚠ {hfError}</div>}
+      {hfError && <div className="error">{hfError}</div>}
 
       {source && (
         <div className="drop-note" style={{ marginTop: 6 }}>
@@ -158,7 +157,7 @@ export default function ModelLoader() {
           replaying recorded trace
         </div>
       )}
-      {err && <div className="error">⚠ {err}</div>}
+      {err && <div className="error">{err}</div>}
     </div>
   );
 }

@@ -138,7 +138,7 @@ export default function ContributorDrawer({ open, onClose }: ContributorDrawerPr
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h2>🤝 Open Contributor Issues</h2>
+          <h2>Open Contributor Issues</h2>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
 
@@ -166,7 +166,7 @@ export default function ContributorDrawer({ open, onClose }: ContributorDrawerPr
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                <span style={{ fontWeight: "700", color: "#38bdf8" }}>
+                <span style={{ fontWeight: "700", color: "var(--accent)" }}>
                   {item.id} — {item.title}
                 </span>
                 <span
@@ -178,7 +178,7 @@ export default function ContributorDrawer({ open, onClose }: ContributorDrawerPr
                       item.level === "Good First Issue"
                         ? "rgba(34,197,94,0.2)"
                         : item.level === "Intermediate"
-                        ? "rgba(56,189,248,0.2)"
+                        ? "rgba(255,255,255,0.1)"
                         : item.level === "Advanced"
                         ? "rgba(239,68,68,0.2)"
                         : "rgba(168,85,247,0.2)",
@@ -186,7 +186,7 @@ export default function ContributorDrawer({ open, onClose }: ContributorDrawerPr
                       item.level === "Good First Issue"
                         ? "#4ade80"
                         : item.level === "Intermediate"
-                        ? "#38bdf8"
+                        ? "var(--text)"
                         : item.level === "Advanced"
                         ? "#f87171"
                         : "#c084fc",
@@ -205,7 +205,7 @@ export default function ContributorDrawer({ open, onClose }: ContributorDrawerPr
 
         <div style={{ marginTop: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: "12px", color: "#94a3b8" }}>
-            See <a href="https://github.com/Sudharsanselvaraj/Token-Print/blob/main/GOOD_FIRST_ISSUES.md" target="_blank" rel="noreferrer" style={{ color: "#38bdf8" }}>GOOD_FIRST_ISSUES.md</a> for full specs.
+            See <a href="https://github.com/Sudharsanselvaraj/Token-Print/blob/main/GOOD_FIRST_ISSUES.md" target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>GOOD_FIRST_ISSUES.md</a> for full specs.
           </span>
           <a
             href="https://github.com/Sudharsanselvaraj/Token-Print/issues/new"
