@@ -5,6 +5,7 @@ import { fmtCount } from "@/lib/format";
 import { useSnapshotUrl } from "@/lib/useSnapshotUrl";
 import type { Mode } from "@/lib/types";
 import { useState } from "react";
+import PluginManager from "./PluginManager";
 
 const MODES: { id: Mode; label: string }[] = [
   { id: "explorer", label: "Architecture" },
@@ -21,6 +22,13 @@ export default function TopBar() {
   const { share } = useSnapshotUrl();
   const tileView = useStore((s) => s.tileView);
   const setTileView = useStore((s) => s.setTileView);
+  const sonificationEnabled = useStore((s) => s.sonificationEnabled);
+  const toggleSonification = useStore((s) => s.toggleSonification);
+  const classroomMode = useStore((s) => s.classroomMode);
+  const toggleClassroomMode = useStore((s) => s.toggleClassroomMode);
+  const data = useStore((s) => s.data);
+
+  const [pluginManagerOpen, setPluginManagerOpen] = useState(false);
 
   const [copied, setCopied] = useState(false);
   const handleShare = () => {
@@ -77,6 +85,37 @@ export default function TopBar() {
           <button className="share-btn" onClick={handleShare} title="Copy snapshot URL">
             {copied ? "✓ Copied" : "Share"}
           </button>
+          <button
+            className={"chip-btn" + (sonificationEnabled ? " on" : "")}
+            onClick={toggleSonification}
+            title="Toggle data-driven activation sonification"
+          >
+            {sonificationEnabled ? "🔊 Sonify ON" : "🔇 Sonify"}
+          </button>
+          <button
+            className={"chip-btn" + (classroomMode ? " on" : "")}
+            onClick={toggleClassroomMode}
+            title="Toggle presentation/classroom mode"
+          >
+            {classroomMode ? "🎓 Classroom ON" : "🎓 Classroom"}
+          </button>
+          <button
+            className="chip-btn"
+            onClick={async () => {
+              const { generateHealthReport } = await import("@/lib/healthReport");
+              generateHealthReport(arch, data);
+            }}
+            title="Generate & download Model Health Report"
+          >
+            📄 Report
+          </button>
+          <button
+            className="chip-btn"
+            onClick={() => setPluginManagerOpen(true)}
+            title="Manage TokenPrint extension plugins"
+          >
+            🔌 Plugins
+          </button>
           {(mode === "explorer") && (
             <button
               className={"chip-btn" + (tileView ? " on" : "")}
@@ -87,6 +126,7 @@ export default function TopBar() {
             </button>
           )}
         </div>
+        <PluginManager open={pluginManagerOpen} onClose={() => setPluginManagerOpen(false)} />
     </div>
   );
 }

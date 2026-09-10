@@ -246,3 +246,11 @@ export interface PatchResponse extends AnalyzeResponse {
   analysis_clean: AnalyzeResponse;
   analysis_source: AnalyzeResponse;
 }
+
+export interface TraceAnnotation {
+  id: string;
+  opIndex?: number;
+  layer?: number;
+  text: string;
+  position: [number, number, number];
+}

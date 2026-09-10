@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { layerAnchors, anchorPosFor } from "@/lib/playback";
 import { CHAPTERS } from "@/lib/walkthrough";
+import { sonifyLayerTransition, sonifyFrame } from "@/lib/sonification";
 
 // Pacing is NORMALIZED, not derived from real per-op/per-token compute time
 // (the trace records no timing, and fabricating smoothing data is out of scope).
@@ -90,6 +91,22 @@ export default function PlaybackEngine() {
         useStore.setState({ playIndex: s.playIndex + 1, opIndex: 0 });
       } else if (s.genStatus !== "streaming") {
         useStore.setState({ opPlaying: false }); // end of trace
+      }
+
+      // Sonification: play layer-advance tone
+      const numLayers = s.genMeta?.num_layers ?? 24;
+      sonifyLayerTransition(s.opIndex, numLayers);
+
+      // When a full frame is ready, play a richer chord from frame stats
+      const frame = s.genFrames[s.playIndex];
+      if (frame) {
+        const topProbs = frame.topk?.map((t) => t.prob) ?? [];
+        const maxP = Math.max(...topProbs, 0.001);
+        // Entropy approximation from top-k probs
+        const entropyNorm = topProbs.reduce((acc, p) => acc - (p / maxP) * Math.log2(p / maxP + 1e-9), 0) / 4;
+        const norm = frame.layer_stats?.[0] ?? 10;
+        const attnSpread = 0.5; // default; real spread needs per-head data
+        sonifyFrame(Math.min(1, entropyNorm), norm, attnSpread);
       }
     }, Math.max(60, GEN_LAYER_MS / playSpeed));
     return () => clearInterval(id);

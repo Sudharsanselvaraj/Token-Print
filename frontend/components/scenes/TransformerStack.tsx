@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Billboard, Text } from "@react-three/drei";
 import { Color, Euler, InstancedMesh, Matrix4, Quaternion, Vector3 } from "three";
+import AnnotationsOverlay from "./AnnotationsOverlay";
 
 // §4 Visual Mapping — distinctive per-operation geometry, faithful to the REAL
 // Qwen2 decoder block (verified against Qwen2.5-0.5B config.json):
@@ -501,6 +502,8 @@ export default function TransformerStack({
           />
         </mesh>
       </group>
+
+      <AnnotationsOverlay />
     </group>
   );
 }

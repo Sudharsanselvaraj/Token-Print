@@ -20,6 +20,7 @@ import type {
   TokenFrame,
   Trace,
 } from "./types";
+import type { TraceAnnotation } from "./types";
 
 interface NeuroState {
   data: AnalyzeResponse | null;
@@ -208,6 +209,22 @@ interface NeuroState {
   // --- Phase 5: Trace Gallery ---
   traceGalleryOpen: boolean;
   setTraceGalleryOpen: (b: boolean) => void;
+
+  // --- Phase 5: Annotations ---
+  annotations: TraceAnnotation[];
+  addAnnotation: (ann: TraceAnnotation) => void;
+  removeAnnotation: (id: string) => void;
+  updateAnnotation: (id: string, text: string) => void;
+
+  // --- Phase 5: Sonification ---
+  sonificationEnabled: boolean;
+  toggleSonification: () => void;
+
+  // --- Phase 5: Classroom Mode ---
+  classroomMode: boolean;
+  classroomPresenting: boolean;
+  toggleClassroomMode: () => void;
+  classroomStep: () => void;  // Advance to next op for all viewers
 }
 
 let genSocket: WebSocket | null = null;
@@ -227,6 +244,31 @@ export const useStore = create<NeuroState>((set, get) => ({
 
   traceGalleryOpen: false,
   setTraceGalleryOpen: (b) => set({ traceGalleryOpen: b }),
+
+  annotations: [],
+  addAnnotation: (ann) => set((s) => ({ annotations: [...s.annotations, ann] })),
+  removeAnnotation: (id) => set((s) => ({ annotations: s.annotations.filter((a) => a.id !== id) })),
+  updateAnnotation: (id, text) => set((s) => ({
+    annotations: s.annotations.map((a) => (a.id === id ? { ...a, text } : a))
+  })),
+
+  sonificationEnabled: false,
+  toggleSonification: () =>
+    set((s) => {
+      const next = !s.sonificationEnabled;
+      import("./sonification").then((mod) => mod.setSonificationEnabled(next));
+      return { sonificationEnabled: next };
+    }),
+
+  classroomMode: false,
+  classroomPresenting: false,
+  toggleClassroomMode: () => set((s) => ({ classroomMode: !s.classroomMode })),
+  classroomStep: () =>
+    set((s) => {
+      const numOps = s.genMeta?.op_catalog?.length ?? 1;
+      const nextOp = (s.opIndex + 1) % numOps;
+      return { opIndex: nextOp };
+    }),
 
   arch: null,
   archFile: null,

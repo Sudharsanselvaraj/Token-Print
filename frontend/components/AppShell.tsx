@@ -21,6 +21,8 @@ import DistributionPanel from "./ui/DistributionPanel";
 import TileView from "./ui/TileView";
 import DebuggerPane from "./ui/DebuggerPane";
 import TraceGallery from "./ui/TraceGallery";
+import PluginManager from "./ui/PluginManager";
+import "@/lib/plugins/demoPlugin";
 import { fmtShape } from "@/lib/format";
 import { roleLabel } from "@/lib/tensorName";
 import { useKeyboard } from "@/lib/useKeyboard";
@@ -34,6 +36,7 @@ export default function AppShell() {
   const tileView = useStore((s) => s.tileView);
   const embedMode = useStore((s) => s.embedMode);
   const [mouse, setMouse] = useState({ x: 0, y: 0, inside: false });
+  const [pluginManagerOpen, setPluginManagerOpen] = useState(false);
 
   useKeyboard();
 
@@ -125,6 +128,7 @@ export default function AppShell() {
         )}
       </div>
       <TraceGallery />
+      <PluginManager open={pluginManagerOpen} onClose={() => setPluginManagerOpen(false)} />
       <BottomBar />
       {!embedMode && <RightPanel />}
     </div>
