@@ -521,17 +521,23 @@ code {
   grid-area: top;
   display: flex;
   align-items: center;
-  gap: 22px;
-  padding: 0 16px;
+  gap: 10px;
+  padding: 0 12px;
   border-bottom: 1px solid var(--panel-border);
-  background: rgba(10, 10, 12, 0.75);
+  background: rgba(10, 10, 12, 0.95);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.topbar::-webkit-scrollbar {
+  display: none;
 }
 .brand {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 .brand-logo {
-  height: 42px;
+  height: 38px;
   width: auto;
   display: block;
   border-radius: 6px;
@@ -539,15 +545,17 @@ code {
 .mode-tabs {
   display: flex;
   gap: 4px;
+  flex-shrink: 0;
 }
 .mode-tab {
   background: transparent;
   border: 1px solid transparent;
   color: var(--muted);
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 .mode-tab:hover {
   color: var(--text);
@@ -560,12 +568,20 @@ code {
 .topstats {
   margin-left: auto;
   display: flex;
-  gap: 16px;
+  gap: 8px;
   align-items: center;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.topstats .chip-btn, .topstats .share-btn {
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .tstat b {
   color: var(--text);

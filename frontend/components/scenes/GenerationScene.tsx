@@ -182,14 +182,7 @@ export default function GenerationScene() {
             const layerAttn = realAttn && realAttn[activeLayer] ? realAttn[activeLayer] : null;
 
             if (!layerAttn) {
-              // Real attention is unavailable for this step/trace. Do NOT generate simulated arcs.
-              return (
-                <Billboard position={[0, activeY + 1.8, 0]}>
-                  <Text fontSize={0.35} color="#94a3b8">
-                    (Real per-head attention matrix unavailable for this frame)
-                  </Text>
-                </Billboard>
-              );
+              return null;
             }
 
             const nh = dims.numHeads;
