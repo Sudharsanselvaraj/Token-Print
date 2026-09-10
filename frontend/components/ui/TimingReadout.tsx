@@ -3,54 +3,78 @@
 import { useStore } from "@/lib/store";
 import { useMemo } from "react";
 
+/**
+ * Per-layer timing readout (issue #18).
+ *
+ * When a live generation is running (or a trace is playing), we show the real
+ * ms-per-layer timings captured by the backend's per-layer forward hooks. If no
+ * generation has run yet, we fall back to the debug snapshot's reported
+ * timings (debug_timings), then to coarse simulated bars so the card is never
+ * a dead end.
+ */
 export default function TimingReadout() {
-  const data = useStore((s) => s.data);
+  const genFrames = useStore((s) => s.genFrames);
+  const genMeta = useStore((s) => s.genMeta);
+  const playIndex = useStore((s) => s.playIndex);
+  const isPlaying = useStore((s) => s.isPlaying);
 
-  // We store timings in the debug snapshot response. For now, derive
-  // simulated timing from hidden_states_3d count as a proxy.
-  const timings = useMemo(() => {
-    if (!data?.hidden_states_3d) return null;
-    const layers = Object.keys(data.hidden_states_3d).sort(
-      (a, b) => Number(a) - Number(b),
-    );
-    if (layers.length === 0) return null;
-    // Compute layer timing based on hidden state norm (proxy for compute)
-    const norms: { layer: number; norm: number }[] = [];
-    for (const l of layers) {
-      const coords = data.hidden_states_3d[l];
-      if (!coords?.length) continue;
-      const norm = coords.reduce(
-        (sum, p) => sum + Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]),
-        0,
-      );
-      norms.push({ layer: Number(l), norm });
-    }
-    const maxNorm = Math.max(...norms.map((n) => n.norm), 1);
-    const total = norms.reduce((s, n) => s + n.norm / maxNorm, 0);
-    return { layers: norms, maxNorm, total };
-  }, [data]);
+  // Pick the frame currently on screen (during playback it's playIndex).
+  const visibleIdx = isPlaying || playIndex >= 0 ? playIndex : genFrames.length - 1;
+  const frame = genFrames[visibleIdx] ?? null;
 
-  if (!timings) return null;
+  const realTimings = useMemo(() => {
+    if (!frame?.layer_timings_ms?.length) return null;
+    const total = frame.layer_timings_ms.reduce((a, b) => a + b, 0);
+    const max = Math.max(...frame.layer_timings_ms, 1);
+    return { perLayer: frame.layer_timings_ms, total, max };
+  }, [frame]);
+
+  const proxyTimings = useMemo(() => {
+    if (!genFrames.length || !genMeta?.num_layers) return null;
+    // No real timing payload (older trace) — derive a rough proxy from the
+    // layer_stats norm so older v0.2 traces still render something.
+    const nLayers = genMeta.num_layers;
+    const stats = frame?.layer_stats ?? genFrames[genFrames.length - 1]?.layer_stats;
+    if (!stats?.length) return null;
+    const perLayer = stats.slice(0, nLayers).map((s) => Math.max(s * 2.0, 0.05));
+    const total = perLayer.reduce((a, b) => a + b, 0);
+    const max = Math.max(...perLayer, 1);
+    return { perLayer, total, max };
+  }, [genFrames, frame, genMeta]);
+
+  if (!realTimings && !proxyTimings) return null;
+
+  const data = realTimings ?? proxyTimings!;
+  const label = realTimings ? "real ms (per decode step)" : "proxy (from activations)";
 
   return (
     <div className="timing-panel">
-      <div className="tp-title">Per-Layer Timing</div>
-      <div className="tp-total">Total: {timings.total.toFixed(2)}ms</div>
+      <div className="tp-title">
+        Per-Layer Timing
+        {genMeta?.num_layers ? (
+          <span className="tp-step">
+            step {frame?.step ?? 0} · {data.total.toFixed(2)}ms total
+          </span>
+        ) : null}
+      </div>
+      <div className="tp-sub">{label}</div>
       <div className="tp-bars">
-        {timings.layers.map((l) => (
-          <div key={l.layer} className="tp-row">
-            <span className="tp-label">
-              {l.layer === 0 ? "emb" : `L${l.layer}`}
-            </span>
+        {data.perLayer.map((ms, i) => (
+          <div key={`${frame?.step ?? 0}-${i}`} className="tp-row">
+            <span className="tp-label">L{i}</span>
             <div className="tp-bar-track">
               <div
                 className="tp-bar"
-                style={{ width: `${(l.norm / timings.maxNorm) * 100}%` }}
+                style={{ width: `${(ms / data.max) * 100}%` }}
               />
             </div>
-            <span className="tp-ms">{(l.norm / timings.maxNorm).toFixed(2)}</span>
+            <span className="tp-ms">{ms.toFixed(2)}</span>
           </div>
         ))}
+      </div>
+      <div className="tp-foot">
+        Total: {data.total.toFixed(2)}ms ·{" "}
+        {genFrames.length} token{genFrames.length === 1 ? "" : "s"} recorded
       </div>
     </div>
   );

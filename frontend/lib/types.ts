@@ -132,6 +132,8 @@ export interface TokenFrame {
   chosen: { id: number; text: string; logprob: number };
   topk: TopKCandidate[];
   layer_stats: number[]; // real mean |activation| per layer (len = num_layer_stats)
+  // Real per-layer latency in milliseconds (len = num_layers, issue #18).
+  layer_timings_ms?: number[];
   eos: boolean;
   // Real KV-cache accounting (present when the backend uses a cache).
   phase?: "prefill" | "decode";

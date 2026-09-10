@@ -91,6 +91,52 @@ class ModelEngine:
         self.hidden_size: int = cfg.hidden_size
         self._catalog: list | None = None  # cached op catalog (static per model)
 
+        # --- Per-layer timing hooks (v0.4, issue #18) ----------------------
+        # Registered once at load time; they write elapsed ms-per-layer into a
+        # scratch dict each forward pass. `layer_elapsed` is consumed (and
+        # cleared) by whoever ran the pass, so it never accumulates.
+        self._layer_elapsed: dict[int, float] = {}
+        self._layer_timing_lock = threading.Lock()
+        self._timing_handles: list = []
+        self._register_layer_timing_hooks()
+
+    def _register_layer_timing_hooks(self) -> None:
+        """Register pre/post hooks on each decoder layer writing ms timings."""
+        layers = getattr(self.model.model, "layers", None)
+        if layers is None:
+            return
+
+        for i, layer in enumerate(layers):
+            marks = {"pre": None}
+
+            def pre_hook(_mod, _in, _i=i, _marks=marks):
+                _marks["pre"] = time.perf_counter()
+
+            def post_hook(_mod, _in, _out, _i=i, _marks=marks):
+                pre = _marks["pre"]
+                if pre is not None:
+                    elapsed_ms = (time.perf_counter() - pre) * 1000.0
+                    with self._layer_timing_lock:
+                        self._layer_elapsed[_i] = elapsed_ms
+
+            self._timing_handles.append(layer.register_forward_pre_hook(pre_hook))
+            self._timing_handles.append(layer.register_forward_hook(post_hook))
+
+    def _last_layer_timings_ms(self) -> list[float]:
+        """Snapshot and clear the per-layer ms timings from the last forward pass."""
+        with self._layer_timing_lock:
+            timings = [
+                round(self._layer_elapsed.get(i, 0.0), 4)
+                for i in range(self.num_layers)
+            ]
+            self._layer_elapsed.clear()
+        return timings
+
+    def release_timing_hooks(self) -> None:
+        for h in self._timing_handles:
+            h.remove()
+        self._timing_handles.clear()
+
     # ------------------------------------------------------------------ #
     # Helpers
     # ------------------------------------------------------------------ #
@@ -303,6 +349,9 @@ class ModelEngine:
                 )
                 past = out.past_key_values
                 positions_done += n_positions
+                # Real per-layer ms from the timing hooks installed at load.
+                layer_timings_ms = self._last_layer_timings_ms()
+
                 logits = out.logits[:, -1, :]  # [1, vocab]
                 probs = logits.softmax(-1)
 
@@ -338,6 +387,8 @@ class ModelEngine:
                         for i, lg, p in zip(top_ids, top_logits, top_probs)
                     ],
                     "layer_stats": layer_stats,
+                    # Real per-layer latency in milliseconds (issue #18).
+                    "layer_timings_ms": layer_timings_ms,
                     "eos": is_eos,
                     # Real KV-cache accounting for this step (see loop comment).
                     "phase": phase,  # "prefill" | "decode"

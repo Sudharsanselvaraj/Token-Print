@@ -48,14 +48,21 @@ def main() -> int:
         chosen_is_top = f["chosen"]["id"] == tk[0]["id"]
         stats_ok = len(f["layer_stats"]) == meta["num_layer_stats"]
         rng_ok = all(0.0 <= p <= 1.0 for p in probs)
-        if not (sorted_ok and chosen_is_top and stats_ok and rng_ok):
+        # issue #18: real per-layer timing must span exactly num_layers
+        timings_ok = (
+            "layer_timings_ms" in f
+            and len(f["layer_timings_ms"]) == meta["num_layers"]
+            and sum(f["layer_timings_ms"]) > 0
+        )
+        if not (sorted_ok and chosen_is_top and stats_ok and rng_ok and timings_ok):
             ok = False
         top = tk[0]
         bar = "#" * int(round(top["prob"] * 30))
+        total_ms = round(sum(f.get("layer_timings_ms", [])), 2)
         print(f"  step {f['step']:2d}: {f['chosen']['text']!r:>10}  "
               f"p={top['prob']:.3f} {bar}  "
               f"(top2: {tk[1]['text']!r} {tk[1]['prob']:.3f})  "
-              f"stats[0..2]={f['layer_stats'][:3]}")
+              f"stats[0..2]={f['layer_stats'][:3]}  {total_ms}ms/layer")
 
     # Determinism: run again, compare chosen token ids.
     frames2 = run(eng)
