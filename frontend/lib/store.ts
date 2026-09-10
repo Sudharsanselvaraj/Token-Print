@@ -8,6 +8,7 @@ import { dequantizeTensor } from "./gguf/dequant";
 import type {
   AnalyzeResponse,
   ArchitectureData,
+  DebugSnapshot,
   District,
   GenMeta,
   GenStatus,
@@ -151,6 +152,16 @@ interface NeuroState {
   // Source mapping: which tensor name is currently source-selected
   sourceSelectedTensor: string | null;
   setSourceSelectedTensor: (name: string | null) => void;
+
+  // --- Debug snapshots captured at breakpoint pauses (issue #63) --------- //
+  // opIndex -> snapshot; the most recent capture is `debugSnapshotActive`.
+  debugSnapshots: Record<number, DebugSnapshot>;
+  debugSnapshotLoading: boolean;
+  debugSnapshotError: string | null;
+  setDebugSnapshot: (opIndex: number, snap: DebugSnapshot) => void;
+  setDebugSnapshotLoading: (b: boolean) => void;
+  setDebugSnapshotError: (msg: string | null) => void;
+  clearDebugSnapshots: () => void;
 
   // Optional overlays (off/neutral by default where the addendum asks).
   showEquations: boolean; // per-layer LaTeX (kept on: it's the spec's teaching content)
@@ -466,6 +477,15 @@ export const useStore = create<NeuroState>((set) => ({
   sourceSelectedTensor: null,
   setSourceSelectedTensor: (name) => set({ sourceSelectedTensor: name }),
 
+  debugSnapshots: {},
+  debugSnapshotLoading: false,
+  debugSnapshotError: null,
+  setDebugSnapshot: (opIndex, snap) =>
+    set((s) => ({ debugSnapshots: { ...s.debugSnapshots, [opIndex]: snap } })),
+  setDebugSnapshotLoading: (b) => set({ debugSnapshotLoading: b }),
+  setDebugSnapshotError: (msg) => set({ debugSnapshotError: msg }),
+  clearDebugSnapshots: () => set({ debugSnapshots: {} }),
+
   setOpIndex: (i) =>
     set((s) => {
       const n = s.genMeta?.op_catalog?.length ?? 0;
@@ -556,6 +576,8 @@ export const useStore = create<NeuroState>((set) => ({
       opPlaying: false,
       autoStarted: false,
       traceSource: "live",
+      debugSnapshots: {},
+      debugSnapshotError: null,
     });
 
     genSocket = wsGenerate(prompt, { maxNewTokens: 40, topK: 10, trace: true, recordTrace: true }, {
@@ -635,6 +657,8 @@ export const useStore = create<NeuroState>((set) => ({
       opPlaying: false,
       autoStarted: false,
       mode: "generation",
+      debugSnapshots: {},
+      debugSnapshotError: null,
     });
     try {
       const trace: Trace = await loadTraceFile(file);

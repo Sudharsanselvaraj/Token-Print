@@ -10,17 +10,29 @@ function fmt(v: number): string {
   return v.toFixed(4);
 }
 
+/**
+ * Tensor inspector (issue #63). Auto-captures a debug snapshot whenever
+ * autoplay pauses on a breakpoint and keeps a per-op history so you can
+ * thumb between captured states after the fact. Snapshots live in the
+ * store so the Data Export card can serialize them too.
+ */
 export default function DebugInspector() {
-  const [snap, setSnap] = useState<DebugSnapshot | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const sentence = useStore((s) => s.data?.sentence);
   const opPlaying = useStore((s) => s.opPlaying);
   const opIndex = useStore((s) => s.opIndex);
   const breakpoints = useStore((s) => s.breakpoints);
-  const genMeta = useStore((s) => s.genMeta);
+  const playIndex = useStore((s) => s.playIndex);
+  const genFrames = useStore((s) => s.genFrames);
+  // Store-backed snapshot history keyed by opIndex.
+  const snapshots = useStore((s) => s.debugSnapshots);
+  const loading = useStore((s) => s.debugSnapshotLoading);
+  const error = useStore((s) => s.debugSnapshotError);
+  const setDebugSnapshot = useStore((s) => s.setDebugSnapshot);
+  const setLoading = useStore((s) => s.setDebugSnapshotLoading);
+  const setError = useStore((s) => s.setDebugSnapshotError);
 
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [viewingOp, setViewingOp] = useState<number | null>(null);
   const capturedAtBp = useRef<number | null>(null);
 
   const run = useCallback(async () => {
@@ -29,13 +41,13 @@ export default function DebugInspector() {
     setError(null);
     try {
       const res = await fetchDebugSnapshot(sentence);
-      setSnap(res.debug_snapshot);
+      setDebugSnapshot(opIndex, res.debug_snapshot);
     } catch (e: any) {
       setError(e.message ?? "Debug snapshot failed");
     } finally {
       setLoading(false);
     }
-  }, [sentence]);
+  }, [sentence, opIndex, setDebugSnapshot, setLoading, setError]);
 
   // Auto-capture when paused at a breakpoint.
   useEffect(() => {
@@ -45,6 +57,7 @@ export default function DebugInspector() {
     // Avoid re-capturing the same breakpoint repeatedly.
     if (capturedAtBp.current === opIndex) return;
     capturedAtBp.current = opIndex;
+    setViewingOp(opIndex);
     run();
   }, [opPlaying, opIndex, breakpoints, sentence, run]);
 
@@ -53,9 +66,23 @@ export default function DebugInspector() {
     capturedAtBp.current = null;
   }, [breakpoints]);
 
-  const paths = snap ? Object.keys(snap).sort() : [];
-  const entry = selectedPath && snap ? snap[selectedPath] : null;
+  // Default the viewing op to the current opIndex once a snapshot exists.
+  useEffect(() => {
+    if (viewingOp === null && snapshots[opIndex]) setViewingOp(opIndex);
+  }, [opIndex, snapshots, viewingOp]);
+
+  const snap =
+    (viewingOp !== null && snapshots[viewingOp]) ||
+    snapshots[opIndex] ||
+    null;
   const isPausedAtBp = !opPlaying && breakpoints.has(opIndex);
+  const capturedOps = Object.keys(snapshots)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const viewingToken =
+    viewingOp !== null && genFrames.length
+      ? genFrames[playIndex < 0 ? 0 : playIndex]?.step
+      : null;
 
   return (
     <div className="debug-panel">
@@ -72,6 +99,31 @@ export default function DebugInspector() {
         </button>
       </div>
 
+      <div className="debug-context">
+        {viewingOp !== null && (
+          <span>
+            op {viewingOp}
+            {breakpoints.has(viewingOp) ? " · ⏸ paused" : ""}
+            {viewingToken !== null && genFrames.length
+              ? ` · token ${viewingToken}`
+              : ""}
+          </span>
+        )}
+        {capturedOps.length > 1 && (
+          <span className="debug-history">
+            {capturedOps.map((o) => (
+              <button
+                key={o}
+                className={`chip-btn${o === viewingOp ? " active" : ""}`}
+                onClick={() => setViewingOp(o)}
+              >
+                op {o}
+              </button>
+            ))}
+          </span>
+        )}
+      </div>
+
       {error && <div className="error">⚠ {error}</div>}
 
       {!snap && !loading && (
@@ -85,44 +137,57 @@ export default function DebugInspector() {
       {loading && <div className="drop-note">Running forward pass…</div>}
 
       {snap && (
-        <div className="debug-split">
-          <div className="debug-path-list">
-            {paths.map((p) => (
-              <div
-                key={p}
-                className={`debug-path${p === selectedPath ? " active" : ""}`}
-                onClick={() => setSelectedPath(p)}
-                title={p}
-              >
-                <span className="debug-path-name">
-                  {p.length > 24 ? "…" + p.slice(-22) : p}
-                </span>
-                <span className="debug-path-shape">
-                  {snap[p].shape.join("×")}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {entry && (
-            <div className="debug-values">
-              <div className="debug-meta">
-                {entry.dtype} · {entry.n_elements.toLocaleString()} elements ·{" "}
-                {entry.shape.join(" × ")}
-              </div>
-              <div className="debug-sample">
-                {entry.sample.slice(0, 32).map((v, i) => (
-                  <span key={i} className="debug-val" title={`[${i}] = ${v}`}>
-                    {fmt(v)}
-                  </span>
+        <>
+          <div className="debug-split">
+            <div className="debug-path-list">
+              {Object.keys(snap)
+                .sort()
+                .map((p) => (
+                  <div
+                    key={p}
+                    className={`debug-path${p === selectedPath ? " active" : ""}`}
+                    onClick={() => setSelectedPath(p)}
+                    title={p}
+                  >
+                    <span className="debug-path-name">
+                      {p.length > 24 ? "…" + p.slice(-22) : p}
+                    </span>
+                    <span className="debug-path-shape">
+                      {snap[p].shape.join("×")}
+                    </span>
+                  </div>
                 ))}
-                {entry.n_elements > 32 && (
-                  <span className="debug-val muted">…</span>
-                )}
-              </div>
             </div>
-          )}
-        </div>
+
+            {selectedPath && snap[selectedPath] && (
+              <div className="debug-values">
+                <div className="debug-meta">
+                  {snap[selectedPath].dtype} ·{" "}
+                  {snap[selectedPath].n_elements.toLocaleString()} elements ·{" "}
+                  {snap[selectedPath].shape.join(" × ")}
+                </div>
+                <div className="debug-sample">
+                  {snap[selectedPath].sample.slice(0, 32).map((v, i) => (
+                    <span
+                      key={i}
+                      className="debug-val"
+                      title={`[${i}] = ${v}`}
+                    >
+                      {fmt(v)}
+                    </span>
+                  ))}
+                  {snap[selectedPath].n_elements > 32 && (
+                    <span className="debug-val muted">…</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="debug-foot">
+            Captured at breakpoint op {viewingOp ?? opIndex} ·{" "}
+            {Object.keys(snap).length} module outputs
+          </div>
+        </>
       )}
     </div>
   );
