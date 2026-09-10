@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { analyzeSentence, analyzeImage, fetchArchitecture, loadTraceFile, downloadTrace as apiDownloadTrace } from "./api";
+import { analyzeSentence, analyzeImage, listGgufs, uploadGguf, openGguf, fetchArchitecture, loadTraceFile, downloadTrace as apiDownloadTrace } from "./api";
+import type { GgufItem } from "./api";
 import { layerAnchors, anchorPosFor } from "./playback";
 import { wsGenerate, type GenOptions } from "./ws";
 import { cueDistrict, cueToken, setMuted as setSoundMuted } from "./sound";
@@ -41,6 +42,14 @@ interface NeuroState {
   loadArchitecture: () => Promise<void>; // model-backed source (/architecture)
   loadGgufFile: (file: File) => Promise<void>; // client-side GGUF drag-drop
   setArch: (a: ArchitectureData | null) => void;
+
+  // --- Quantized GGUF generation (issue #85) ------------------------------ //
+  ggufs: GgufItem[];
+  ggufMeta: { name?: string; architecture?: string; quant?: string; n_ctx?: number } | null;
+  activeGguf: string | null; // server-side file name, or null for PyTorch
+  refreshGgufs: () => Promise<void>;
+  uploadGguf: (file: File) => Promise<void>;
+  selectGguf: (path: string | null) => Promise<void>;
   selectedTensor: string | null;
   hoveredTensor: string | null;
   setSelectedTensor: (name: string | null) => void;
@@ -195,7 +204,7 @@ interface NeuroState {
 
 let genSocket: WebSocket | null = null;
 
-export const useStore = create<NeuroState>((set) => ({
+export const useStore = create<NeuroState>((set, get) => ({
   data: null,
   loading: false,
   modelMode: "",
@@ -209,6 +218,9 @@ export const useStore = create<NeuroState>((set) => ({
   archFile: null,
   archLoading: false,
   archError: null,
+  ggufs: [],
+  ggufMeta: null,
+  activeGguf: null,
   loadArchitecture: async () => {
     set({ archLoading: true, archError: null });
     try {
@@ -248,6 +260,32 @@ export const useStore = create<NeuroState>((set) => ({
       selectedTensor: null,
       hoveredTensor: null,
     }),
+  refreshGgufs: async () => {
+    set({ ggufs: await listGgufs() });
+  },
+  uploadGguf: async (file) => {
+    const item = await uploadGguf(file);
+    set((s) => ({ ggufs: [...s.ggufs.filter((g) => g.name !== item.name), item] }));
+    await get().selectGguf(item.path);
+  },
+  selectGguf: async (path) => {
+    if (!path) {
+      set({ activeGguf: null, ggufMeta: null });
+      return;
+    }
+    const open = await openGguf(path);
+    set({
+      activeGguf: path,
+      ggufMeta: open.ok
+        ? {
+            name: open.name ?? path,
+            architecture: open.architecture,
+            quant: open.quant,
+            n_ctx: open.n_ctx,
+          }
+        : { name: path },
+    });
+  },
   selectedTensor: null,
   hoveredTensor: null,
   setHoveredTensor: (name) => set({ hoveredTensor: name }),
@@ -611,7 +649,17 @@ export const useStore = create<NeuroState>((set) => ({
       debugSnapshotError: null,
     });
 
-    genSocket = wsGenerate(prompt, { maxNewTokens: 40, topK: 10, trace: true, recordTrace: true, ...opts }, {
+    genSocket = wsGenerate(
+      prompt,
+      {
+        maxNewTokens: 40,
+        topK: 10,
+        trace: true,
+        recordTrace: true,
+        gguf: get().activeGguf ?? undefined,
+        ...opts,
+      },
+      {
       onFrame: (raw) => {
         const f = raw as { type: string } & Record<string, unknown>;
         if (f.type === "meta") {

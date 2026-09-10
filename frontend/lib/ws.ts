@@ -15,6 +15,8 @@ export interface GenOptions {
   windowSize?: number;
   draftGamma?: number;
   needle?: string;
+  // Issue #85: server-side .gguf file name to run quantized llama.cpp inference.
+  gguf?: string;
 }
 
 /**
@@ -42,6 +44,7 @@ export function wsGenerate(
         window_size: opts.windowSize ?? 512,
         draft_gamma: opts.draftGamma ?? 4,
         needle: opts.needle ?? undefined,
+        gguf: opts.gguf ?? undefined,
       }),
     );
   };

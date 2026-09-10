@@ -78,6 +78,71 @@ export async function analyzeImage(
   return res.json();
 }
 
+/** GET /gguf/list — server-side GGUF files eligible for quantized generation. */
+export interface GgufItem {
+  name: string;
+  path: string;
+  size_bytes: number;
+  quant: string;
+  loaded: boolean;
+}
+
+export async function listGgufs(): Promise<GgufItem[]> {
+  try {
+    const res = await fetch(`${API_URL}/gguf/list`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data?.files) ? data.files : [];
+  } catch {
+    return [];
+  }
+}
+
+/** POST /gguf/upload — stream an uploaded .gguf to the server data dir. */
+export async function uploadGguf(file: File): Promise<GgufItem> {
+  const body = new FormData();
+  body.append("file", file);
+  const res = await fetch(`${API_URL}/gguf/upload`, {
+    method: "POST",
+    body,
+  });
+  if (!res.ok) {
+    let msg = `GGUF upload failed (${res.status})`;
+    try {
+      const b = await res.json();
+      if (b?.detail) msg = typeof b.detail === "string" ? b.detail : JSON.stringify(b.detail);
+    } catch {
+      /* keep status message */
+    }
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+/** POST /gguf/open — load a server GGUF's real metadata (and cache the engine). */
+export async function openGguf(path: string): Promise<{
+  ok: boolean;
+  name?: string;
+  architecture?: string;
+  quant?: string;
+  n_vocab?: number;
+  n_ctx?: number;
+  size_bytes?: number;
+  detail?: string;
+}> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/gguf/open`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+    });
+  } catch {
+    return { ok: false, detail: "Backend unreachable" };
+  }
+  return res.ok ? res.json() : { ok: false, detail: `Open failed (${res.status})` };
+}
+
 /** GET /architecture — real model metadata + tensor list (Explorer source). */
 export async function fetchArchitecture(
   modelId?: string,

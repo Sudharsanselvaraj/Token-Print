@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useStore } from "@/lib/store";
+import GgufControls from "./GgufControls";
 
 const DEFAULT_PROMPT = "Name one primary color. Answer in one word.";
 const DEFAULT_NEEDLE = "The secret color is mauve.";
@@ -15,9 +16,11 @@ export default function GenerationControls() {
   const start = useStore((s) => s.startGeneration);
   const status = useStore((s) => s.genStatus);
   const modelMode = useStore((s) => s.modelMode);
+  const activeGguf = useStore((s) => s.activeGguf);
 
   const streaming = status === "streaming";
   const canGenerate = modelMode === "" || modelMode === "causal_lm";
+  const isGGUF = !!activeGguf;
 
   return (
     <div className="panel selector">
@@ -29,7 +32,8 @@ export default function GenerationControls() {
           const p = prompt.trim();
           if (p && !streaming)
             start(p, {
-              decodingMode: mode,
+              decodingMode: isGGUF ? "greedy" : mode,
+              gguf: isGGUF ? activeGguf : undefined,
               windowSize,
               draftGamma,
               needle: mode === "greedy" ? undefined : needle.trim() || undefined,
@@ -54,16 +58,25 @@ export default function GenerationControls() {
           <label className="footer-note" style={{ display: "flex", gap: 4, alignItems: "center" }}>
             Mode:
             <select
-              value={mode}
+              value={isGGUF ? "greedy" : mode}
               onChange={(e) => setMode(e.target.value as typeof mode)}
-              disabled={streaming}
+              disabled={streaming || isGGUF}
             >
               <option value="greedy">Greedy</option>
-              <option value="sliding_window">Sliding window</option>
-              <option value="speculative">Speculative</option>
+              <option value="sliding_window" disabled={isGGUF}>
+                Sliding window
+              </option>
+              <option value="speculative" disabled={isGGUF}>
+                Speculative
+              </option>
             </select>
+            {isGGUF && (
+              <span style={{ marginLeft: 4, opacity: 0.7 }}>
+                (llama.cpp greedy only)
+              </span>
+            )}
           </label>
-          {mode === "sliding_window" && (
+          {!isGGUF && mode === "sliding_window" && (
             <label className="footer-note" style={{ display: "flex", gap: 4, alignItems: "center" }}>
               Window:
               <input
@@ -78,7 +91,7 @@ export default function GenerationControls() {
               />
             </label>
           )}
-          {mode === "speculative" && (
+          {!isGGUF && mode === "speculative" && (
             <label className="footer-note" style={{ display: "flex", gap: 4, alignItems: "center" }}>
               Drafts:
               <input
@@ -92,7 +105,7 @@ export default function GenerationControls() {
               />
             </label>
           )}
-          {mode !== "greedy" && (
+          {!isGGUF && mode !== "greedy" && (
             <label className="footer-note" style={{ display: "flex", gap: 4, alignItems: "center" }}>
               Needle:
               <input
@@ -122,11 +135,14 @@ export default function GenerationControls() {
       )}
       <div className="footer-note" style={{ marginTop: 8 }}>
         Streams a real decode over WebSocket — one message per token, each
-        carrying the top-k probabilities and per-layer activation stats.
-        {mode === "sliding_window" && " Sliding-window mode trims the KV cache to the last N positions."}
-        {mode === "speculative" && " Speculative mode drafts candidates in one batched verify pass and accepts the matching prefix."}
-        {mode !== "greedy" && " The needle is injected as a MEMORY line and recall is reported on the done frame."}
+        carrying the top-k probabilities.
+        {!isGGUF && " Per-layer activation stats arrive from the running model's own forward hooks."}
+        {!isGGUF && mode === "sliding_window" && " Sliding-window mode trims the KV cache to the last N positions."}
+        {!isGGUF && mode === "speculative" && " Speculative mode drafts candidates in one batched verify pass and accepts the matching prefix."}
+        {!isGGUF && mode !== "greedy" && " The needle is injected as a MEMORY line and recall is reported on the done frame."}
+        {isGGUF && " Layer-level hooks are unavailable in llama.cpp — those rows stay off to avoid simulation."}
       </div>
+      <GgufControls />
     </div>
   );
 }

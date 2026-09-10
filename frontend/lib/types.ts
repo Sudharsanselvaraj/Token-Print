@@ -157,6 +157,10 @@ export interface GenMeta {
   };
   uses_kv_cache?: boolean;
   op_catalog?: OpCatalogEntry[];
+  // Issue #85 — when generation ran on quantized GGUF weights via llama.cpp.
+  source?: string;
+  quant?: string;
+  honesty_notes?: string[];
 }
 
 export interface GenDoneStats {
@@ -176,6 +180,9 @@ export interface GenDone {
   drafts_accepted?: number;
   acceptance_rate?: number;
   needle_report?: { needle: string; recalled: boolean; response: string };
+  // Issue #85 — quantized GGUF / llama.cpp provenance.
+  source?: string;
+  quant?: string;
 }
 
 export interface TokenFrame {
@@ -191,6 +198,8 @@ export interface TokenFrame {
   phase?: "prefill" | "decode";
   n_positions?: number; // tokens actually computed this step
   cache_len?: number; // cached positions reused this step
+  // Issue #85 — set on frames produced by the quantized llama.cpp backend.
+  source?: "llama.cpp";
 }
 
 export type GenStatus = "idle" | "streaming" | "done" | "error";

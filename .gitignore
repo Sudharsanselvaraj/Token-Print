@@ -3,10 +3,14 @@ backend/.venv/
 __pycache__/
 *.pyc
 
+# Backend data (GGUF files, runtime artifacts)
+backend/data/
+
 # Node / Next
 frontend/node_modules/
 frontend/.next/
 frontend/out/
+frontend/tsconfig.tsbuildinfo
 tools/node_modules
 
 # Model cache (downloaded at runtime)

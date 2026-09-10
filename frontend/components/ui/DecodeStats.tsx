@@ -18,6 +18,11 @@ export default function DecodeStats() {
       </div>
       <div className="footer-note" style={{ marginTop: 6 }}>
         <div>mode: {done.decoding_mode ?? "greedy"}</div>
+        {done.source && (
+          <div style={{ marginTop: 2 }}>
+            source: {done.source} {done.quant ? `(${done.quant})` : ""}
+          </div>
+        )}
         {params?.window_size != null && (
           <div>sliding window: {params.window_size}</div>
         )}

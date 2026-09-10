@@ -17,14 +17,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Optional
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from .ablation import Ablation
 from .debug import DebugCapture
+from .gguf_engine import GGUFEngine
 from .model import ModelEngine, TokenizedTooLong
 from .reduce import chunk_attribution, query_self_attribution, ungrounded_flags
 from .schemas import (
@@ -48,6 +52,32 @@ engine: ModelEngine | None = None
 
 # Last recorded trace (kept in memory; overwritten each generation).
 _last_trace: dict | None = None
+
+# Directory that holds user GGUF files (issue #85). Generation district can
+# switch to real quantized inference against any .gguf found here.
+GGUF_DIR = Path(__file__).resolve().parent.parent / "data" / "gguf"
+GGUF_DIR.mkdir(parents=True, exist_ok=True)
+
+# Cache of opened GGUF engines keyed by resolved path.
+_gguf_engines: dict[str, GGUFEngine] = {}
+
+
+def _resolve_gguf(path: str) -> str:
+    """Canonicalize a requested GGUF path, forbidding traversal outside GGUF_DIR."""
+    try:
+        resolved = (GGUF_DIR / path).resolve()
+    except (OSError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid GGUF path.")
+    if not str(resolved).startswith(str(GGUF_DIR.resolve())) or not resolved.is_file():
+        raise HTTPException(status_code=404, detail="GGUF file not found in data/gguf.")
+    return str(resolved)
+
+
+def _gguf_engine_for(path: str) -> GGUFEngine:
+    resolved = _resolve_gguf(path)
+    if resolved not in _gguf_engines:
+        _gguf_engines[resolved] = GGUFEngine(resolved)
+    return _gguf_engines[resolved]
 
 
 @asynccontextmanager
@@ -179,6 +209,61 @@ async def architecture(model_id: str | None = None) -> dict:
     if model_id:
         return _require_engine().checkpoint_architecture(model_id)
     return _require_engine().architecture()
+
+
+# --- GGUF quantized generation (issue #85) -------------------------------- //
+
+def _quant_guess(filename: str) -> str:
+    stem = Path(filename).stem.upper()
+    for token in ("Q8_0", "Q6_K", "Q5_K_M", "Q5_K_S", "Q5_0", "Q4_K_M", "Q4_K_S", "Q4_0", "Q3_K", "Q2_K", "F16", "F32"):
+        if token in stem:
+            return token
+    return "unknown"
+
+
+@app.get("/gguf/list")
+async def gguf_list() -> dict:
+    """List server-side .gguf files eligible for real quantized generation."""
+    items = []
+    for p in sorted(GGUF_DIR.glob("*.gguf")):
+        items.append(
+            {
+                "name": p.name,
+                "path": p.name,
+                "size_bytes": p.stat().st_size,
+                "quant": _quant_guess(p.name),
+                "loaded": str(p.resolve()) in _gguf_engines,
+            }
+        )
+    return {"files": items}
+
+
+@app.post("/gguf/upload")
+async def gguf_upload(file: UploadFile = File(...)) -> dict:
+    """Stream an uploaded .gguf into data/gguf so it can power generation."""
+    if not (file.filename or "").lower().endswith(".gguf"):
+        raise HTTPException(status_code=400, detail="Only .gguf files are accepted.")
+    safe = Path(file.filename or "model.gguf").name
+    dest = GGUF_DIR / safe
+    size = 0
+    with open(dest, "wb") as fh:
+        while chunk := await file.read(1 << 20):
+            size += len(chunk)
+            fh.write(chunk)
+    return {"name": safe, "path": safe, "size_bytes": size, "quant": _quant_guess(safe)}
+
+
+@app.post("/gguf/open")
+async def gguf_open(payload: dict = ...) -> dict:
+    """Open (and cache) a server-side GGUF for generation; returns metadata."""
+    path = str(payload.get("path") or "")
+    if not path:
+        raise HTTPException(status_code=400, detail="`path` is required.")
+    resolved = _resolve_gguf(path)
+    if resolved not in _gguf_engines:
+        _gguf_engines[resolved] = GGUFEngine(resolved)
+    meta = _gguf_engines[resolved].metadata()
+    return {"ok": True, **meta}
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)
@@ -388,6 +473,11 @@ async def ws_generate(ws: WebSocket) -> None:
     window_size = req.get("window_size", 512)
     draft_gamma = req.get("draft_gamma", 4)
     needle = req.get("needle") or None
+    # Issue #85: when `gguf` names a server-side .gguf, generation runs on the
+    # real quantized weights through llama.cpp instead of full-precision PyTorch.
+    gguf_path: Optional[str] = req.get("gguf") or None
+    if gguf_path:
+        _gguf_engine_for(gguf_path)  # open early so errors surface as a frame
 
     loop = asyncio.get_running_loop()
     queue: asyncio.Queue = asyncio.Queue(maxsize=32)
@@ -399,10 +489,16 @@ async def ws_generate(ws: WebSocket) -> None:
     def worker() -> None:
         nonlocal recorder
         try:
-            for frame in engine.generate_steps(
-                prompt, max_new_tokens, top_k, use_chat_template, include_catalog,
-                decoding_mode, window_size, draft_gamma, needle,
-            ):
+            if gguf_path:
+                frames = _gguf_engine_for(gguf_path).generate(
+                    prompt, int(max_new_tokens), int(top_k),
+                )
+            else:
+                frames = engine.generate_steps(
+                    prompt, max_new_tokens, top_k, use_chat_template, include_catalog,
+                    decoding_mode, window_size, draft_gamma, needle,
+                )
+            for frame in frames:
                 # Tee to the recorder for trace capture.
                 if recorder is not None:
                     if frame.get("type") == "meta":
