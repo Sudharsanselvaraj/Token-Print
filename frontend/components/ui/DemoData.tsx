@@ -19,6 +19,7 @@ const DEMOS: DemoEntry[] = [
 
 export default function DemoData() {
   const loadTrace = useStore((s) => s.loadTrace);
+  const setTraceGalleryOpen = useStore((s) => s.setTraceGalleryOpen);
   const arch = useStore((s) => s.arch);
   const [loading, setLoading] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -66,6 +67,13 @@ export default function DemoData() {
             <div className="demo-card-desc">{d.description}</div>
           </button>
         ))}
+        <button 
+          className="demo-card" 
+          style={{ marginTop: 8, borderColor: "var(--accent)" }}
+          onClick={() => setTraceGalleryOpen(true)}
+        >
+          <strong>View Trace Gallery →</strong>
+        </button>
       </div>
       {err && <div className="error">⚠ {err}</div>}
     </div>

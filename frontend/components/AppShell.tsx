@@ -20,6 +20,7 @@ import KvCacheTimeline from "./ui/KvCacheTimeline";
 import DistributionPanel from "./ui/DistributionPanel";
 import TileView from "./ui/TileView";
 import DebuggerPane from "./ui/DebuggerPane";
+import TraceGallery from "./ui/TraceGallery";
 import { fmtShape } from "@/lib/format";
 import { roleLabel } from "@/lib/tensorName";
 import { useKeyboard } from "@/lib/useKeyboard";
@@ -31,6 +32,7 @@ export default function AppShell() {
   const hovName = useStore((s) => s.hoveredTensor);
   const devMode = useStore((s) => s.devMode);
   const tileView = useStore((s) => s.tileView);
+  const embedMode = useStore((s) => s.embedMode);
   const [mouse, setMouse] = useState({ x: 0, y: 0, inside: false });
 
   useKeyboard();
@@ -70,10 +72,10 @@ export default function AppShell() {
   const hov = hovName ? arch?.tensors.find((t) => t.name === hovName) : null;
 
   return (
-    <div className={`app mode-${mode}`}>
+    <div className={`app mode-${mode} ${embedMode ? "embed" : ""}`}>
       <PlaybackEngine />
-      <TopBar />
-      <Sidebar />
+      {!embedMode && <TopBar />}
+      {!embedMode && <Sidebar />}
       <div
         className="canvas-area"
         onMouseMove={(e) => {
@@ -122,8 +124,9 @@ export default function AppShell() {
           </div>
         )}
       </div>
+      <TraceGallery />
       <BottomBar />
-      <RightPanel />
+      {!embedMode && <RightPanel />}
     </div>
   );
 }

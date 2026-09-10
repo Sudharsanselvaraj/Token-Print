@@ -200,6 +200,14 @@ interface NeuroState {
   prevChapter: () => void;
   setWtModel: (id: string) => void;
   toggleWtPlay: () => void;
+
+  // --- Phase 5: Embeddable Player ---
+  embedMode: boolean;
+  setEmbedMode: (b: boolean) => void;
+  
+  // --- Phase 5: Trace Gallery ---
+  traceGalleryOpen: boolean;
+  setTraceGalleryOpen: (b: boolean) => void;
 }
 
 let genSocket: WebSocket | null = null;
@@ -213,6 +221,12 @@ export const useStore = create<NeuroState>((set, get) => ({
 
   mode: "explorer",
   setMode: (m) => set({ mode: m }),
+
+  embedMode: false,
+  setEmbedMode: (b) => set({ embedMode: b }),
+
+  traceGalleryOpen: false,
+  setTraceGalleryOpen: (b) => set({ traceGalleryOpen: b }),
 
   arch: null,
   archFile: null,
@@ -788,6 +802,8 @@ export function restoreFromUrl(): Partial<NeuroState> {
 
   const chapter = p.get("chapter");
   if (chapter) state.wtChapter = Number(chapter);
+
+  if (p.get("embed") === "true") state.embedMode = true;
 
   return state;
 }
