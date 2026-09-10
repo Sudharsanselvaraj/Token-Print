@@ -54,6 +54,34 @@ Open **http://localhost:3000** and pick a mode from the top bar. No model file i
 for the live-model view; drag any local `.gguf` onto the drop zone to inspect it instead
 (the file is parsed in-browser — nothing is uploaded).
 
+### Optional GGUF Backend Support
+```bash
+# To enable native local GGUF backend execution:
+pip install llama-cpp-python
+```
+
+## Model Support & Capability Matrix
+
+TokenPrint recognizes many transformer model families. Broad loading support does not imply identical instrumentation depth across all architectures:
+
+| Model Family | Load / Parse | Real Forward Pass | Attention Visualization | Logit Lens | Head Ablation | Activation Patching | GGUF Dequant |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Qwen / Qwen2.5** | ✅ | ✅ (Live) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Llama 2 / 3 / 3.2** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Gemma / Gemma 2** | ✅ | ✅ | ✅ | ✅ | ⚠️ | ⚠️ | ✅ |
+| **DeepSeek / MoE** | ✅ | ✅ (MoE Router) | ✅ | ✅ | ⚠️ | ⚠️ | ✅ |
+| **Mistral / Mixtral**| ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **GPT-2 / Pythia** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | N/A |
+
+## Data Provenance System
+
+TokenPrint follows a strict transparency standard. Every value displayed in the UI is tagged with its provenance level:
+
+* **`REAL` (`●`)** — Captured directly from live model execution, `named_parameters()`, or `.gguf` file headers.
+* **`DERIVED` (`◇`)** — Computed deterministically from real model data (e.g. PCA, layer norms, entropy).
+* **`CONCEPTUAL`** — Visual 3D geometry representing real model dimensions (e.g., GQA head grouping, SwiGLU funnel ratio).
+* **`SIMULATED` (`△`)** — Offline educational data or proxy values (explicitly flagged with `△ SIMULATION` badge).
+
 ## The four modes
 
 | Mode | What it shows | Where the data comes from |

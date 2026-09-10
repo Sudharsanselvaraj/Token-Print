@@ -27,10 +27,11 @@ Please keep that in mind for any change that touches what the user sees.
 - **Performance** — point-cloud rendering, WebSocket payloads, parser speed.
 - **Docs** — clarity, examples, screenshots.
 
-See [docs/contributing-ideas.md](docs/contributing-ideas.md) for a concrete,
-up-to-date list of what needs doing — grouped by difficulty, with the files to
-touch and how to verify each. Open an issue before large changes so we can agree
-on the approach.
+See [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md) for a curated list of beginner, intermediate, and advanced tasks with files to touch and difficulty levels.
+
+For complete developer guides, see:
+- [Developer Guide](docs/DEVELOPMENT.md) — Local setup, testing, and PR conventions.
+- [Architecture Guide](docs/ARCHITECTURE.md) — System design and data flow.
 
 ## Development setup
 

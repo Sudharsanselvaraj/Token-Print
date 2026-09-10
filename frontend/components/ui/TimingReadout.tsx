@@ -12,6 +12,8 @@ import { useMemo } from "react";
  * timings (debug_timings), then to coarse simulated bars so the card is never
  * a dead end.
  */
+import DataProvenanceBadge from "./DataProvenanceBadge";
+
 export default function TimingReadout() {
   const genFrames = useStore((s) => s.genFrames);
   const genMeta = useStore((s) => s.genMeta);
@@ -45,19 +47,23 @@ export default function TimingReadout() {
   if (!realTimings && !proxyTimings) return null;
 
   const data = realTimings ?? proxyTimings!;
-  const label = realTimings ? "real ms (per decode step)" : "proxy (from activations)";
 
   return (
     <div className="timing-panel">
-      <div className="tp-title">
-        Per-Layer Timing
+      <div className="tp-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span>
+          Per-Layer Timing{" "}
+          <DataProvenanceBadge
+            origin={realTimings ? "real" : "derived"}
+            label={realTimings ? "REAL MS" : "PROXY DERIVED"}
+          />
+        </span>
         {genMeta?.num_layers ? (
           <span className="tp-step">
             step {frame?.step ?? 0} · {data.total.toFixed(2)}ms total
           </span>
         ) : null}
       </div>
-      <div className="tp-sub">{label}</div>
       <div className="tp-bars">
         {data.perLayer.map((ms, i) => (
           <div key={`${frame?.step ?? 0}-${i}`} className="tp-row">

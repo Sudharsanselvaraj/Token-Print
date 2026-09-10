@@ -56,9 +56,15 @@ class Ablation:
 
         for i, layer in enumerate(layers):
             if i in self._zero_layers:
-                handle = layer.register_forward_hook(
-                    lambda _mod, _in, out: out * 0.0
-                )
+                def make_layer_hook():
+                    def hook(_mod, _in, output):
+                        # Safely handle tuple outputs (hidden_states, present_key_value, ...)
+                        if isinstance(output, tuple):
+                            # Retain input residual state while zeroing the layer's additive contribution
+                            return (_in[0] if len(_in) > 0 else output[0] * 0.0,) + output[1:]
+                        return output * 0.0
+                    return hook
+                handle = layer.register_forward_hook(make_layer_hook())
                 self._handles.append(handle)
                 continue
 
@@ -78,9 +84,8 @@ class Ablation:
                     else:
                         hidden = output
                     # hidden: [batch, seq, hidden_dim]
-                    head_dim = hidden.size(-1) // (
-                        _mod.num_heads if hasattr(_mod, "num_heads") else 8
-                    )
+                    num_heads = getattr(_mod, "num_heads", None) or getattr(_mod, "num_attention_heads", 8)
+                    head_dim = hidden.size(-1) // num_heads
                     for h in heads:
                         start = h * head_dim
                         end = (h + 1) * head_dim

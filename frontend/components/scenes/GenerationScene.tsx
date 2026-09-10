@@ -173,11 +173,25 @@ export default function GenerationScene() {
         />
       )}
 
-      {/* Attention arcs from active attention layer to tokens.
-          Only shown during decode when an attention op is active and real KV positions exist. */}
+      {/* Real Attention Arcs from active attention layer to tokens.
+          Only rendered when real attention data (store.data.attention) is available for this layer. */}
       {activeLayer != null && activeKind === "attn" && phase && positions > 0 && (
         <group>
           {(() => {
+            const realAttn = useStore.getState().data?.attention;
+            const layerAttn = realAttn && realAttn[activeLayer] ? realAttn[activeLayer] : null;
+
+            if (!layerAttn) {
+              // Real attention is unavailable for this step/trace. Do NOT generate simulated arcs.
+              return (
+                <Billboard position={[0, activeY + 1.8, 0]}>
+                  <Text fontSize={0.35} color="#94a3b8">
+                    (Real per-head attention matrix unavailable for this frame)
+                  </Text>
+                </Billboard>
+              );
+            }
+
             const nh = dims.numHeads;
             const kvh = dims.kvHeads;
             const kg = Math.max(1, Math.min(kvh, nh));
@@ -185,51 +199,53 @@ export default function GenerationScene() {
             const groupGap = 0.55;
             const groupSpan = (Math.PI * 2) / kg - groupGap;
             const Rc = 1.25;
+
             return Array.from({ length: Math.min(nh, 14) }, (_, h) => {
-            const g = Math.floor(h / pg);
-            const withinN = Math.min(pg, nh - g * pg);
-            const i = h - g * pg;
-            const gStart = g * ((Math.PI * 2) / kg) + groupGap / 2;
-            const a = withinN > 1 ? gStart + (i / (withinN - 1)) * groupSpan : gStart + groupSpan / 2;
-            const fromX = Rc * Math.sin(a);
-            const fromZ = Rc * Math.cos(a);
+              const headMatrix = layerAttn[h];
+              if (!headMatrix) return null;
 
-            // Show arcs to the most-attended positions (simulated typical pattern)
-            const attendedPositions = [];
-            const n = Math.min(positions, 16);
-            for (let p = 0; p < n; p++) {
-              const relP = p / Math.max(1, n - 1);
-              const weight = h === 0
-                ? (p === n - 1 ? 0.05 : Math.exp(-3 * relP) * 0.7 + 0.08 * (1 - relP))
-                : (p === 0 ? 0.6 : Math.exp(-2 * relP) * 0.15 + 0.05);
-              if (weight < 0.08) continue;
-              attendedPositions.push({ pos: p, weight });
-            }
+              const g = Math.floor(h / pg);
+              const withinN = Math.min(pg, nh - g * pg);
+              const i = h - g * pg;
+              const gStart = g * ((Math.PI * 2) / kg) + groupGap / 2;
+              const a = withinN > 1 ? gStart + (i / (withinN - 1)) * groupSpan : gStart + groupSpan / 2;
+              const fromX = Rc * Math.sin(a);
+              const fromZ = Rc * Math.cos(a);
 
-            const headColor = new Color().setHSL(h / dims.numHeads, 0.7, 0.55);
+              const lastRow = headMatrix[headMatrix.length - 1] ?? [];
+              const attendedPositions: { pos: number; weight: number }[] = [];
 
-            return attendedPositions.map(({ pos: p, weight }) => {
-              const toX = -6.4 + 0.24 * p + 0.5;
-              const toY = activeY;
-              const start = new Vector3(fromX, activeY, fromZ);
-              const end = new Vector3(toX, toY, 0);
-              const mid = start.clone().add(end).multiplyScalar(0.5);
-              mid.y += Math.abs(activeY - toY) * 0.2 + 1.2;
-              mid.z *= 0.3;
-              const curve = new QuadraticBezierCurve3(start, mid, end);
-              const pts = curve.getPoints(24);
-              const opacity = 0.15 + weight * 0.7;
-              return (
-                <Line
-                  key={`arc-${h}-${p}`}
-                  points={pts}
-                  color={headColor}
-                  lineWidth={1}
-                  transparent
-                  opacity={opacity}
-                />
-              );
-            });
+              for (let p = 0; p < Math.min(lastRow.length, positions, 16); p++) {
+                const weight = lastRow[p];
+                if (weight > 0.05) {
+                  attendedPositions.push({ pos: p, weight });
+                }
+              }
+
+              const headColor = new Color().setHSL(h / dims.numHeads, 0.7, 0.55);
+
+              return attendedPositions.map(({ pos: p, weight }) => {
+                const toX = -6.4 + 0.24 * p + 0.5;
+                const toY = activeY;
+                const start = new Vector3(fromX, activeY, fromZ);
+                const end = new Vector3(toX, toY, 0);
+                const mid = start.clone().add(end).multiplyScalar(0.5);
+                mid.y += Math.abs(activeY - toY) * 0.2 + 1.2;
+                mid.z *= 0.3;
+                const curve = new QuadraticBezierCurve3(start, mid, end);
+                const pts = curve.getPoints(24);
+                const opacity = Math.min(1, 0.2 + weight * 0.8);
+                return (
+                  <Line
+                    key={`arc-${h}-${p}`}
+                    points={pts}
+                    color={headColor}
+                    lineWidth={1.5}
+                    transparent
+                    opacity={opacity}
+                  />
+                );
+              });
             });
           })()}
         </group>
