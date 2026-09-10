@@ -3357,3 +3357,35 @@ select { background: rgba(255,255,255,0.06); border: 1px solid var(--panel-borde
   margin: 0;
   overflow: visible;
 }
+
+/* --- MoE routing (issue #83) ------------------------------------------- */
+.moe-viz { font-size: var(--fs-sm); display: flex; flex-direction: column; gap: 6px; }
+.mv-title { font-weight: var(--fw-semibold); display: flex; align-items: center; gap: 8px; }
+.mv-empty { color: var(--muted); font-style: italic; font-size: var(--fs-xs); }
+.mv-demo { font-size: var(--fs-xs); background: rgba(245,158,11,0.15); color: #f59e0b; padding: 1px 8px; border-radius: 99px; }
+.mv-real { font-size: var(--fs-xs); background: rgba(46,204,113,0.15); color: #2ecc71; padding: 1px 8px; border-radius: 99px; }
+.mv-tokenbar { display: flex; align-items: center; gap: 8px; font-size: var(--fs-xs); }
+.mv-tok { color: var(--muted); }
+
+.mv-layer { border: 1px solid var(--panel-border); border-radius: 6px; padding: 4px 8px; background: rgba(255,255,255,0.03); }
+.mv-layer-label { display: flex; align-items: center; justify-content: space-between; font-size: var(--fs-xs); color: var(--muted); margin-bottom: 4px; }
+.mv-expert-count { font-size: 10px; opacity: 0.8; }
+.mv-lanes { display: flex; gap: 4px; height: 42px; align-items: stretch; }
+
+.mv-lane {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  gap: 2px; border-radius: 4px; padding: 2px; min-width: 0;
+  background: rgba(255,255,255,0.04);
+}
+.mv-lane-bar {
+  width: 100%; height: calc(var(--mv-w, 3%) * 1px); max-height: 24px;
+  background: linear-gradient(180deg, #6c5ce7, #a29bfe);
+  border-radius: 2px; transition: height 200ms ease;
+}
+.mv-lane.active { background: rgba(108,92,231,0.15); }
+.mv-lane.active .mv-lane-bar { background: linear-gradient(180deg, #2ecc71, #27ae60); }
+.mv-lane.top1 .mv-lane-bar { background: linear-gradient(180deg, #f39c12, #e67e22); }
+.mv-lane-num { font-size: 10px; color: var(--muted); line-height: 1; }
+.mv-lane-w { font-size: 9px; color: var(--muted); line-height: 1; }
+.mv-lane.active .mv-lane-w { color: #2ecc71; }
+.mv-lane.top1 .mv-lane-w { color: #f39c12; }

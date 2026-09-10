@@ -39,6 +39,26 @@ export interface AnalyzeResponse {
 
   // Phase 4: logit lens (v0.3).
   logit_lens: LogitLensEntry[][][]; // [layer][position][top-5]
+
+  // MoE routing (issue #83) — present only when the loaded model has
+  // mixture-of-experts blocks (router logits captured during the forward).
+  moe_routing?: MoERouting;
+}
+
+export interface MoERoutingEntry {
+  token: number;
+  experts: { idx: number; weight: number }[];
+}
+
+export interface MoELayerRouting {
+  layer: number;
+  n_experts: number;
+  used: number;
+  routing: MoERoutingEntry[];
+}
+
+export interface MoERouting {
+  per_layer: MoELayerRouting[];
 }
 
 export type District = "tokenizer" | "embedding" | "attention" | "generation";

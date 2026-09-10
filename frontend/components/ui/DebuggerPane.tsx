@@ -27,6 +27,7 @@ import SamplingPlayground from "./SamplingPlayground";
 import WhyExplainer from "./WhyExplainer";
 import DepthDial from "./DepthDial";
 import Gpt2Loader from "./Gpt2Loader";
+import MoERoutingViz from "./MoERoutingViz";
 
 /**
  * Phase 2: Dedicated debugger mode — a dashboard of all dev tools
@@ -176,6 +177,11 @@ export default function DebuggerPane() {
         <div className="dbg-card">
           <div className="dbg-card-title">Ablation</div>
           <AblationPanel />
+        </div>
+
+        <div className="dbg-card dbg-card-wide">
+          <div className="dbg-card-title">MoE Routing</div>
+          <MoERoutingViz />
         </div>
 
         <div className="dbg-card">

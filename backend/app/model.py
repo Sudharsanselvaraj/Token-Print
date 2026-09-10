@@ -138,6 +138,114 @@ class ModelEngine:
         self._timing_handles.clear()
 
     # ------------------------------------------------------------------ #
+    # MoE routing (issue #83)
+    # ------------------------------------------------------------------ #
+    def _detect_moe_blocks(self) -> list[dict]:
+        """Find mixture-of-experts blocks and their router modules.
+
+        Returns a list of ``{layer_index, path, gate, n_experts, used}`` dicts
+        by scanning the decoder layers for submodules that contain an
+        ``experts`` ModuleList plus a ``gate``/``router`` linear. Works across
+        Qwen2Moe, Mixtral, DeepSeek, and similar architectures.
+        """
+        base = getattr(self.model, "model", self.model)
+        layers = getattr(base, "layers", None)
+        if layers is None:
+            return []
+        found: list[dict] = []
+        for i, layer in enumerate(layers):
+            for name, mod in layer.named_children():
+                experts = None
+                gate = None
+                for child_name, child in mod.named_children():
+                    if child_name in ("experts", "expert"):
+                        experts = child
+                    if child_name in ("gate", "router", "gate_proj"):
+                        gate = child
+                if experts is not None and gate is not None:
+                    n_experts = len(experts)
+                    used = getattr(
+                        self.model.config,
+                        "num_experts_per_tok",
+                        getattr(self.model.config, "num_local_experts", 2),
+                    )
+                    found.append(
+                        {
+                            "layer": i,
+                            "path": f"layers.{i}.{name}",
+                            "gate": gate,
+                            "n_experts": int(n_experts),
+                            "used": int(used),
+                        }
+                    )
+        return found
+
+    def _capture_moe_routing(self, input_ids) -> dict | None:
+        """Run a forward pass with router hooks; return per-layer routing.
+
+        Returns None if the model has no MoE blocks. Otherwise returns
+        ``{per_layer: [{layer, n_experts, used, routing: [{token, experts:
+        [{idx, weight}]}]}]}`` with the top-``used`` experts per token.
+        """
+        blocks = self._detect_moe_blocks()
+        if not blocks:
+            return None
+
+        captured: dict[int, "torch.Tensor"] = {}
+        handles: list = []
+        for b in blocks:
+            gate = b["gate"]
+
+            def make_hook(path: str, layer: int):
+                def hook(_mod, _inp, out):
+                    captured[layer] = out.detach().float().cpu()
+                return hook
+
+            handles.append(gate.register_forward_hook(make_hook(b["path"], b["layer"])))
+
+        try:
+            self.model(input_ids=input_ids)
+        finally:
+            for h in handles:
+                h.remove()
+
+        imports_ok = True
+        try:
+            import torch.nn.functional as F  # noqa: F401
+        except Exception:
+            imports_ok = False
+        if not imports_ok:
+            return None
+
+        import torch.nn.functional as F
+
+        per_layer: list[dict] = []
+        for b in blocks:
+            logits = captured.get(b["layer"])
+            if logits is None:
+                continue
+            logits = logits[0]  # [seq, n_experts]
+            probs = F.softmax(logits, dim=-1)
+            k = min(b["used"], b["n_experts"])
+            topk = torch.topk(probs, k, dim=-1)
+            routing = []
+            for t_idx in range(logits.shape[0]):
+                experts = [
+                    {"idx": int(e), "weight": round(float(w), 4)}
+                    for e, w in zip(topk.indices[t_idx].tolist(), topk.values[t_idx].tolist())
+                ]
+                routing.append({"token": t_idx, "experts": experts})
+            per_layer.append(
+                {
+                    "layer": b["layer"],
+                    "n_experts": b["n_experts"],
+                    "used": k,
+                    "routing": routing,
+                }
+            )
+        return {"per_layer": per_layer}
+
+    # ------------------------------------------------------------------ #
     # Helpers
     # ------------------------------------------------------------------ #
     def _decode_piece(self, piece: str) -> str:
@@ -310,10 +418,29 @@ class ModelEngine:
         enc, tokens = self._tokenize(sentence)
         enc = {k: v.to(self.device) for k, v in enc.items()}
 
-        with torch.no_grad():
-            out = self.model(
-                **enc, output_attentions=True, output_hidden_states=True
-            )
+        # Attach MoE router hooks if the model has any experts (issue #83).
+        moe_blocks = self._detect_moe_blocks()
+        moe_captured: dict[int, "torch.Tensor"] = {}
+        moe_handles: list = []
+        if moe_blocks:
+            for b in moe_blocks:
+                gate = b["gate"]
+
+                def make_hook(layer: int):
+                    def hook(_mod, _inp, out):
+                        moe_captured[layer] = out.detach().float().cpu()
+                    return hook
+
+                moe_handles.append(gate.register_forward_hook(make_hook(b["layer"])))
+
+        try:
+            with torch.no_grad():
+                out = self.model(
+                    **enc, output_attentions=True, output_hidden_states=True
+                )
+        finally:
+            for h in moe_handles:
+                h.remove()
 
         attn = torch.stack(out.attentions).squeeze(1).to("cpu").float()
         attn = torch.round(attn * (10**_ATTN_DECIMALS)) / (10**_ATTN_DECIMALS)
@@ -351,7 +478,7 @@ class ModelEngine:
                     pos_entries.append(entries)
                 logit_lens.append(pos_entries)
 
-        return {
+        result = {
             "sentence": sentence,
             "model": self.model_id,
             "device": self.device,
@@ -373,6 +500,46 @@ class ModelEngine:
                 "embedding_explained_variance": explained_variance(hidden[0]),
             },
         }
+
+        # MoE routing (issue #83): build from router logits captured above.
+        if moe_blocks:
+            try:
+                import torch.nn.functional as F
+            except Exception:
+                F = None
+            if F is not None:
+                per_layer: list[dict] = []
+                for b in moe_blocks:
+                    logits = moe_captured.get(b["layer"])
+                    if logits is None:
+                        continue
+                    lg = logits[0]  # [seq, n_experts]
+                    probs = F.softmax(lg, dim=-1)
+                    k = min(b["used"], b["n_experts"])
+                    topk = torch.topk(probs, k, dim=-1)
+                    routing = [
+                        {
+                            "token": t_idx,
+                            "experts": [
+                                {"idx": int(e), "weight": round(float(w), 4)}
+                                for e, w in zip(
+                                    topk.indices[t_idx].tolist(),
+                                    topk.values[t_idx].tolist(),
+                                )
+                            ],
+                        }
+                        for t_idx in range(lg.shape[0])
+                    ]
+                    per_layer.append(
+                        {
+                            "layer": b["layer"],
+                            "n_experts": b["n_experts"],
+                            "used": k,
+                            "routing": routing,
+                        }
+                    )
+                result["moe_routing"] = {"per_layer": per_layer}
+        return result
 
     def _eos_ids(self) -> set[int]:
         eos: set[int] = set()
