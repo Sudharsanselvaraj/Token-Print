@@ -1,11 +1,22 @@
-"""Ablation hooks: zero out specific attention heads or entire layers during
-a forward pass by registering forward hooks that mask the output."""
+"""Ablation + activation-patching hooks.
+
+Ablation zeroes out specific attention heads or entire layers during a
+forward pass by registering forward hooks that mask the output.
+
+Activation patching (issue #75) is the classic mechanistic-interpretability
+move: run a "source" prompt forward, capture the residual stream entering
+each chosen layer, then run the "target" prompt forward while injecting those
+captured states at the same layers. Layers AFTER the patched one then process
+the source's activations, which lets you ask "if this layer saw the other
+prompt's state, does the output flip?"
+"""
 
 from __future__ import annotations
 
 import typing
 
 if typing.TYPE_CHECKING:
+    import torch
     import torch.nn as nn
 
 
@@ -83,6 +94,106 @@ class Ablation:
             self._handles.append(handle)
 
     def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.remove()
+
+    def remove(self) -> None:
+        for h in self._handles:
+            h.remove()
+        self._handles.clear()
+
+
+class ActivationPatch:
+    """Patch hidden states from a source forward pass into a target forward pass.
+
+    Run ``capture`` once with the source prompt to record the residual stream
+    entering each patch layer, then run the target forward pass with the patch
+    hooks registered: layer inputs at ``patch_layers`` are replaced by the
+    source's states (position-wise, truncated to the shorter sequence).
+
+    Usage::
+
+        patch = ActivationPatch(model.model, patch_layers={8, 12})
+        source = patch.capture(model, source_input_ids)
+        with patch(source):
+            out = model(**target_inputs)
+    """
+
+    def __init__(self, model: nn.Module, patch_layers: set[int] | None = None):
+        self._model = model
+        self._patch_layers = patch_layers or set()
+        self._handles: list = []
+        self._source: dict[int, torch.Tensor] = {}
+        self._capture_handles: list = []
+
+    # --- Source capture --------------------------------------------------- #
+    def capture(
+        self,
+        model,
+        input_ids,
+        *,
+        attention_mask=None,
+        position_ids=None,
+    ) -> dict[int, torch.Tensor]:
+        """Run one forward pass on the source and return {layer: residual input}."""
+        layers = getattr(self._model, "layers", None)
+        if layers is None:
+            return {}
+
+        self._source.clear()
+        self._remove_capture_hooks()
+        captures: dict[int, torch.Tensor] = {}
+
+        def make_capture(i: int):
+            def hook(_mod, args):
+                if args:
+                    captures[i] = args[0].detach().clone().float().cpu()
+            return hook
+
+        for i in self._patch_layers:
+            if 0 <= i < len(layers):
+                h = layers[i].register_forward_pre_hook(make_capture(i))
+                self._capture_handles.append(h)
+
+        try:
+            self._model(input_ids=input_ids, attention_mask=attention_mask, position_ids=position_ids)
+        finally:
+            self._remove_capture_hooks()
+
+        self._source = captures
+        return captures
+
+    def _remove_capture_hooks(self) -> None:
+        for h in self._capture_handles:
+            h.remove()
+        self._capture_handles.clear()
+
+    # --- Patch hooks ------------------------------------------------------ #
+    def _register_patch_hooks(self) -> None:
+        layers = getattr(self._model, "layers", None)
+        if layers is None:
+            return
+
+        def make_hook(i: int):
+            def hook(_mod, args):
+                src = self._source.get(i)
+                if src is None or not args:
+                    return None
+                target = args[0]
+                n = min(src.shape[1], target.shape[1])
+                patched = target.clone()
+                patched[:, :n, :] = src[:, :n, :].to(target.device, target.dtype)
+                return (patched,) + args[1:]
+            return hook
+
+        for i in self._patch_layers:
+            if 0 <= i < len(layers):
+                self._handles.append(layers[i].register_forward_pre_hook(make_hook(i)))
+
+    def __enter__(self):
+        self._register_patch_hooks()
         return self
 
     def __exit__(self, *args):

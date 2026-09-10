@@ -171,3 +171,17 @@ export interface DebugSnapshotEntry {
 export interface DebugSnapshot {
   [modulePath: string]: DebugSnapshotEntry;
 }
+
+// --- Activation patching (issue #75) -------------------------------------- //
+export interface PatchInfo {
+  source_sentence: string;
+  target_sentence: string;
+  patch_layers: number[];
+  n_captured: number;
+}
+
+export interface PatchResponse extends AnalyzeResponse {
+  patch: PatchInfo;
+  analysis_clean: AnalyzeResponse;
+  analysis_source: AnalyzeResponse;
+}

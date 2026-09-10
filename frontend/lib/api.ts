@@ -1,4 +1,10 @@
-import type { AnalyzeResponse, ArchitectureData, DebugSnapshot, Trace } from "./types";
+import type {
+  AnalyzeResponse,
+  ArchitectureData,
+  DebugSnapshot,
+  PatchResponse,
+  Trace,
+} from "./types";
 
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -139,5 +145,37 @@ export async function fetchDebugOps(): Promise<
 > {
   const res = await fetch(`${API_URL}/debug/ops`);
   if (!res.ok) return [];
+  return res.json();
+}
+
+// --------------------------------------------------------------------------- //
+// Activation patching (issue #75)
+// --------------------------------------------------------------------------- //
+
+/** POST /patch/analyze — target run with source residual states injected. */
+export async function patchAnalyze(
+  sentence: string,
+  sourceSentence: string,
+  patchLayers: number[],
+): Promise<PatchResponse> {
+  const res = await fetch(`${API_URL}/patch/analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sentence,
+      source_sentence: sourceSentence,
+      patch_layers: patchLayers,
+    }),
+  });
+  if (!res.ok) {
+    let msg = `Patch failed (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body?.detail) msg = JSON.stringify(body.detail);
+    } catch {
+      /* keep status message */
+    }
+    throw new Error(msg);
+  }
   return res.json();
 }

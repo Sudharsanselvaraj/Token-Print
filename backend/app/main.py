@@ -32,6 +32,7 @@ from .schemas import (
     AnalyzeRequest,
     AnalyzeResponse,
     ModelInfo,
+    PatchRequest,
     RagAnalyzeRequest,
     RagAnalyzeResponse,
     RagChunk,
@@ -292,6 +293,29 @@ async def ablate_analyze(req: AblateRequest) -> dict:
             zero_layers=set(req.zero_layers),
         ):
             return eng.analyze(req.sentence)
+
+    try:
+        data = await anyio.to_thread.run_sync(run)
+    except TokenizedTooLong as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return data
+
+
+@app.post("/patch/analyze")
+async def patch_analyze(req: PatchRequest) -> dict:
+    """Activation patching (issue #75): run the target sentence with the
+    residual stream at ``patch_layers`` replaced by the source sentence's
+    captured states. Returns the patched analysis plus the clean (unpatched)
+    and source analyses for comparison."""
+    eng = _require_engine()
+    import anyio
+
+    def run():
+        return eng.analyze_patched(
+            req.sentence,
+            req.source_sentence,
+            list(req.patch_layers),
+        )
 
     try:
         data = await anyio.to_thread.run_sync(run)

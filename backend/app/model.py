@@ -259,6 +259,121 @@ class ModelEngine:
             self.tokenizer.convert_ids_to_tokens([token_id])
         )
 
+    # ------------------------------------------------------------------ #
+    # Activation patching (issue #75)
+    # ------------------------------------------------------------------ #
+    def analyze_patched(
+        self,
+        sentence: str,
+        source_sentence: str,
+        patch_layers: list[int],
+    ) -> dict:
+        """Run the target sentence with residual states patched from the source.
+
+        Returns ``analyze()``-shaped data for the patched run plus a ``patch``
+        block describing what was replaced, plus ``analysis_clean`` (the
+        unpatched target run) and ``analysis_source`` (the source run) so the
+        frontend can compare before/after and visualize trajectories.
+        """
+        from .ablation import ActivationPatch
+
+        with self._lock:
+            patch = ActivationPatch(self.model.model, set(patch_layers))
+            enc_src = self.tokenizer(source_sentence, return_tensors="pt").to(self.device)
+            with torch.no_grad():
+                source_states = patch.capture(
+                    self.model,
+                    enc_src["input_ids"],
+                    attention_mask=enc_src.get("attention_mask"),
+                )
+
+            with torch.no_grad(), patch:
+                data = self._analyze_forward_only(sentence)
+
+            with torch.no_grad():
+                clean = self._analyze_forward_only(sentence)
+                source_data = self._analyze_forward_only(source_sentence)
+
+        data["patch"] = {
+            "source_sentence": source_sentence,
+            "target_sentence": sentence,
+            "patch_layers": sorted(patch_layers),
+            "n_captured": len(source_states),
+        }
+        data["analysis_clean"] = clean
+        data["analysis_source"] = source_data
+        return data
+
+    def _analyze_forward_only(self, sentence: str) -> dict:
+        """Run one forward pass and return the analyze()-shaped result without
+        taking the engine lock (callers hold it)."""
+        enc, tokens = self._tokenize(sentence)
+        enc = {k: v.to(self.device) for k, v in enc.items()}
+
+        with torch.no_grad():
+            out = self.model(
+                **enc, output_attentions=True, output_hidden_states=True
+            )
+
+        attn = torch.stack(out.attentions).squeeze(1).to("cpu").float()
+        attn = torch.round(attn * (10**_ATTN_DECIMALS)) / (10**_ATTN_DECIMALS)
+        attn[attn < _ATTN_ZERO_BELOW] = 0.0
+        attention = attn.tolist()
+
+        hidden = [h.squeeze(0).to("cpu").float().numpy() for h in out.hidden_states]
+        hidden_states_3d = {str(i): project_3d(h) for i, h in enumerate(hidden)}
+        embeddings_3d = hidden_states_3d["0"]
+        emb_norms = [round(float(v), 4) for v in (hidden[0] ** 2).sum(1) ** 0.5]
+
+        norm = getattr(self.model.model, "norm", None)
+        if norm is None:
+            norm = getattr(self.model.model, "final_layer_norm", None)
+        lm_head = getattr(self.model, "lm_head", None)
+        logit_lens: list[list[list[dict]]] = []
+        if norm is not None and lm_head is not None:
+            n_top = 5
+            for h in out.hidden_states:
+                x = h.to(self.device)
+                x = norm(x)
+                logits = lm_head(x).float()
+                probs = logits.softmax(-1).squeeze(0)
+                pos_entries: list[list[dict]] = []
+                for pos in range(probs.shape[0]):
+                    topk = probs[pos].topk(n_top)
+                    entries = [
+                        {
+                            "text": self._decode_id(int(tid)),
+                            "token_id": int(tid),
+                            "prob": round(float(p), 6),
+                        }
+                        for tid, p in zip(topk.indices.tolist(), topk.values.tolist())
+                    ]
+                    pos_entries.append(entries)
+                logit_lens.append(pos_entries)
+
+        return {
+            "sentence": sentence,
+            "model": self.model_id,
+            "device": self.device,
+            "num_layers": self.num_layers,
+            "num_heads": self.num_heads,
+            "hidden_size": self.hidden_size,
+            "tokens": tokens,
+            "attention": attention,
+            "embeddings_3d": embeddings_3d,
+            "hidden_states_3d": hidden_states_3d,
+            "embedding_norms": emb_norms,
+            "logit_lens": logit_lens,
+            "projection": {
+                "method": "PCA",
+                "note": (
+                    "3D PCA projection of 896-dim vectors; distances are "
+                    "approximate, not the literal high-dimensional geometry."
+                ),
+                "embedding_explained_variance": explained_variance(hidden[0]),
+            },
+        }
+
     def _eos_ids(self) -> set[int]:
         eos: set[int] = set()
         gc = getattr(self.model, "generation_config", None)

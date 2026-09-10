@@ -67,6 +67,23 @@ class AblateRequest(BaseModel):
     )
 
 
+class PatchRequest(BaseModel):
+    """Activation patching (issue #75): replace target layers' residual stream
+    with a source prompt's captured states."""
+
+    sentence: str = Field(
+        ..., min_length=1, description="Target sentence to run with patched states."
+    )
+    source_sentence: str = Field(
+        ..., min_length=1, description="Source sentence whose hidden states are patched in."
+    )
+    patch_layers: list[int] = Field(
+        ...,
+        min_length=1,
+        description="Layer indices whose residual input is replaced by the source's.",
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Response building blocks
 # --------------------------------------------------------------------------- #
