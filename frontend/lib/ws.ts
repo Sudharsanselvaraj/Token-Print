@@ -11,6 +11,10 @@ export interface GenOptions {
   topK?: number;
   trace?: boolean;
   recordTrace?: boolean;
+  decodingMode?: "greedy" | "sliding_window" | "speculative";
+  windowSize?: number;
+  draftGamma?: number;
+  needle?: string;
 }
 
 /**
@@ -34,6 +38,10 @@ export function wsGenerate(
         top_k: opts.topK ?? 10,
         trace: opts.trace ?? false,
         record_trace: opts.recordTrace ?? false,
+        decoding_mode: opts.decodingMode ?? "greedy",
+        window_size: opts.windowSize ?? 512,
+        draft_gamma: opts.draftGamma ?? 4,
+        needle: opts.needle ?? undefined,
       }),
     );
   };

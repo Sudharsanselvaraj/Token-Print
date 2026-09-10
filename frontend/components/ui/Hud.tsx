@@ -5,6 +5,7 @@ import SentenceInput from "./SentenceInput";
 import LayerHeadSelector from "./LayerHeadSelector";
 import EmbeddingControls from "./EmbeddingControls";
 import GenerationControls from "./GenerationControls";
+import DecodeStats from "./DecodeStats";
 import PlaybackControls from "./PlaybackControls";
 import DistrictNav from "./DistrictNav";
 import SettingsBar from "./SettingsBar";
@@ -34,6 +35,7 @@ export default function Hud() {
   const layer = useStore((s) => s.selectedLayer);
   const head = useStore((s) => s.selectedHead);
   const embLayer = useStore((s) => s.embeddingLayer);
+  const genMeta = useStore((s) => s.genMeta);
 
   return (
     <div className="hud">
@@ -61,6 +63,7 @@ export default function Hud() {
           {district === "generation" && (
             <>
               <GenerationControls />
+              <DecodeStats />
               <PlaybackControls />
             </>
           )}
@@ -87,7 +90,7 @@ export default function Hud() {
                 ` · layer ${layer}/${data.num_layers - 1} · head ${head}/${data.num_heads - 1}`}
               {district === "embedding" &&
                 ` · ${embLayer === 0 ? "embeddings" : `layer ${embLayer}`}`}
-              {district === "generation" && " · greedy stream"}
+              {district === "generation" && ` · ${genMeta?.decoding ?? "greedy"} stream`}
             </div>
           ) : (
             <div className="status">Loading model…</div>

@@ -359,6 +359,10 @@ async def ws_generate(ws: WebSocket) -> None:
     use_chat_template = bool(req.get("use_chat_template", True))
     include_catalog = bool(req.get("trace", False))
     record_trace = bool(req.get("record_trace", False))
+    decoding_mode = req.get("decoding_mode", "greedy")
+    window_size = req.get("window_size", 512)
+    draft_gamma = req.get("draft_gamma", 4)
+    needle = req.get("needle") or None
 
     loop = asyncio.get_running_loop()
     queue: asyncio.Queue = asyncio.Queue(maxsize=32)
@@ -371,7 +375,8 @@ async def ws_generate(ws: WebSocket) -> None:
         nonlocal recorder
         try:
             for frame in engine.generate_steps(
-                prompt, max_new_tokens, top_k, use_chat_template, include_catalog
+                prompt, max_new_tokens, top_k, use_chat_template, include_catalog,
+                decoding_mode, window_size, draft_gamma, needle,
             ):
                 # Tee to the recorder for trace capture.
                 if recorder is not None:

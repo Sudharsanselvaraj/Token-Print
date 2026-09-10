@@ -8,6 +8,7 @@ import ComparePanel from "./ComparePanel";
 import ExplorerControls from "./ExplorerControls";
 import TensorList from "./TensorList";
 import GenerationControls from "./GenerationControls";
+import DecodeStats from "./DecodeStats";
 import WalkthroughPane from "./WalkthroughPane";
 import TopologyView from "./TopologyView";
 import ModelInfoPane from "./ModelInfoPane";
@@ -41,6 +42,7 @@ export default function Sidebar() {
         <div className="side-section">
           <div className="side-title">Prompt</div>
           <GenerationControls />
+          <DecodeStats />
         </div>
       )}
       {mode === "explorer" && (

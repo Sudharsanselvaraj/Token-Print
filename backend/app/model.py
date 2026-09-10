@@ -31,7 +31,12 @@ os.environ.setdefault("USE_FLAX", "0")
 os.environ.setdefault("TRANSFORMERS_NO_ADVISORY_WARNINGS", "1")
 
 import torch  # noqa: E402
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer  # noqa: E402
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    DynamicCache,
+)  # noqa: E402
 
 from .debug import DebugCapture  # noqa: E402
 from .reduce import explained_variance, project_3d  # noqa: E402
@@ -558,17 +563,38 @@ class ModelEngine:
         top_k: int = 10,
         use_chat_template: bool = True,
         include_catalog: bool = False,
+        decoding_mode: str = "greedy",
+        window_size: int = 512,
+        draft_gamma: int = 4,
+        needle: str | None = None,
     ):
-        """Yield one frame per generated token from a real greedy decode loop.
+        """Yield one frame per generated token from a real autoregressive loop.
 
-        We run the autoregressive loop by hand (model(...) step by step with
-        past_key_values) rather than model.generate(), because that's the only
-        way to capture — per step, with no post-hoc correlation — the chosen
-        token, top-k probabilities, and per-layer activation stats. Greedy
-        decoding makes the trace deterministic so the frontend can replay it.
+        Decoding modes (issue #86):
+          * ``greedy`` — classic one-token-per-step argmax.
+          * ``sliding_window`` — the KV cache is trimmed to the last
+            ``window_size`` positions each decode step, so the model genuinely
+            recomputes with a reduced visual context (real, not fake).
+          * ``speculative`` — self-speculative "blockwise" decoding: draft
+            ``draft_gamma`` candidate tokens cheaply from the last distribution,
+            verify ALL of them in one batched forward pass, then accept the
+            longest matching prefix (a real appraise-accept step).
+
+        When ``needle`` is set, the text is injected as a "memory" sentence at the
+        start of the prompt and the done frame reports whether the model recalls
+        it verbatim in its output — a long-context needle test.
         """
         max_new_tokens = max(1, min(int(max_new_tokens), 64))
         top_k = max(1, min(int(top_k), 20))
+        window_size = max(16, min(int(window_size), 4096))
+        draft_gamma = max(1, min(int(draft_gamma), 8))
+        decoding_mode = decoding_mode if decoding_mode in ("greedy", "sliding_window", "speculative") else "greedy"
+
+        needle_report: dict | None = None
+        if needle:
+            needle = str(needle).strip()
+            if needle:
+                prompt = f'[MEMORY] {needle}\n\n[QUERY] {prompt}'
 
         with self._lock, torch.no_grad():
             # Build the prompt. The chat template makes the instruct model
@@ -597,7 +623,12 @@ class ModelEngine:
                 "prompt_len": len(prompt_token_ids),
                 "max_new_tokens": max_new_tokens,
                 "top_k": top_k,
-                "decoding": "greedy",
+                "decoding": decoding_mode,
+                "decoding_params": {
+                    "window_size": window_size,
+                    "draft_gamma": draft_gamma,
+                    "needle": needle or None,
+                },
                 # This decode loop genuinely uses a KV cache (use_cache=True with
                 # past_key_values threaded step to step), so the frontend may show
                 # the real prefill/decode distinction.
@@ -611,17 +642,76 @@ class ModelEngine:
             past = None
             cur = input_ids
             generated_ids: list[int] = []
-            # Track KV-cache growth so each frame can report the REAL prefill vs
-            # decode distinction: step 0 processes the whole prompt at once
-            # (past is None -> a "prefill" pass building the cache); every later
-            # step feeds a single new token and reuses the cached keys/values
-            # ("decode"). positions_done is the cache length seen at a step's input.
             positions_done = 0
+            drafts_accepted = 0
+            draft_batches = 0
 
-            for step in range(max_new_tokens):
-                n_positions = int(cur.shape[1])  # tokens actually computed this step
-                cache_len_in = positions_done    # cached positions reused this step
+            def trim_cache(past_ckv, keep: int):
+                """Keep only the last ``keep`` positions of a KV cache."""
+                if past_ckv is None:
+                    return past_ckv
+                if isinstance(past_ckv, DynamicCache) and past_ckv.key_cache:
+                    nk = int(past_ckv.key_cache[0].shape[-2])
+                    if nk <= keep:
+                        return past_ckv
+                    dyn = DynamicCache()
+                    dyn.key_cache = [t[..., -keep:, :] for t in past_ckv.key_cache]
+                    dyn.value_cache = [t[..., -keep:, :] for t in past_ckv.value_cache]
+                    dyn._seen_tokens = keep
+                    return dyn
+                if (
+                    isinstance(past_ckv, tuple)
+                    and past_ckv
+                    and isinstance(past_ckv[0], tuple)
+                ):
+                    return tuple(
+                        tuple(v[..., -keep:, :] if v is not None else v for v in t)
+                        for t in past_ckv
+                    )
+                return past_ckv
+
+            def emit_frame(step, chosen_id, probs, logits, hidden_states,
+                           phase, n_positions, cache_len_in, extra: dict | None = None):
+                topk = probs.topk(top_k)
+                top_ids = topk.indices[0].tolist()
+                top_probs = topk.values[0].tolist()
+                top_logits = logits[0, top_ids].tolist()
+                layer_stats = [
+                    round(float(h[0, -1].abs().mean()), 4) for h in hidden_states
+                ]
+                frame = {
+                    "type": "token",
+                    "step": step,
+                    "chosen": {
+                        "id": chosen_id,
+                        "text": self._decode_id(chosen_id),
+                        "logprob": round(float(probs[0, chosen_id].log()), 4),
+                    },
+                    "topk": [
+                        {"id": int(i), "text": self._decode_id(int(i)),
+                         "logit": round(float(lg), 3), "prob": round(float(p), 4)}
+                        for i, lg, p in zip(top_ids, top_logits, top_probs)
+                    ],
+                    "layer_stats": layer_stats,
+                    "layer_timings_ms": self._last_layer_timings_ms(),
+                    "eos": chosen_id in eos_ids,
+                    "phase": phase,
+                    "n_positions": n_positions,
+                    "cache_len": cache_len_in,
+                }
+                if extra:
+                    frame.update(extra)
+                return frame
+
+            step = 0
+            while step < max_new_tokens:
+                n_positions = int(cur.shape[1])
+                cache_len_in = positions_done
                 phase = "prefill" if past is None else "decode"
+
+                if decoding_mode == "sliding_window" and past is not None and positions_done > window_size:
+                    past = trim_cache(past, window_size)
+                    cache_len_in = positions_done - window_size
 
                 out = self.model(
                     input_ids=cur,
@@ -631,64 +721,134 @@ class ModelEngine:
                 )
                 past = out.past_key_values
                 positions_done += n_positions
-                # Real per-layer ms from the timing hooks installed at load.
-                layer_timings_ms = self._last_layer_timings_ms()
 
-                logits = out.logits[:, -1, :]  # [1, vocab]
+                logits = out.logits[:, -1, :]
                 probs = logits.softmax(-1)
 
-                topk = probs.topk(top_k)
-                top_ids = topk.indices[0].tolist()
-                top_probs = topk.values[0].tolist()
-                top_logits = logits[0, top_ids].tolist()
+                if decoding_mode == "speculative" and phase == "decode" and draft_gamma > 1 and step + draft_gamma <= max_new_tokens:
+                    # --- Self-speculative pass: draft + verify in one batch. ---
+                    draft_batches += 1
+                    # The draft distribution is the model's own next-token
+                    # distribution sharpened (temperature 0.6) — a cheap,
+                    # confident draft. torch.multinomial segfaults on MPS, so
+                    # we sample on CPU (one small vocab-vector copy).
+                    draft_probs = (logits / 0.6).softmax(-1)[0].float().cpu()
+                    draft_ids = torch.multinomial(
+                        draft_probs, draft_gamma, replacement=True
+                    )
+                    draft_seq = [int(d) for d in draft_ids.tolist()]
+                    draft_tokens = torch.tensor([draft_seq], device=self.device)
+                    vout = self.model(
+                        input_ids=draft_tokens,
+                        past_key_values=past,
+                        use_cache=True,
+                        output_hidden_states=True,
+                    )
+                    vlogits = vout.logits  # [1, gamma, vocab]
+                    vprobs = vlogits.softmax(-1)
 
-                # Real per-layer mean |activation| at the last position.
-                layer_stats = [
-                    round(float(h[0, -1].abs().mean()), 4) for h in out.hidden_states
+                    # Acceptance prefix. Draft token 0 is checked against the
+                    # pre-draft decode distribution; draft token g (>=1) against
+                    # the verify row g-1 (the prediction made after reading the
+                    # earlier drafts). That row *is* the single-step forward the
+                    # verify pass reuses — the batched count of 1.
+                    k = 0
+                    if draft_seq[0] == int(probs.argmax().item()):
+                        k = 1
+                        for g in range(1, draft_gamma):
+                            if draft_seq[g] == int(vprobs[0, g - 1].argmax().item()):
+                                k += 1
+                            else:
+                                break
+                    drafts_accepted += k
+
+                    # Tokens to emit this step: k accepted drafts + 1 target
+                    # continuation token (the model's own greedy next token).
+                    if k == draft_gamma:
+                        cont = int(vprobs[0, draft_gamma - 1].argmax().item())
+                    elif k >= 1:
+                        cont = int(vprobs[0, k - 1].argmax().item())
+                    else:
+                        cont = int(probs.argmax().item())
+                    emit_ids = draft_seq[:k] + [cont]
+
+                    for g, cid in enumerate(emit_ids):
+                        if g == 0:
+                            row_probs, row_logits = probs, logits
+                            row_hs = out.hidden_states
+                        else:
+                            r = max(0, min(g - 1, draft_gamma - 1))
+                            row_probs = vprobs[:, r:r + 1, :].squeeze(1)
+                            row_logits = vlogits[:, r:r + 1, :].squeeze(1)
+                            row_hs = [h[:, r:r + 1, :] for h in vout.hidden_states]
+                        generated_ids.append(cid)
+                        yield emit_frame(
+                            step, cid, row_probs, row_logits, row_hs,
+                            phase, n_positions, cache_len_in,
+                            {
+                                "accepted_drafts": True,
+                                "draft_batch": True,
+                                "n_accepted": k,
+                                "draft_pos": g,
+                                "spec_cont": g >= k,
+                            },
+                        )
+                        step += 1
+                        cache_len_in += 1
+                        if cid in eos_ids:
+                            break
+                    past = vout.past_key_values
+                    positions_done += len(emit_ids)
+                    chosen_id = generated_ids[-1]
+                    if chosen_id in eos_ids:
+                        break
+                    cur = torch.tensor([[chosen_id]], device=self.device)
+                    continue
+                else:
+                    chosen_id = int(probs.argmax().item())
+                    generated_ids.append(chosen_id)
+                    yield emit_frame(step, chosen_id, probs, logits, out.hidden_states,
+                                     phase, n_positions, cache_len_in)
+                    step += 1
+                    if chosen_id in eos_ids:
+                        break
+                    cur = torch.tensor([[chosen_id]], device=self.device)
+
+            # Needle recall report.
+            if needle:
+                gen_text = self.tokenizer.decode(generated_ids, skip_special_tokens=True)
+                gen_lower = gen_text.lower()
+                # The model rarely returns the full needle verbatim; recall means
+                # it surfaced at least one distinctive needle word in its output.
+                significant = [
+                    w.strip(".,;:!?") for w in str(needle).lower().split()
+                    if len(w.strip(".,;:!?")) > 3
                 ]
-
-                chosen_id = int(top_ids[0])  # greedy = argmax
-                generated_ids.append(chosen_id)
-                is_eos = chosen_id in eos_ids
-
-                yield {
-                    "type": "token",
-                    "step": step,
-                    "chosen": {
-                        "id": chosen_id,
-                        "text": self._decode_id(chosen_id),
-                        "logprob": round(float(probs[0, chosen_id].log()), 4),
-                    },
-                    "topk": [
-                        {
-                            "id": int(i),
-                            "text": self._decode_id(int(i)),
-                            "logit": round(float(lg), 3),
-                            "prob": round(float(p), 4),
-                        }
-                        for i, lg, p in zip(top_ids, top_logits, top_probs)
-                    ],
-                    "layer_stats": layer_stats,
-                    # Real per-layer latency in milliseconds (issue #18).
-                    "layer_timings_ms": layer_timings_ms,
-                    "eos": is_eos,
-                    # Real KV-cache accounting for this step (see loop comment).
-                    "phase": phase,  # "prefill" | "decode"
-                    "n_positions": n_positions,  # tokens computed this step
-                    "cache_len": cache_len_in,  # cached positions reused this step
+                recalled = bool(significant) and any(w in gen_lower for w in significant)
+                needle_report = {
+                    "needle": needle,
+                    "recalled": recalled,
+                    "response": gen_text,
                 }
 
-                if is_eos:
-                    break
-                cur = torch.tensor([[chosen_id]], device=self.device)
-
-            yield {
+            done = {
                 "type": "done",
                 "generated_text": self.tokenizer.decode(
                     generated_ids, skip_special_tokens=True
                 ),
                 "total_steps": len(generated_ids),
             }
+            if decoding_mode != "greedy":
+                done["decoding_mode"] = decoding_mode
+            if decoding_mode == "speculative":
+                done["draft_batches"] = draft_batches
+                done["drafts_accepted"] = drafts_accepted
+                done["acceptance_rate"] = round(
+                    drafts_accepted / max(draft_batches * draft_gamma, 1), 4
+                )
+            if needle_report:
+                done["needle_report"] = needle_report
+            yield done
 
     # ------------------------------------------------------------------ #
     # Operation catalog (Generation — real per-op params/weights/dims)

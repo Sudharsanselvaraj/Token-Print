@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { analyzeSentence, fetchArchitecture, loadTraceFile, downloadTrace as apiDownloadTrace } from "./api";
 import { layerAnchors, anchorPosFor } from "./playback";
-import { wsGenerate } from "./ws";
+import { wsGenerate, type GenOptions } from "./ws";
 import { cueDistrict, cueToken, setMuted as setSoundMuted } from "./sound";
 import { annotateTensors } from "./tensorName";
 import { dequantizeTensor } from "./gguf/dequant";
@@ -10,6 +10,7 @@ import type {
   ArchitectureData,
   DebugSnapshot,
   District,
+  GenDone,
   GenMeta,
   GenStatus,
   HotSpot,
@@ -99,10 +100,11 @@ interface NeuroState {
   genFrames: TokenFrame[]; // recorded real frames (for replay)
   genText: string;
   genError: string | null;
+  genDone: GenDone | null;
   playIndex: number; // which recorded frame is displayed
   isPlaying: boolean;
 
-  startGeneration: (prompt: string) => void;
+  startGeneration: (prompt: string, opts?: GenOptions) => void;
   setPlayIndex: (i: number) => void;
   stepPlay: (dir: 1 | -1) => void;
   togglePlay: () => void;
@@ -411,6 +413,7 @@ export const useStore = create<NeuroState>((set) => ({
   genFrames: [],
   genText: "",
   genError: null,
+  genDone: null,
   playIndex: -1,
   isPlaying: false,
   traceSource: null,
@@ -562,7 +565,7 @@ export const useStore = create<NeuroState>((set) => ({
   setWtModel: (id) => set({ wtModel: id }),
   toggleWtPlay: () => set((s) => ({ wtPlaying: !s.wtPlaying })),
 
-  startGeneration: (prompt) => {
+  startGeneration: (prompt, opts) => {
     genSocket?.close();
     set({
       genStatus: "streaming",
@@ -580,7 +583,7 @@ export const useStore = create<NeuroState>((set) => ({
       debugSnapshotError: null,
     });
 
-    genSocket = wsGenerate(prompt, { maxNewTokens: 40, topK: 10, trace: true, recordTrace: true }, {
+    genSocket = wsGenerate(prompt, { maxNewTokens: 40, topK: 10, trace: true, recordTrace: true, ...opts }, {
       onFrame: (raw) => {
         const f = raw as { type: string } & Record<string, unknown>;
         if (f.type === "meta") {
@@ -600,6 +603,7 @@ export const useStore = create<NeuroState>((set) => ({
           set({
             genStatus: "done",
             genText: String((f as Record<string, unknown>).generated_text ?? ""),
+            genDone: raw as unknown as GenDone,
           });
         } else if (f.type === "error") {
           set({
@@ -651,6 +655,7 @@ export const useStore = create<NeuroState>((set) => ({
       genFrames: [],
       genText: "",
       genError: null,
+      genDone: null,
       playIndex: -1,
       isPlaying: false,
       opIndex: 0,
@@ -669,6 +674,7 @@ export const useStore = create<NeuroState>((set) => ({
         genFrames: frames,
         genText: trace.done?.generated_text ?? "",
         genStatus: "done",
+        genDone: (trace.done as GenDone | undefined) ?? null,
         playIndex: 0,
         isPlaying: false,
         traceSource: "file",

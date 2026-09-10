@@ -142,8 +142,32 @@ export interface GenMeta {
   max_new_tokens: number;
   top_k: number;
   decoding: string;
+  decoding_params?: {
+    window_size?: number;
+    draft_gamma?: number;
+    needle?: string | null;
+  };
   uses_kv_cache?: boolean;
   op_catalog?: OpCatalogEntry[];
+}
+
+export interface GenDoneStats {
+  decoding_mode?: string;
+  draft_batches?: number;
+  drafts_accepted?: number;
+  acceptance_rate?: number;
+  needle_report?: { needle: string; recalled: boolean; response: string };
+}
+
+export interface GenDone {
+  type: "done";
+  generated_text: string;
+  total_steps: number;
+  decoding_mode?: string;
+  draft_batches?: number;
+  drafts_accepted?: number;
+  acceptance_rate?: number;
+  needle_report?: { needle: string; recalled: boolean; response: string };
 }
 
 export interface TokenFrame {
@@ -170,7 +194,7 @@ export interface Trace {
   model: string;
   meta: GenMeta;
   frames: TokenFrame[];
-  done: { generated_text: string; total_steps: number } | null;
+  done: GenDone | null;
 }
 
 // --- v0.25 Hot-spot ranking ------------------------------------------------ //
