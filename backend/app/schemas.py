@@ -22,6 +22,20 @@ class AnalyzeRequest(BaseModel):
     )
 
 
+class AnalyzeImageRequest(BaseModel):
+    """An image for the vision-transformer pipeline (issue #87).
+
+    ``image`` may be a base64 ``data:image/...;base64,...`` payload or an
+    http(s) URL the server fetches.
+    """
+
+    image: str = Field(
+        ...,
+        min_length=1,
+        description="Base64 data:image/... URL or an http(s) image URL.",
+    )
+
+
 class RagChunk(BaseModel):
     id: str = Field(..., description="Caller-provided chunk identifier.")
     text: str = Field(..., description="Retrieved chunk text.", min_length=1)
@@ -107,6 +121,9 @@ class AnalyzeResponse(BaseModel):
     sentence: str
     model: str = Field(..., description="HF model id that produced this data.")
     device: str = Field(..., description="Device the forward pass ran on (mps/cpu).")
+    # Model family (issue #87): "causal_lm" | "encoder" | "vision".
+    mode: str = ""
+    model_type: str = ""
     num_layers: int
     num_heads: int
     hidden_size: int
@@ -132,6 +149,14 @@ class AnalyzeResponse(BaseModel):
     # Index 0 = embedding output; index L = after layer L.
     # Each entry: [layer_index] -> [{text, token_id, prob}, ...] (top 5)
     logit_lens: list[list[list[dict]]] = []
+
+    # --- Issue #87: encoder / vision payloads ------------------------------ #
+    # Sentence-embedding vector (encoder models: pooler or mean-pool) or the
+    # [CLS] patch embedding (vision models). Real floats from the forward pass.
+    pooled_vector: list[float] = []
+    pooling_note: str = ""
+    # Vision detail: how many patches / the patch grid for this image.
+    image_meta: dict = Field(default_factory=dict)
 
 
 class RagAnalyzeResponse(AnalyzeResponse):
@@ -170,6 +195,8 @@ class RagAnalyzeResponse(AnalyzeResponse):
 class ModelInfo(BaseModel):
     model: str
     device: str
+    mode: str = ""
+    model_type: str = ""
     num_layers: int
     num_heads: int
     hidden_size: int

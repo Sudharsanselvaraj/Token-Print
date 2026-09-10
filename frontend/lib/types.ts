@@ -24,6 +24,9 @@ export interface AnalyzeResponse {
   sentence: string;
   model: string;
   device: string;
+  // Model family (issue #87): "causal_lm" | "encoder" | "vision".
+  mode?: string;
+  model_type?: string;
   num_layers: number;
   num_heads: number;
   hidden_size: number;
@@ -39,6 +42,11 @@ export interface AnalyzeResponse {
 
   // Phase 4: logit lens (v0.3).
   logit_lens: LogitLensEntry[][][]; // [layer][position][top-5]
+
+  // Issue #87 — encoder / vision payloads.
+  pooled_vector?: number[];
+  pooling_note?: string;
+  image_meta?: { n_patches: number; grid_n: number; format: string | null; mode: string };
 
   // MoE routing (issue #83) — present only when the loaded model has
   // mixture-of-experts blocks (router logits captured during the forward).

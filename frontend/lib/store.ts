@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { analyzeSentence, fetchArchitecture, loadTraceFile, downloadTrace as apiDownloadTrace } from "./api";
+import { analyzeSentence, analyzeImage, fetchArchitecture, loadTraceFile, downloadTrace as apiDownloadTrace } from "./api";
 import { layerAnchors, anchorPosFor } from "./playback";
 import { wsGenerate, type GenOptions } from "./ws";
 import { cueDistrict, cueToken, setMuted as setSoundMuted } from "./sound";
@@ -24,6 +24,10 @@ interface NeuroState {
   data: AnalyzeResponse | null;
   loading: boolean;
   error: string | null;
+
+  // Model family served by the backend (issue #87): "" until known.
+  modelMode: "causal_lm" | "encoder" | "vision" | "";
+  setModelMode: (m: NeuroState["modelMode"]) => void;
 
   // Top-level app mode (replaces the district flythrough).
   mode: Mode;
@@ -93,6 +97,7 @@ interface NeuroState {
   setMinWeight: (w: number) => void;
   setEmbeddingLayer: (l: number) => void;
   analyze: (sentence: string) => Promise<void>;
+  analyzeImage: (image: string) => Promise<void>;
 
   // --- Phase 3: generation ---------------------------------------------- //
   genStatus: GenStatus;
@@ -193,6 +198,8 @@ let genSocket: WebSocket | null = null;
 export const useStore = create<NeuroState>((set) => ({
   data: null,
   loading: false,
+  modelMode: "",
+  setModelMode: (m) => set({ modelMode: m }),
   error: null,
 
   mode: "explorer",
@@ -394,9 +401,30 @@ export const useStore = create<NeuroState>((set) => ({
       set((s) => ({
         data,
         loading: false,
+        modelMode: (data.mode as NeuroState["modelMode"]) || s.modelMode,
         selectedLayer: Math.min(s.selectedLayer, data.num_layers - 1),
         selectedHead: Math.min(s.selectedHead, data.num_heads - 1),
         // hidden_states_3d has entries 0..num_layers (embeddings + each layer).
+        embeddingLayer: Math.min(s.embeddingLayer, data.num_layers),
+      }));
+    } catch (e) {
+      set({
+        loading: false,
+        error: e instanceof Error ? e.message : "Request failed",
+      });
+    }
+  },
+
+  analyzeImage: async (image) => {
+    set({ loading: true, error: null });
+    try {
+      const data = await analyzeImage(image);
+      set((s) => ({
+        data,
+        loading: false,
+        modelMode: (data.mode as NeuroState["modelMode"]) || s.modelMode,
+        selectedLayer: Math.min(s.selectedLayer, data.num_layers - 1),
+        selectedHead: Math.min(s.selectedHead, data.num_heads - 1),
         embeddingLayer: Math.min(s.embeddingLayer, data.num_layers),
       }));
     } catch (e) {

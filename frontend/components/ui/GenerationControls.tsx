@@ -14,8 +14,10 @@ export default function GenerationControls() {
   const [needle, setNeedle] = useState(DEFAULT_NEEDLE);
   const start = useStore((s) => s.startGeneration);
   const status = useStore((s) => s.genStatus);
+  const modelMode = useStore((s) => s.modelMode);
 
   const streaming = status === "streaming";
+  const canGenerate = modelMode === "" || modelMode === "causal_lm";
 
   return (
     <div className="panel selector">
@@ -106,12 +108,18 @@ export default function GenerationControls() {
         <button
           className="primary"
           type="submit"
-          disabled={streaming}
+          disabled={streaming || !canGenerate}
           style={{ width: "100%" }}
         >
-          {streaming ? "Generating…" : "Generate"}
+          {streaming ? "Generating…" : !canGenerate ? "Generation unavailable" : "Generate"}
         </button>
       </form>
+      {!canGenerate && (
+        <div className="footer-note" style={{ marginTop: 6, color: "#ffd9a7" }}>
+          The loaded {modelMode} model cannot generate text. Run an embedding
+          forward pass in the top bar instead.
+        </div>
+      )}
       <div className="footer-note" style={{ marginTop: 8 }}>
         Streams a real decode over WebSocket — one message per token, each
         carrying the top-k probabilities and per-layer activation stats.

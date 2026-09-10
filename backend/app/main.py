@@ -29,6 +29,7 @@ from .model import ModelEngine, TokenizedTooLong
 from .reduce import chunk_attribution, query_self_attribution, ungrounded_flags
 from .schemas import (
     AblateRequest,
+    AnalyzeImageRequest,
     AnalyzeRequest,
     AnalyzeResponse,
     ModelInfo,
@@ -154,7 +155,12 @@ def _token_spans_from_char_ranges(
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok", "model_loaded": engine is not None}
+    return {
+        "status": "ok",
+        "model_loaded": engine is not None,
+        "mode": engine.mode if engine is not None else None,
+        "model_type": engine.model_type if engine is not None else None,
+    }
 
 
 @app.get("/model-info", response_model=ModelInfo)
@@ -186,6 +192,25 @@ async def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
         data = await anyio.to_thread.run_sync(eng.analyze, req.sentence)
     except TokenizedTooLong as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return AnalyzeResponse(**data)
+
+
+@app.post("/analyze/image", response_model=AnalyzeResponse)
+async def analyze_image(req: AnalyzeImageRequest) -> AnalyzeResponse:
+    """Vision-transformer forward pass over an image (issue #87).
+
+    Patches are surfaced as "tokens"; every value is a real forward-pass
+    number from the loaded vision model.
+    """
+    eng = _require_engine()
+    if eng.mode != "vision":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Loaded model ({eng.mode}) is not a vision transformer.",
+        )
+    import anyio
+
+    data = await anyio.to_thread.run_sync(eng.analyze_image, req.image)
     return AnalyzeResponse(**data)
 
 

@@ -6,6 +6,7 @@ import LayerHeadSelector from "./LayerHeadSelector";
 import EmbeddingControls from "./EmbeddingControls";
 import GenerationControls from "./GenerationControls";
 import DecodeStats from "./DecodeStats";
+import ModelModeBadge, { VisionAnalyzer } from "./ModelModeBadge";
 import PlaybackControls from "./PlaybackControls";
 import DistrictNav from "./DistrictNav";
 import SettingsBar from "./SettingsBar";
@@ -36,6 +37,7 @@ export default function Hud() {
   const head = useStore((s) => s.selectedHead);
   const embLayer = useStore((s) => s.embeddingLayer);
   const genMeta = useStore((s) => s.genMeta);
+  const modelMode = useStore((s) => s.modelMode);
 
   return (
     <div className="hud">
@@ -46,7 +48,8 @@ export default function Hud() {
             Neuro<span className="dot">Scope</span> — {TITLES[district]}
           </div>
           <div className="subtitle">{SUBTITLES[district]}</div>
-          {district !== "generation" && <SentenceInput />}
+          {district !== "generation" &&
+            (modelMode === "vision" ? <VisionAnalyzer /> : <SentenceInput />)}
           <InfoOverlay />
         </div>
         <div className="top-right">
@@ -62,8 +65,9 @@ export default function Hud() {
           {district === "embedding" && <EmbeddingControls />}
           {district === "generation" && (
             <>
-              <GenerationControls />
+              {modelMode === "vision" ? <VisionAnalyzer /> : <GenerationControls />}
               <DecodeStats />
+              <ModelModeBadge />
               <PlaybackControls />
             </>
           )}

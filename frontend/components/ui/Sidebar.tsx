@@ -9,6 +9,7 @@ import ExplorerControls from "./ExplorerControls";
 import TensorList from "./TensorList";
 import GenerationControls from "./GenerationControls";
 import DecodeStats from "./DecodeStats";
+import ModelModeBadge, { VisionAnalyzer } from "./ModelModeBadge";
 import WalkthroughPane from "./WalkthroughPane";
 import TopologyView from "./TopologyView";
 import ModelInfoPane from "./ModelInfoPane";
@@ -28,6 +29,7 @@ function Legend() {
 
 export default function Sidebar() {
   const mode = useStore((s) => s.mode);
+  const modelMode = useStore((s) => s.modelMode);
   if (mode === "walkthrough") {
     return (
       <div className="sidebar">
@@ -41,8 +43,15 @@ export default function Sidebar() {
       {mode === "generation" && (
         <div className="side-section">
           <div className="side-title">Prompt</div>
-          <GenerationControls />
-          <DecodeStats />
+          {modelMode === "vision" ? (
+            <VisionAnalyzer />
+          ) : (
+            <>
+              <GenerationControls />
+              <DecodeStats />
+              <ModelModeBadge />
+            </>
+          )}
         </div>
       )}
       {mode === "explorer" && (

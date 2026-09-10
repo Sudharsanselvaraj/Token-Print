@@ -38,6 +38,46 @@ export async function analyzeSentence(
   return res.json();
 }
 
+/** GET /health — liveness + which model family is loaded (issue #87). */
+export async function fetchHealth(): Promise<{
+  status: string;
+  model_loaded: boolean;
+  mode?: string | null;
+  model_type?: string | null;
+}> {
+  try {
+    const res = await fetch(`${API_URL}/health`);
+    if (!res.ok) return { status: "error", model_loaded: false };
+    return res.json();
+  } catch {
+    return { status: "error", model_loaded: false };
+  }
+}
+
+/** POST /analyze/image — real vision-transformer forward pass (issue #87). */
+export async function analyzeImage(
+  image: string,
+): Promise<AnalyzeResponse> {
+  const res = await fetch(`${API_URL}/analyze/image`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image }),
+  });
+  if (!res.ok) {
+    let msg = `Vision analyze failed (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body?.detail) {
+        msg = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail);
+      }
+    } catch {
+      /* non-JSON error body; keep the status message */
+    }
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
 /** GET /architecture — real model metadata + tensor list (Explorer source). */
 export async function fetchArchitecture(
   modelId?: string,

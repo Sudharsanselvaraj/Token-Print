@@ -11,6 +11,7 @@ Design decisions (see plan):
 
 from __future__ import annotations
 
+import io
 import os
 import threading
 import time
@@ -33,6 +34,7 @@ os.environ.setdefault("TRANSFORMERS_NO_ADVISORY_WARNINGS", "1")
 import torch  # noqa: E402
 from transformers import (
     AutoConfig,
+    AutoModel,
     AutoModelForCausalLM,
     AutoTokenizer,
     DynamicCache,
@@ -47,6 +49,38 @@ MAX_TOKENS = int(os.environ.get("NEUROSCOPE_MAX_TOKENS", "40"))
 # Rounding / thresholding for the attention payload.
 _ATTN_DECIMALS = 3
 _ATTN_ZERO_BELOW = 0.01
+
+# Model-family classification (issue #87): the engine supports decoder-only
+# causal LMs, encoder-only embedding models, and vision transformers.
+_CAUSAL_LM_TYPES = {
+    "qwen2", "llama", "gemma", "gemma2", "gpt2", "gptj", "gpt_neox",
+    "mistral", "mixtral", "phi", "phi3", "falcon", "opt", "bloom",
+    "starcoder2", "qwen2_moe", "codegen", "gpt_bigcode", "baichuan",
+    "internlm", "xglm", "mpt",
+}
+_ENCODER_TYPES = {
+    "bert", "roberta", "electra", "distilbert", "albert", "deberta",
+    "deberta-v2", "layoutlm", "camembert", "xlm-roberta", "mpnet",
+    "mobilebert", "longformer", "ibert", "data2vec-text",
+}
+_VISION_TYPES = {
+    "vit", "deit", "swin", "convnext", "clip", "siglip", "blip",
+    "levit", "segformer", "beit", "poolformer", "vit_mae", "imagegpt",
+    "donut-swin",
+}
+
+
+def _classify_model_type(model_type: str) -> str:
+    """Map a HF ``model_type`` to one of ``causal_lm`` / ``encoder`` / ``vision``."""
+    model_type = str(model_type or "").lower()
+    if model_type in _CAUSAL_LM_TYPES:
+        return "causal_lm"
+    if model_type in _ENCODER_TYPES:
+        return "encoder"
+    if model_type in _VISION_TYPES:
+        return "vision"
+    # Unknown: default to causal LM (backward compatible) but never claim it.
+    return "causal_lm"
 
 
 def _pick_device() -> str:
@@ -81,16 +115,41 @@ class ModelEngine:
         # A single model is not safe for concurrent forward passes; serialize them.
         self._lock = threading.Lock()
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_id,
-            attn_implementation=self.attn_implementation,  # REQUIRED for real attentions
-            torch_dtype=torch.float32,
-        )
+        # Detect the model family up front (issue #87): decoder-only causal
+        # LMs, encoder-only embedding models, and vision transformers load
+        # through the appropriate Auto class and run through matching pipelines.
+        probe_cfg = AutoConfig.from_pretrained(model_id)
+        self.model_type: str = str(getattr(probe_cfg, "model_type", "unknown"))
+        self.mode: str = _classify_model_type(self.model_type)
+
+        self.tokenizer: AutoTokenizer | None = None
+        self.image_processor = None
+        if self.mode == "encoder":
+            self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+            self.model = AutoModel.from_pretrained(
+                model_id,
+                attn_implementation=self.attn_implementation,
+                torch_dtype=torch.float32,
+            )
+        elif self.mode == "vision":
+            # Vision transformers have no text tokenizer; the image processor
+            # is built lazily on first use (it can encode user-provided images).
+            self.model = AutoModel.from_pretrained(
+                model_id,
+                attn_implementation=self.attn_implementation,
+                torch_dtype=torch.float32,
+            )
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_id,
+                attn_implementation=self.attn_implementation,  # REQUIRED for real attentions
+                torch_dtype=torch.float32,
+            )
         self.model.to(self.device)
         self.model.eval()
 
-        cfg = self.model.config
+        cfg = probe_cfg
         self.num_layers: int = cfg.num_hidden_layers
         self.num_heads: int = cfg.num_attention_heads
         self.hidden_size: int = cfg.hidden_size
@@ -105,9 +164,25 @@ class ModelEngine:
         self._timing_handles: list = []
         self._register_layer_timing_hooks()
 
+    def _layer_list(self):
+        """Return the ModuleList of transformer layers regardless of mode."""
+        if self.mode == "encoder":
+            base = getattr(self.model, "encoder", self.model)
+            return (
+                getattr(base, "layer", None)
+                or getattr(base, "layers", None)
+                or getattr(base, "blocks", None)
+            )
+        base = getattr(self.model, "model", self.model)
+        return (
+            getattr(base, "layers", None)
+            or getattr(base, "layer", None)
+            or getattr(base, "blocks", None)
+        )
+
     def _register_layer_timing_hooks(self) -> None:
-        """Register pre/post hooks on each decoder layer writing ms timings."""
-        layers = getattr(self.model.model, "layers", None)
+        """Register pre/post hooks on each transformer layer writing ms timings."""
+        layers = self._layer_list()
         if layers is None:
             return
 
@@ -281,7 +356,24 @@ class ModelEngine:
     # Phase 1: attention
     # ------------------------------------------------------------------ #
     def analyze(self, sentence: str) -> dict:
-        """Run one real forward pass and return tokens, attention, and geometry."""
+        """Run one real forward pass and return tokens, attention, and geometry.
+
+        Dispatches by the loaded model's family (issue #87): decoder-only
+        causal LMs keep the logit-lens path; encoder-only models return real
+        token embeddings + attention + a pooled sentence vector; vision
+        transformers must be inspected through ``analyze_image``.
+        """
+        if self.mode == "vision":
+            raise ValueError(
+                "Vision transformers process images, not sentences — "
+                "use POST /analyze/image."
+            )
+        if self.mode == "encoder":
+            return self._analyze_encoder(sentence)
+        return self._analyze_causal_lm(sentence)
+
+    def _analyze_causal_lm(self, sentence: str) -> dict:
+        """Decoder-only causal LM forward pass (tokens, attention, geometry)."""
         with self._lock:
             enc, tokens = self._tokenize(sentence)
             enc = {k: v.to(self.device) for k, v in enc.items()}
@@ -345,6 +437,8 @@ class ModelEngine:
             "sentence": sentence,
             "model": self.model_id,
             "device": self.device,
+            "mode": self.mode,
+            "model_type": self.model_type,
             "num_layers": self.num_layers,
             "num_heads": self.num_heads,
             "hidden_size": self.hidden_size,
@@ -359,6 +453,222 @@ class ModelEngine:
                 "note": (
                     "3D PCA projection of 896-dim vectors; distances are "
                     "approximate, not the literal high-dimensional geometry."
+                ),
+                "embedding_explained_variance": explained_variance(hidden[0]),
+            },
+        }
+
+    # ------------------------------------------------------------------ #
+    # Encoder-only embedding models (issue #87)
+    # ------------------------------------------------------------------ #
+    def _analyze_encoder(self, sentence: str) -> dict:
+        """Real forward pass through a BERT-style encoder.
+
+        Returns the same shape as the causal pipeline — real tokens, per-layer
+        hidden states (PCA-projected), real attention maps, per-token embedding
+        norms, plus a ``pooled_vector`` (the model's own pooled sentence
+        embedding) and ``pooling_note`` describing exactly which rule produced
+        it. Logit lens is N/A for encoder-only models and left empty.
+        """
+        with self._lock:
+            enc, tokens = self._tokenize(sentence)
+            enc = {k: v.to(self.device) for k, v in enc.items()}
+
+            with torch.no_grad():
+                out = self.model(
+                    **enc, output_attentions=True, output_hidden_states=True
+                )
+
+            sequential = bool(getattr(self.model.config, "position_embedding_type", "") == "relative_key_query")
+            attn = torch.stack(out.attentions).squeeze(1).to("cpu").float()
+            attn = torch.round(attn * (10**_ATTN_DECIMALS)) / (10**_ATTN_DECIMALS)
+            attn[attn < _ATTN_ZERO_BELOW] = 0.0
+            attention = attn.tolist()
+
+            hidden = [h.squeeze(0).to("cpu").float().numpy() for h in out.hidden_states]
+            hidden_states_3d = {str(i): project_3d(h) for i, h in enumerate(hidden)}
+            embeddings_3d = hidden_states_3d["0"]
+            emb_norms = [round(float(v), 4) for v in (hidden[0] ** 2).sum(1) ** 0.5]
+
+            # Pooled sentence embedding — the model's own pooler (dense+tanh)
+            # when present, otherwise an explicit mean-pool of the last layer
+            # over non-pad tokens. The rule is reported, never guessed.
+            last = out.hidden_states[-1][0]  # [seq, hidden]
+            mask = enc.get("attention_mask", torch.ones_like(enc["input_ids"]))[0]
+            pooled: "torch.Tensor" | None = None
+            pooling_note = ""
+            pooler = getattr(self.model, "pooler", None)
+            if pooler is not None and out.pooler_output is not None:
+                pooled = out.pooler_output[0].float().cpu()
+                pooling_note = "model's own pooler (dense + tanh on [CLS])"
+            else:
+                pooled = (last * mask.unsqueeze(-1)).sum(0) / mask.sum().clamp(min=1)
+                pooled = pooled.float().cpu()
+                pooling_note = "mean-pool of the last hidden layer over non-pad tokens"
+
+        return {
+            "sentence": sentence,
+            "model": self.model_id,
+            "device": self.device,
+            "mode": self.mode,
+            "model_type": self.model_type,
+            "num_layers": self.num_layers,
+            "num_heads": self.num_heads,
+            "hidden_size": self.hidden_size,
+            "tokens": tokens,
+            "attention": attention,
+            "embeddings_3d": embeddings_3d,
+            "hidden_states_3d": hidden_states_3d,
+            "embedding_norms": emb_norms,
+            "logit_lens": [],
+            "pooled_vector": [round(float(v), 5) for v in pooled.tolist()],
+            "pooling_note": pooling_note,
+            "projection": {
+                "method": "PCA",
+                "note": (
+                    "3D PCA projection of real encoder hidden states; distances "
+                    "are approximate."
+                ),
+                "embedding_explained_variance": explained_variance(hidden[0]),
+            },
+        }
+
+    # ------------------------------------------------------------------ #
+    # Vision transformers (issue #87) — patches as tokens
+    # ------------------------------------------------------------------ #
+    def _vision_processor(self):
+        """Lazily build the AutoImageProcessor for the loaded vision model."""
+        if self.image_processor is None:
+            from transformers import AutoImageProcessor
+
+            self.image_processor = AutoImageProcessor.from_pretrained(self.model_id)
+        return self.image_processor
+
+    @staticmethod
+    def _load_image_bytes(image: str) -> "torch.Tensor" | bytes:
+        """Turn an image payload (base64 data URL or http(s) URL) into bytes.
+
+        Returns the decoded bytes; raises ValueError for anything unsupported.
+        """
+        if image.startswith("data:image/"):
+            import base64
+            import binascii
+
+            try:
+                _, payload = image.split(",", 1)
+                return base64.b64decode(payload)
+            except (binascii.Error, ValueError) as exc:
+                raise ValueError("Malformed base64 image payload.") from exc
+        if image.startswith(("http://", "https://")):
+            import urllib.request
+
+            try:
+                with urllib.request.urlopen(image, timeout=30) as resp:
+                    return resp.read()
+            except Exception as exc:
+                raise ValueError(f"Could not fetch image URL: {exc}") from exc
+        raise ValueError(
+            "Unsupported image payload — pass a base64 data:image/... URL or an http(s) URL."
+        )
+
+    def analyze_image(self, image: str) -> dict:
+        """Run one real forward pass on an image through the loaded vision model.
+
+        Image patches are surfaced as "tokens" (including the [CLS] patch), each
+        with real patch embeddings and real attention from the forward pass. The
+        check/patch-resolution is reported in ``image_meta``.
+        """
+        from PIL import Image
+
+        if self.mode != "vision":
+            raise ValueError(
+                f"Loaded model ({self.mode}) is not a vision transformer."
+            )
+        with self._lock:
+            raw = self._load_image_bytes(image)
+            img_src = Image.open(io.BytesIO(raw))
+            img_format = img_src.format
+            img = img_src.convert("RGB")
+            processor = self._vision_processor()
+            inputs = processor(images=img, return_tensors="pt")
+            inputs = {k: v.to(self.device) for k, v in inputs.items()}
+
+            with torch.no_grad():
+                out = self.model(
+                    **inputs, output_attentions=True, output_hidden_states=True
+                )
+                last = out.last_hidden_state[0]  # [n_patches, hidden]
+
+            attn = torch.stack(out.attentions).squeeze(1).to("cpu").float()
+            attn = torch.round(attn * (10**_ATTN_DECIMALS)) / (10**_ATTN_DECIMALS)
+            attn[attn < _ATTN_ZERO_BELOW] = 0.0
+            attention = attn.tolist()
+
+            hidden = [h.squeeze(0).to("cpu").float().numpy() for h in out.hidden_states]
+            hidden_states_3d = {str(i): project_3d(h) for i, h in enumerate(hidden)}
+            embeddings_3d = hidden_states_3d["0"]
+            emb_norms = [round(float(v), 4) for v in (hidden[0] ** 2).sum(1) ** 0.5]
+            pooled = last[0].float().cpu().tolist()
+
+            # Patch grid layout so the scene can name each "token".
+            n_patches = last.shape[0]
+            try:
+                grid_n = (
+                    int(getattr(self.model.config, "image_size", 0)
+                        // getattr(self.model.config, "patch_size", 16))
+                ) or int(round(n_patches ** 0.5))
+            except Exception:
+                grid_n = int(round(n_patches ** 0.5))
+            grid_n = max(1, grid_n)
+            tokens = []
+            for i in range(n_patches):
+                if i == 0:
+                    text = "[CLS]"
+                    is_special = True
+                else:
+                    pr = i - 1
+                    r = pr // grid_n
+                    c = pr % grid_n
+                    text = f"patch {r}×{c}"
+                    is_special = False
+                tokens.append(
+                    {
+                        "index": i,
+                        "id": i,
+                        "piece": text,
+                        "text": text,
+                        "is_special": is_special,
+                    }
+                )
+
+        return {
+            "sentence": f"image → {grid_n}×{grid_n} patches",
+            "model": self.model_id,
+            "device": self.device,
+            "mode": self.mode,
+            "model_type": self.model_type,
+            "num_layers": self.num_layers,
+            "num_heads": self.num_heads,
+            "hidden_size": self.hidden_size,
+            "tokens": tokens[:256],
+            "attention": attention,
+            "embeddings_3d": embeddings_3d,
+            "hidden_states_3d": hidden_states_3d,
+            "embedding_norms": emb_norms,
+            "logit_lens": [],
+            "pooled_vector": [round(float(v), 5) for v in pooled],
+            "pooling_note": "vision [CLS] patch embedding",
+            "image_meta": {
+                "n_patches": n_patches,
+                "grid_n": grid_n,
+                "format": img_format,
+                "mode": img.mode,
+            },
+            "projection": {
+                "method": "PCA",
+                "note": (
+                    "3D PCA projection of real patch embeddings; distances are "
+                    "approximate."
                 ),
                 "embedding_explained_variance": explained_variance(hidden[0]),
             },
@@ -390,6 +700,10 @@ class ModelEngine:
         """
         from .ablation import ActivationPatch
 
+        if self.mode != "causal_lm":
+            raise ValueError(
+                "Activation patching is only supported for decoder-only causal LMs."
+            )
         with self._lock:
             patch = ActivationPatch(self.model.model, set(patch_layers))
             enc_src = self.tokenizer(source_sentence, return_tensors="pt").to(self.device)
@@ -589,6 +903,11 @@ class ModelEngine:
         window_size = max(16, min(int(window_size), 4096))
         draft_gamma = max(1, min(int(draft_gamma), 8))
         decoding_mode = decoding_mode if decoding_mode in ("greedy", "sliding_window", "speculative") else "greedy"
+        if self.mode != "causal_lm":
+            raise ValueError(
+                f"{self.mode} models do not generate text — decoding is only "
+                "available for decoder-only causal LMs."
+            )
 
         needle_report: dict | None = None
         if needle:
@@ -1116,6 +1435,8 @@ class ModelEngine:
         return {
             "model": self.model_id,
             "device": self.device,
+            "mode": self.mode,
+            "model_type": self.model_type,
             "num_layers": self.num_layers,
             "num_heads": self.num_heads,
             "hidden_size": self.hidden_size,
