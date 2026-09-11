@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Activation Patching Experiment for Causal RAG Context Token Attribution (Issue #115).
 
 Demonstrates and verifies that activation patching on retrieved context token
