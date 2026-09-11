@@ -46,7 +46,7 @@ jobs:
 
       # enablement:true turns Pages on (build_type=workflow) the first time this
       # runs, so a fresh clone/fork deploys without a manual Settings → Pages step.
-      - uses: actions/configure-pages@v4
+      - uses: actions/configure-pages@v6
         if: ${{ github.event.repository.has_pages == true }}
         with:
           enablement: true
