@@ -1,10 +1,10 @@
 "use client";
 
-import { useStore } from "@/lib/store";
+import { useGenerationFrames } from "@/lib/store";
 import { useMemo } from "react";
 
 export default function KvCacheTimeline() {
-  const genFrames = useStore((s) => s.genFrames);
+  const genFrames = useGenerationFrames();
 
   const cacheData = useMemo(() => {
     if (!genFrames?.length) return null;
