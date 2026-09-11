@@ -128,7 +128,7 @@ jobs:
           steps.generation.outcome == 'failure' ||
           steps.trace_record.outcome == 'failure' ||
           steps.trace_diff.outcome == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const today = new Date().toISOString().slice(0, 10);
