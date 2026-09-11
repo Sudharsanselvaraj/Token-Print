@@ -12,6 +12,8 @@ on:
     types: [opened, synchronize, reopened]
   issue_comment:
     types: [created]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
