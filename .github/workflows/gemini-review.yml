@@ -1,4 +1,4 @@
-name: "🔎 Gemini Code Review"
+name: "🔎 Gemini Code Review & Quality Gate"
 
 # NOTE: This workflow uses the free-tier Gemini API via
 # derailed-dash/gemini-review-action@v1. Rate limits are expected under heavy
@@ -41,14 +41,74 @@ jobs:
 
     steps:
       - name: Checkout repository
+        id: checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || format('refs/pull/{0}/head', github.event.issue.number) }}
 
       - name: Run Gemini PR review
+        id: gemini
         uses: derailed-dash/gemini-review-action@v1
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           gemini_model: "gemini-2.0-flash"
           language: "English"
+
+      - name: Evaluate Gemini Quality Gate Verdict
+        if: always() && steps.checkout.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prSha = context.payload.pull_request
+              ? context.payload.pull_request.head.sha
+              : (context.payload.issue && context.payload.issue.pull_request ? (await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: context.payload.issue.number
+                })).data.head.sha : context.sha);
+
+            const prNumber = context.payload.pull_request
+              ? context.payload.pull_request.number
+              : (context.payload.issue ? context.payload.issue.number : null);
+
+            if (!prNumber) return;
+
+            // Fetch recent comments on the PR to find Gemini's review verdict
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 20
+            });
+
+            const lastVerdictComment = comments
+              .reverse()
+              .find(c => c.body && c.body.includes('VERDICT:'));
+
+            let state = 'success';
+            let description = 'Gemini Quality Gate: Approved (VERDICT: APPROVE)';
+
+            if (lastVerdictComment) {
+              const body = lastVerdictComment.body;
+              if (body.includes('VERDICT: CHANGES_REQUESTED')) {
+                state = 'failure';
+                description = 'Gemini Quality Gate: Rejected (VERDICT: CHANGES_REQUESTED)';
+              } else if (body.includes('VERDICT: MAINTAINER_REVIEW')) {
+                state = 'success';
+                description = 'Gemini Quality Gate: Requires Maintainer Review';
+              } else if (body.includes('VERDICT: APPROVE')) {
+                state = 'success';
+                description = 'Gemini Quality Gate: Approved (VERDICT: APPROVE)';
+              }
+            }
+
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: prSha,
+              state: state,
+              context: 'Gemini PR Quality Gate',
+              description: description,
+            });
+            console.log(`Commit status set to ${state} for SHA ${prSha}: ${description}`);
