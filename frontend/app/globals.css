@@ -3577,6 +3577,198 @@ select { background: rgba(255,255,255,0.06); border: 1px solid var(--panel-borde
   background: var(--accent);
 }
 .mv-lane-num { font-size: 10px; color: var(--muted); line-height: 1; }
+
+/* --- Contributors Section (Dynamic GitHub Component) ----------------------- */
+.contributors-container {
+  background: radial-gradient(circle at 85% 50%, rgba(30, 41, 59, 0.4) 0%, rgba(10, 10, 14, 0.95) 70%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px 28px;
+  color: var(--text, #f8fafc);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+  margin-top: 16px;
+  margin-bottom: 20px;
+}
+
+.contributors-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.contributors-title-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.contributors-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #818cf8;
+}
+
+.contributors-heading {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+}
+
+.contributors-subheading {
+  margin: 2px 0 0 0;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.highlight-text {
+  color: #818cf8;
+  font-weight: 600;
+}
+
+.contributors-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+  min-height: 100px;
+}
+
+.contributor-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  width: 80px;
+}
+
+.contributor-card:hover {
+  transform: translateY(-3px);
+}
+
+.avatar-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.2s ease;
+}
+
+.creator-ring {
+  background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+  box-shadow: 0 0 12px rgba(129, 140, 248, 0.35);
+}
+
+.contrib-ring {
+  background: linear-gradient(135deg, #f43f5e, #ec4899, #a855f7);
+  box-shadow: 0 0 10px rgba(236, 72, 153, 0.25);
+}
+
+.contributor-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #0f172a;
+}
+
+.contributor-name {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.contributor-badge {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  line-height: 1.2;
+}
+
+.contributor-badge.creator {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.contributor-badge.contrib {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+.contributors-loading,
+.contributors-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.contributors-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(129, 140, 248, 0.2);
+  border-top-color: #818cf8;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.contributors-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.footer-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.tag-icon {
+  font-size: 11px;
+}
+
+.footer-divider {
+  color: rgba(255, 255, 255, 0.1);
+}
+
 .mv-lane-w { font-size: 9px; color: var(--muted); line-height: 1; }
 .mv-lane.active .mv-lane-w { color: #2ecc71; }
 .mv-lane.top1 .mv-lane-w { color: #f39c12; }

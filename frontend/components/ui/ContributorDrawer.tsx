@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import ContributorsSection from "./ContributorsSection";
 
 interface IssueItem {
   id: string;
@@ -134,12 +135,19 @@ export default function ContributorDrawer({ open, onClose }: ContributorDrawerPr
     >
       <div
         className="modal-content contributor-drawer"
-        style={{ width: "800px", maxWidth: "90vw", zIndex: 10001, background: "var(--bg, #0f1117)" }}
+        style={{ width: "840px", maxWidth: "92vw", maxHeight: "90vh", overflowY: "auto", zIndex: 10001, background: "var(--bg, #0f1117)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h2>Open Contributor Issues</h2>
+          <h2>Community & Open Issues</h2>
           <button className="close-btn" onClick={onClose}>✕</button>
+        </div>
+
+        {/* Dynamic GitHub Contributors Section */}
+        <ContributorsSection />
+
+        <div className="side-title" style={{ marginTop: 24, marginBottom: 12, fontSize: 13 }}>
+          Open Contributor Issues
         </div>
 
         <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
@@ -154,7 +162,7 @@ export default function ContributorDrawer({ open, onClose }: ContributorDrawerPr
           ))}
         </div>
 
-        <div style={{ maxHeight: "60vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ maxHeight: "40vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: "10px" }}>
           {filtered.map((item) => (
             <div
               key={item.id}

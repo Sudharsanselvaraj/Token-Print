@@ -34,6 +34,10 @@ jobs:
 
       - run: npm ci
 
+      - name: Fetch GitHub Contributors JSON
+        run: |
+          curl -s https://api.github.com/repos/${{ github.repository }}/contributors?per_page=100 > public/contributors.json || echo "[]" > public/contributors.json
+
       - run: npm run build
 
       - name: Skip deploy when Pages is disabled
