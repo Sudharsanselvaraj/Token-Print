@@ -550,7 +550,7 @@ async def ws_generate(ws: WebSocket) -> None:
                 len(recorder._frames),
                 safe_prompt,
             )
-        await worker_task
+        await asyncio.gather(worker_task)
         try:
             await ws.close()  # graceful close frame after the stream ends
         except RuntimeError:
