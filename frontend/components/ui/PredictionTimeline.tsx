@@ -47,18 +47,44 @@ export default function PredictionTimeline() {
     };
   }, [playing, numPositions]);
 
+  const [collapsed, setCollapsed] = useState(false);
+
   if (!logit_lens?.length || !tokens) return null;
 
   const clampedPos = Math.min(pos, numPositions - 1);
 
+  if (collapsed) {
+    return (
+      <div className="timeline-panel-collapsed">
+        <button
+          className="tl-toggle-btn"
+          onClick={() => setCollapsed(false)}
+          title="Expand Prediction Timeline (layer-by-layer prediction evolution)"
+        >
+          <span>⏱️ Show Prediction Timeline</span>
+          <span className="tl-badge">{numPositions} tokens</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="timeline-panel">
-      <div className="tl-header">
-        <span className="tl-title">Prediction Timeline</span>
-        <span className="tl-subtitle">
-          Layer-by-layer prediction evolution at position{" "}
-          <strong>{clampedPos}</strong> &ldquo;{tokens[clampedPos]?.text ?? "?"}&rdquo;
-        </span>
+      <div className="tl-header-bar">
+        <div className="tl-header">
+          <span className="tl-title">Prediction Timeline</span>
+          <span className="tl-subtitle">
+            Layer-by-layer prediction evolution at position{" "}
+            <strong>{clampedPos}</strong> &ldquo;{tokens[clampedPos]?.text ?? "?"}&rdquo;
+          </span>
+        </div>
+        <button
+          className="tl-close-btn"
+          onClick={() => setCollapsed(true)}
+          title="Minimize Prediction Timeline view to reveal full 3D canvas"
+        >
+          ✕ Hide
+        </button>
       </div>
 
       <div className="tl-nav">
