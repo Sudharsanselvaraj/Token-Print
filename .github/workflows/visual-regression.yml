@@ -28,7 +28,7 @@ jobs:
           python-version: "3.11"
 
       - name: Cache Qwen2.5-0.5B weights
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/huggingface
           key: hf-qwen2.5-0.5b-instruct-v1
