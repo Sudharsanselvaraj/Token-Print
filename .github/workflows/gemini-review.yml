@@ -12,6 +12,7 @@ on:
     types: [opened, synchronize, reopened]
   issue_comment:
     types: [created]
+  workflow_dispatch:
 
 jobs:
   review:
@@ -44,7 +45,7 @@ jobs:
         id: checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request && github.event.pull_request.head.sha || (github.event.issue && format('refs/pull/{0}/head', github.event.issue.number)) }}
+          ref: ${{ github.event.pull_request && github.event.pull_request.head.sha || github.sha }}
 
       - name: Run Gemini PR review
         id: gemini
