@@ -37,7 +37,9 @@ jobs:
 
       - name: Run Gemini PR review
         id: gemini
-        if: ${{ secrets.GEMINI_API_KEY != '' }}
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        if: env.GEMINI_API_KEY != ''
         uses: derailed-dash/gemini-review-action@v1
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
