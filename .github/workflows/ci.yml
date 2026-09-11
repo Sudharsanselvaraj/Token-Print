@@ -52,8 +52,7 @@ jobs:
       - name: Byte-compile
         run: python -m compileall -q backend/app backend/scripts
 
-      - name: Lint (ruff, informational)
-        continue-on-error: true
+      - name: Lint (ruff)
         run: |
           python -m pip install --quiet ruff
           ruff check backend/app backend/scripts

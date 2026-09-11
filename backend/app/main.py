@@ -17,17 +17,21 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Optional
 
-from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    File,
+    HTTPException,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from .ablation import Ablation
-from .debug import DebugCapture
 from .gguf_engine import GGUFEngine
 from .model import ModelEngine, TokenizedTooLong
 from .reduce import chunk_attribution, query_self_attribution, ungrounded_flags
@@ -42,7 +46,7 @@ from .schemas import (
     RagAnalyzeResponse,
     RagChunk,
 )
-from .trace import TraceRecorder, serialize_trace, parse_trace
+from .trace import TraceRecorder, parse_trace, serialize_trace
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("neuroscope")
@@ -239,14 +243,14 @@ async def gguf_list() -> dict:
 
 
 @app.post("/gguf/upload")
-async def gguf_upload(file: UploadFile = File(...)) -> dict:
+async def gguf_upload(file: UploadFile = File(None)) -> dict:  # noqa: B008
     """Stream an uploaded .gguf into data/gguf so it can power generation."""
-    if not (file.filename or "").lower().endswith(".gguf"):
+    if file is None or not (file.filename or "").lower().endswith(".gguf"):
         raise HTTPException(status_code=400, detail="Only .gguf files are accepted.")
     safe = Path(file.filename or "model.gguf").name
     dest = GGUF_DIR / safe
     size = 0
-    with open(dest, "wb") as fh:
+    with open(dest, "wb") as fh:  # noqa: ASYNC230
         while chunk := await file.read(1 << 20):
             size += len(chunk)
             fh.write(chunk)
@@ -475,7 +479,7 @@ async def ws_generate(ws: WebSocket) -> None:
     needle = req.get("needle") or None
     # Issue #85: when `gguf` names a server-side .gguf, generation runs on the
     # real quantized weights through llama.cpp instead of full-precision PyTorch.
-    gguf_path: Optional[str] = req.get("gguf") or None
+    gguf_path: str | None = req.get("gguf") or None
     if gguf_path:
         _gguf_engine_for(gguf_path)  # open early so errors surface as a frame
 
@@ -509,7 +513,7 @@ async def ws_generate(ws: WebSocket) -> None:
                         recorder.finalize(frame)
                 # .result() blocks this thread until the queue has room -> backpressure.
                 asyncio.run_coroutine_threadsafe(queue.put(frame), loop).result()
-        except Exception as exc:  # surface generation errors to the client
+        except Exception as exc:  # noqa: BLE001 — surface generation errors to the client
             asyncio.run_coroutine_threadsafe(
                 queue.put({"type": "error", "message": str(exc)}), loop
             ).result()

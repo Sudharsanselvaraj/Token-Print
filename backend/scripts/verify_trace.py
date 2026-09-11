@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from app.trace import TraceRecorder, serialize_trace, parse_trace, download_filename
+
+from app.trace import TraceRecorder, download_filename, parse_trace, serialize_trace
 
 
 def test_recorder_builds_correct_shape():

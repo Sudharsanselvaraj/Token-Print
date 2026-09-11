@@ -20,13 +20,12 @@ What is *not* available (and is never simulated):
 """
 from __future__ import annotations
 
+import logging
 import math
 import os
 import threading
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator, Optional
-
-import logging
 
 import numpy as np
 
@@ -57,7 +56,7 @@ class GGUFEngine:
         self.path = str(path)
         self.n_ctx = int(n_ctx)
         self._llm = None  # lazy: opening holds ~6s + several hundred MB RAM
-        self._meta_cache: Optional[dict] = None
+        self._meta_cache: dict | None = None
         self._load_lock = threading.Lock()
 
     # -- lifecycle ---------------------------------------------------------- //
@@ -66,7 +65,7 @@ class GGUFEngine:
             if self._llm is not None:
                 try:
                     self._llm.close()
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
             self._llm = None
             self._meta_cache = None
@@ -171,12 +170,18 @@ class GGUFEngine:
             "uses_kv_cache": True,
             "source": "llama.cpp (GGUF quantized)",
             "honesty_notes": [
-                "token ids + top-k probabilities come from the real quantized "
-                "weights (llama.cpp logits)",
-                "per-layer activations and per-head attention are not exposed "
-                "by llama.cpp — layer_stats/timings are omitted, never simulated",
-                "this backend runs greedy sampling; sliding-window and "
-                "speculative decode are PyTorch-only",
+                (
+                    "token ids + top-k probabilities come from the real quantized "
+                    "weights (llama.cpp logits)"
+                ),
+                (
+                    "per-layer activations and per-head attention are not exposed "
+                    "by llama.cpp — layer_stats/timings are omitted, never simulated"
+                ),
+                (
+                    "this backend runs greedy sampling; sliding-window and "
+                    "speculative decode are PyTorch-only"
+                ),
             ],
         }
 

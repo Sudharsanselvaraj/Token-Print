@@ -1,5 +1,5 @@
-import pytest
-from app.schemas import AnalyzeRequest, AblateRequest
+from app.schemas import AblateRequest, AnalyzeRequest
+
 
 def test_analyze_request_schema():
     req = AnalyzeRequest(sentence="Hello world")

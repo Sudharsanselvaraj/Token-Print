@@ -17,7 +17,7 @@ import torch
 # Make `app` importable when run from anywhere.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.model import ModelEngine  # noqa: E402
+from app.model import ModelEngine
 
 SENTENCE = "The cat sat on the mat."
 
@@ -79,7 +79,7 @@ def main() -> int:
           f"({tokens[0]['text']!r}) TO each token:")
     for j, t in enumerate(tokens):
         w = served["attention"][0][0][0][j]
-        bar = "#" * int(round(w * 40))
+        bar = "#" * round(w * 40)
         print(f"  -> {t['text']!r:>10}  {w:.3f}  {bar}")
 
     print("\n" + ("PASS: data is real." if ok else "FAIL: see errors above."))

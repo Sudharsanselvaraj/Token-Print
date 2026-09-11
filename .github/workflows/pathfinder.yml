@@ -1,0 +1,94 @@
+name: "🧭 Contributor Pathfinder Bot"
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  pathfinder:
+    name: Contributor Orientation
+    # Run when a new issue is opened OR when someone comments "I want to contribute" or "/contribute"
+    if: |
+      github.event_name == 'issues' ||
+      (
+        github.event_name == 'issue_comment' &&
+        !github.event.issue.pull_request &&
+        (
+          contains(github.event.comment.body, 'want to contribute') ||
+          contains(github.event.comment.body, 'help with this') ||
+          startsWith(github.event.comment.body, '/contribute')
+        )
+      )
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Post Pathfinder Guide
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const isComment = context.eventName === 'issue_comment';
+            const author = isComment ? context.payload.comment.user.login : context.payload.issue.user.login;
+            
+            // Skip bot comments to prevent feedback loops
+            if (context.payload.comment && context.payload.comment.user.type === 'Bot') return;
+            if (context.payload.issue.user.type === 'Bot') return;
+
+            const title = (context.payload.issue.title || '').toLowerCase();
+            const labels = (context.payload.issue.labels || []).map(l => l.name.toLowerCase());
+
+            let area = 'General / Cross-stack';
+            let files = '`frontend/` or `backend/`';
+            let testCmd = '`npm test` or `python -m pytest backend/tests/`';
+
+            if (labels.includes('frontend') || title.includes('ui') || title.includes('3d') || title.includes('component')) {
+              area = 'Frontend & 3D Visualization';
+              files = '`frontend/components/` and `frontend/lib/`';
+              testCmd = '`cd frontend && npm run dev` (visual checks) / `npm run build`';
+            } else if (labels.includes('backend') || title.includes('fastapi') || title.includes('model') || title.includes('torch')) {
+              area = 'Backend & PyTorch Model Engine';
+              files = '`backend/app/model.py`, `backend/app/main.py`';
+              testCmd = '`cd backend && python3 -m pytest tests/`';
+            } else if (labels.includes('docs') || title.includes('doc') || title.includes('readme')) {
+              area = 'Documentation';
+              files = '`docs/` and `README.md`';
+              testCmd = '`bash scripts/verify-data.sh`';
+            }
+
+            const body = [
+              `Hello @${author}! 👋 Welcome to **TokenPrint**. Here is your Contributor Pathfinder guide for this task:`,
+              '',
+              `🟢 **Suggested Difficulty:** Good First Issue / Contributor Ready`,
+              `🏷️ **Area:** ${area}`,
+              `📁 **Key Component Files:** ${files}`,
+              `🧪 **Verification Command:** ${testCmd}`,
+              '',
+              '📚 **Quick Reference Links:**',
+              '- [Contributing Guidelines](https://github.com/Sudharsanselvaraj/Token-Print/blob/main/CONTRIBUTING.md)',
+              '- [System Architecture Docs](https://github.com/Sudharsanselvaraj/Token-Print/blob/main/docs/architecture.md)',
+              '- [Verification & Testing Guide](https://github.com/Sudharsanselvaraj/Token-Print/blob/main/docs/verification.md)',
+              '',
+              'Feel free to ask any questions directly in this thread. Happy coding! 🚀',
+            ].join('\n');
+
+            if (isComment) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                body,
+              });
+            } else {
+              // Add a welcoming comment on new issues
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                body,
+              });
+            }

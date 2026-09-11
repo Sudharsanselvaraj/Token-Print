@@ -3,13 +3,13 @@ forward pass.  Each hook stores its output tensor, keyed by module path."""
 
 from __future__ import annotations
 
+import threading
 import time
 import typing
-import threading
 
 if typing.TYPE_CHECKING:
     import torch
-    import torch.nn as nn
+    from torch import nn
 
 
 class DebugCapture:

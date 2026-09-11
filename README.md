@@ -61,6 +61,7 @@ illustrative, sampled from noise, or hardcoded.
 - [Documentation](#documentation)
 - [Roadmap](#roadmap)
 - [Honest limitations](#honest-limitations)
+- [Engineering & community infrastructure](#-engineering--community-infrastructure)
 - [Contributing](#contributing)
 - [Creator and contributors](#creator-and-contributors)
 - [License](#license)
@@ -253,6 +254,19 @@ We would rather under-claim than overstate. Known gaps, stated plainly:
   attention-vs-MLP decomposition (that needs per-sub-block forward hooks).
 - The walkthrough's **model-scale selector** rescales the 3D using each reference model's real
   published parameter count; all worked numbers come from the loaded Qwen forward pass.
+
+## 🛡️ Engineering & Community Infrastructure
+
+TokenPrint maintains a production-grade automated pipeline for code quality, data provenance verification, security, and contributor onboarding:
+
+- **✓ Gemini AI PR Review & Triage** — Reviews PRs against TokenPrint's data-provenance guidelines and triages incoming issues.
+- **✓ Contributor Pathfinder Bot** — Guides first-time contributors with component files, test commands, and architectural docs.
+- **✓ Real-Model Nightly Verification** — Runs PyTorch forward passes nightly on `Qwen2.5-0.5B` and opens severity-ranked issues (`P0`–`P3`) on regression.
+- **✓ Playwright Visual Regression** — Captures 3D canvas snapshots on scene updates to detect rendering regressions.
+- **✓ CodeQL & Dependabot** — Automated SAST security scanning and weekly grouped dependency updates.
+- **✓ Conventional Commits & Release Please** — Automated multi-package versioning, changelogs, and GitHub Releases.
+- **✓ Stale Cleanup & Auto-Labeling** — Manages issue lifecycles and automatically tags PRs by component (`frontend`, `backend`, `3d-scene`).
+- **✓ Wiki Auto-Sync** — Automatically syncs repository documentation in `docs/` with the GitHub Wiki.
 
 ## Contributing
 

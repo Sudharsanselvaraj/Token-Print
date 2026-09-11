@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from app.model import ModelEngine  # noqa: E402
+from app.model import ModelEngine
 
 SENTENCE = "king queen man woman apple orange"
 # Related pairs we'd hope cluster (by token text, trimmed).
@@ -54,9 +54,8 @@ def main() -> int:
             rel = [dist(coords[idx[a]], coords[idx[b]]) for a, b in RELATED]
             mean_rel = float(np.mean(rel))
             ratio = mean_rel / mean_all
-            mark = ""
             if best is None or ratio < best[1]:
-                best = (L, ratio); mark = ""
+                best = (L, ratio)
             print(f"{L:5d} | {mean_rel:16.3f} | {mean_all:18.3f} | {ratio:.3f}")
     if best:
         print(f"\nBest-clustering layer: {best[0]} (related pairs are "

@@ -17,7 +17,7 @@ import typing
 
 if typing.TYPE_CHECKING:
     import torch
-    import torch.nn as nn
+    from torch import nn
 
 
 class Ablation:

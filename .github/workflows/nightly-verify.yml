@@ -132,7 +132,6 @@ jobs:
         with:
           script: |
             const today = new Date().toISOString().slice(0, 10);
-            const title = `Nightly verification failed — ${today}`;
             const label1 = 'bug';
             const label2 = 'verification';
 
@@ -145,26 +144,54 @@ jobs:
               state: 'open',
               since: cutoff,
             });
-            if (open.some(i => i.title.startsWith('Nightly verification failed'))) {
+            if (open.some(i => i.title.includes('Nightly verification failed'))) {
               console.log('Duplicate issue found — skipping.');
               return;
             }
 
             const failed = [];
-            if ('${{ steps.real_data.outcome }}' === 'failure') failed.push('verify_real_data.py');
-            if ('${{ steps.geometry.outcome }}' === 'failure') failed.push('verify_geometry.py');
-            if ('${{ steps.generation.outcome }}' === 'failure') failed.push('verify_generation.py');
-            if ('${{ steps.trace_record.outcome }}' === 'failure') failed.push('trace recording');
-            if ('${{ steps.trace_diff.outcome }}' === 'failure') failed.push('trace_diff.py');
+            let maxSeverity = 'P3';
+
+            if ('${{ steps.real_data.outcome }}' === 'failure') {
+              failed.push('- **P0 (Critical)**: `verify_real_data.py` — Real model attention/activation tensor values failed validation');
+              maxSeverity = 'P0';
+            }
+            if ('${{ steps.generation.outcome }}' === 'failure') {
+              failed.push('- **P0 (Critical)**: `verify_generation.py` — Real causal generation logits/step outputs invalid');
+              maxSeverity = 'P0';
+            }
+            if ('${{ steps.trace_record.outcome }}' === 'failure') {
+              failed.push('- **P1 (High)**: `trace recording` — Trace serialization failed or schema was broken');
+              if (maxSeverity !== 'P0') maxSeverity = 'P1';
+            }
+            if ('${{ steps.trace_diff.outcome }}' === 'failure') {
+              failed.push('- **P1 (High)**: `trace_diff.py` — Attention provenance/trace numerical diff exceeded tolerance');
+              if (maxSeverity !== 'P0') maxSeverity = 'P1';
+            }
+            if ('${{ steps.geometry.outcome }}' === 'failure') {
+              failed.push('- **P2 (Medium)**: `verify_geometry.py` — 3D layout/manifold geometry clustering mismatch');
+              if (maxSeverity !== 'P0' && maxSeverity !== 'P1') maxSeverity = 'P2';
+            }
+
+            const title = `🚨 [${maxSeverity}] Nightly verification failed — ${today}`;
 
             const body = [
-              `## Nightly verification failed — ${today}`,
+              `## 🔬 Nightly Verification Failure Report [${maxSeverity}]`,
               '',
-              `**Failing steps:** ${failed.join(', ')}`,
+              `**Severity Level:** \`${maxSeverity}\``,
               '',
-              `**Workflow run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '### Failing Verification Checks:',
+              ...failed,
               '',
-              'Check the workflow logs for full output. See `docs/verification.md` for what each script verifies.',
+              '### Severity Reference Matrix:',
+              '- **P0 (Critical)**: Model forward pass values / logits / attention calculations broken.',
+              '- **P1 (High)**: Trace schema changed or attention data provenance broken.',
+              '- **P2 (Medium)**: 3D geometry / token clustering manifold mismatch.',
+              '- **P3 (Low)**: Minor status or documentation mismatch.',
+              '',
+              `**Workflow Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              'Refer to `docs/verification.md` for troubleshooting guidelines.',
             ].join('\n');
 
             await github.rest.issues.create({
@@ -172,6 +199,6 @@ jobs:
               repo: context.repo.repo,
               title,
               body,
-              labels: [label1, label2],
+              labels: [label1, label2, maxSeverity.toLowerCase()],
             });
             console.log('Issue created:', title);

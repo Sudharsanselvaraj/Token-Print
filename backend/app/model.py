@@ -15,6 +15,7 @@ import io
 import os
 import threading
 import time
+from typing import ClassVar
 
 # --- Environment guards (must be set BEFORE torch/transformers import) -------
 # Safety net: if any single op is unimplemented on MPS, fall back to CPU for that
@@ -31,17 +32,17 @@ os.environ.setdefault("USE_TF", "0")
 os.environ.setdefault("USE_FLAX", "0")
 os.environ.setdefault("TRANSFORMERS_NO_ADVISORY_WARNINGS", "1")
 
-import torch  # noqa: E402
+import torch
 from transformers import (
     AutoConfig,
     AutoModel,
     AutoModelForCausalLM,
     AutoTokenizer,
     DynamicCache,
-)  # noqa: E402
+)
 
-from .debug import DebugCapture  # noqa: E402
-from .reduce import explained_variance, project_3d  # noqa: E402
+from .debug import DebugCapture
+from .reduce import explained_variance, project_3d
 
 DEFAULT_MODEL_ID = os.environ.get("NEUROSCOPE_MODEL", "Qwen/Qwen2.5-0.5B-Instruct")
 MAX_TOKENS = int(os.environ.get("NEUROSCOPE_MAX_TOKENS", "40"))
@@ -271,7 +272,7 @@ class ModelEngine:
         if not blocks:
             return None
 
-        captured: dict[int, "torch.Tensor"] = {}
+        captured: dict[int, torch.Tensor] = {}
         handles: list = []
         for b in blocks:
             gate = b["gate"]
@@ -291,8 +292,8 @@ class ModelEngine:
 
         imports_ok = True
         try:
-            import torch.nn.functional as F  # noqa: F401
-        except Exception:
+            import torch.nn.functional as F
+        except Exception:  # noqa: BLE001
             imports_ok = False
         if not imports_ok:
             return None
@@ -478,8 +479,6 @@ class ModelEngine:
                 out = self.model(
                     **enc, output_attentions=True, output_hidden_states=True
                 )
-
-            sequential = bool(getattr(self.model.config, "position_embedding_type", "") == "relative_key_query")
             attn = torch.stack(out.attentions).squeeze(1).to("cpu").float()
             attn = torch.round(attn * (10**_ATTN_DECIMALS)) / (10**_ATTN_DECIMALS)
             attn[attn < _ATTN_ZERO_BELOW] = 0.0
@@ -495,7 +494,7 @@ class ModelEngine:
             # over non-pad tokens. The rule is reported, never guessed.
             last = out.hidden_states[-1][0]  # [seq, hidden]
             mask = enc.get("attention_mask", torch.ones_like(enc["input_ids"]))[0]
-            pooled: "torch.Tensor" | None = None
+            pooled: torch.Tensor | None = None
             pooling_note = ""
             pooler = getattr(self.model, "pooler", None)
             if pooler is not None and out.pooler_output is not None:
@@ -545,7 +544,7 @@ class ModelEngine:
         return self.image_processor
 
     @staticmethod
-    def _load_image_bytes(image: str) -> "torch.Tensor" | bytes:
+    def _load_image_bytes(image: str) -> torch.Tensor | bytes:
         """Turn an image payload (base64 data URL or http(s) URL) into bytes.
 
         Returns the decoded bytes; raises ValueError for anything unsupported.
@@ -616,9 +615,9 @@ class ModelEngine:
                 grid_n = (
                     int(getattr(self.model.config, "image_size", 0)
                         // getattr(self.model.config, "patch_size", 16))
-                ) or int(round(n_patches ** 0.5))
-            except Exception:
-                grid_n = int(round(n_patches ** 0.5))
+                ) or round(n_patches ** 0.5)
+            except Exception:  # noqa: BLE001
+                grid_n = round(n_patches ** 0.5)
             grid_n = max(1, grid_n)
             tokens = []
             for i in range(n_patches):
@@ -739,7 +738,7 @@ class ModelEngine:
 
         # Attach MoE router hooks if the model has any experts (issue #83).
         moe_blocks = self._detect_moe_blocks()
-        moe_captured: dict[int, "torch.Tensor"] = {}
+        moe_captured: dict[int, torch.Tensor] = {}
         moe_handles: list = []
         if moe_blocks:
             for b in moe_blocks:
@@ -824,7 +823,7 @@ class ModelEngine:
         if moe_blocks:
             try:
                 import torch.nn.functional as F
-            except Exception:
+            except Exception:  # noqa: BLE001
                 F = None
             if F is not None:
                 per_layer: list[dict] = []
@@ -1172,7 +1171,7 @@ class ModelEngine:
     # ------------------------------------------------------------------ #
     # Operation catalog (Generation — real per-op params/weights/dims)
     # ------------------------------------------------------------------ #
-    _OP_LABELS = {
+    _OP_LABELS: ClassVar[dict[str, str]] = {
         "embedding": "Token Embedding",
         "norm": "Layer Normalization",
         "attn.q": "Query Projection",

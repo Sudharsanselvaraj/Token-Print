@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from app.model import ModelEngine  # noqa: E402
+from app.model import ModelEngine
 
 PROMPT = "Name one primary color. Answer in one word."
 
@@ -57,7 +57,7 @@ def main() -> int:
         if not (sorted_ok and chosen_is_top and stats_ok and rng_ok and timings_ok):
             ok = False
         top = tk[0]
-        bar = "#" * int(round(top["prob"] * 30))
+        bar = "#" * round(top["prob"] * 30)
         total_ms = round(sum(f.get("layer_timings_ms", [])), 2)
         print(f"  step {f['step']:2d}: {f['chosen']['text']!r:>10}  "
               f"p={top['prob']:.3f} {bar}  "
