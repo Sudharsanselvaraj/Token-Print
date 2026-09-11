@@ -21,19 +21,16 @@ jobs:
   # ── PR Review ───────────────────────────────────────────────────────────────
   review:
     name: Gemini PR review
-    # Run on internal PRs when API key secret is available, or on /gemini-review comments.
     if: |
-      secrets.GEMINI_API_KEY != '' && (
-        (
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name == github.repository
-        ) ||
-        (
-          github.event_name == 'issue_comment' &&
-          github.event.issue.pull_request &&
-          startsWith(github.event.comment.body, '/gemini-review') &&
-          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
-        )
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      ) ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        startsWith(github.event.comment.body, '/gemini-review') &&
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
       )
     runs-on: ubuntu-latest
     permissions:
@@ -50,6 +47,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || format('refs/pull/{0}/head', github.event.issue.number) }}
 
       - name: Run Gemini PR review
+        if: ${{ secrets.GEMINI_API_KEY != '' }}
         uses: derailed-dash/gemini-review-action@v1
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
@@ -60,7 +58,7 @@ jobs:
   # ── Issue Triage ────────────────────────────────────────────────────────────
   triage:
     name: Gemini issue triage
-    if: secrets.GEMINI_API_KEY != '' && github.event_name == 'issues'
+    if: github.event_name == 'issues'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -71,6 +69,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Gemini issue triage
+        if: ${{ secrets.GEMINI_API_KEY != '' }}
         uses: derailed-dash/gemini-review-action@v1
         with:
           command: "triage"
