@@ -7,7 +7,8 @@
     "build": "npm run verify-data && next build",
     "start": "next start",
     "lint": "next lint",
-    "verify-data": "bash scripts/verify-data.sh"
+    "verify-data": "bash scripts/verify-data.sh",
+    "test:visual": "playwright test"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.0",
@@ -24,6 +25,7 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

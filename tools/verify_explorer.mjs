@@ -1,3 +1,4 @@
+// NOTE: For automated CI visual regression testing, see frontend/tests/visual/ (Playwright).
 import puppeteer from "puppeteer-core";
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

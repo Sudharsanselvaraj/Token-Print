@@ -1,4 +1,5 @@
 // Headless-browser verification of the Attention District.
+// NOTE: For automated CI visual regression testing, see frontend/tests/visual/ui-baseline.spec.ts (Playwright).
 //
 // Loads the running app in the system Chrome, confirms the HUD status line
 // reflects REAL data from the backend, screenshots layer0/head0, then drives
