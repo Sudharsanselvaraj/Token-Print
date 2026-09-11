@@ -147,13 +147,13 @@ async function main() {
       : "\nFAIL: see above.",
   );
 
-  const cleanText = (val) => String(val ?? "").replace(/[\r\n\x00-\x1f]/g, "");
+  const isModelOk = typeof analyze?.model === "string" && analyze.model.length > 0;
   const reportLines = [
-    `backend: ${cleanText(analyze.model)}`,
-    `status@load: ${cleanText(s0)}`,
-    `status@switched: ${cleanText(s1)}`,
-    `expected beams L0/H0: ${cleanText(expA)}`,
-    `expected beams L${targetLayer}/H${targetHead}: ${cleanText(expB)}`,
+    `backend: ${isModelOk ? "loaded" : "none"}`,
+    `status@load: ${s0 ? "ok" : "missing"}`,
+    `status@switched: ${s1 ? "ok" : "missing"}`,
+    `expected beams L0/H0: ${expA ? "ok" : "missing"}`,
+    `expected beams L${targetLayer}/H${targetHead}: ${expB ? "ok" : "missing"}`,
     `page errors: ${errors.length}`,
     `result: ${ok ? "PASS" : "FAIL"}`,
   ];

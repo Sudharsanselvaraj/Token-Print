@@ -71,17 +71,11 @@ def _resolve_gguf(path: str) -> str:
     """Canonicalize a requested GGUF path, forbidding traversal outside GGUF_DIR."""
     if not path or not isinstance(path, str):
         raise HTTPException(status_code=400, detail="Invalid GGUF path.")
-    filename = os.path.basename(path)
-    if not filename or filename != path or ".." in path or "/" in path or "\\" in path:
-        raise HTTPException(status_code=400, detail="Invalid GGUF path.")
-    base_dir = GGUF_DIR.resolve()
-    try:
-        resolved = (base_dir / filename).resolve()
-    except (OSError, ValueError):
-        raise HTTPException(status_code=400, detail="Invalid GGUF path.")
-    if not str(resolved).startswith(str(base_dir) + os.sep) or not resolved.is_file():
+    safe_name = os.path.basename(path)
+    allowed_files = {p.name for p in GGUF_DIR.iterdir() if p.is_file()}
+    if safe_name not in allowed_files:
         raise HTTPException(status_code=404, detail="GGUF file not found in data/gguf.")
-    return str(resolved)
+    return str((GGUF_DIR / safe_name).resolve())
 
 
 def _gguf_engine_for(path: str) -> GGUFEngine:
@@ -537,7 +531,7 @@ async def ws_generate(ws: WebSocket) -> None:
     if record_trace:
         recorder = TraceRecorder({"prompt": prompt})
 
-    worker_future = asyncio.wrap_future(loop.run_in_executor(None, worker))
+    worker_task = asyncio.create_task(asyncio.to_thread(worker))
     try:
         while True:
             frame = await queue.get()
@@ -556,7 +550,7 @@ async def ws_generate(ws: WebSocket) -> None:
                 len(recorder._frames),
                 safe_prompt,
             )
-        await worker_future
+        _res = await worker_task
         try:
             await ws.close()  # graceful close frame after the stream ends
         except RuntimeError:

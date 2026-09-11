@@ -165,7 +165,7 @@ export default function HeadInspector() {
   }, [data]);
 
   if (!headData) return null;
-  const { attn, H, T, sim, fingerprints, verdicts } = headData;
+  const { attn, H, sim, fingerprints, verdicts } = headData;
   const layer = attn[selectedLayer] ?? attn[0];
   const head = layer[selectedHead] ?? layer[0];
 
