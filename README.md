@@ -311,13 +311,15 @@ TokenPrint was designed and built from the ground up by **[Sudharsan Selvaraj](h
 
 ### Contributors
 
-Everyone below has a merged pull request in TokenPrint — code, docs, bug fixes, or design. This grid updates automatically as new contributions land.
+Everyone below has a merged pull request in TokenPrint — code, docs, bug fixes, or design. This grid updates automatically and excludes coding-tool/bot accounts.
 
+<!-- CONTRIBUTORS_GRID:START -->
 <p align="left">
-  <a href="https://github.com/Sudharsanselvaraj/Token-Print/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=Sudharsanselvaraj/Token-Print" alt="TokenPrint contributors" />
+  <a href="https://github.com/Sudharsanselvaraj" title="Sudharsanselvaraj">
+    <img src="https://github.com/Sudharsanselvaraj.png?size=80" width="40" height="40" alt="Sudharsanselvaraj" />
   </a>
 </p>
+<!-- CONTRIBUTORS_GRID:END -->
 
 Want to be in that grid? Grab one of the **26 curated issues** in [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md),
 read [CONTRIBUTING.md](CONTRIBUTING.md) to get set up, and open a PR. First-time open-source
