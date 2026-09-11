@@ -54,7 +54,6 @@ export default function GenerationPanel() {
   const status = useStore((s) => s.genStatus);
   const showEquations = useStore((s) => s.showEquations);
   const devMode = useStore((s) => s.devMode);
-  const playIndex = useStore((s) => s.playIndex);
   const frame = useStore((s) => (s.playIndex >= 0 ? s.genFrames[s.playIndex] : null));
 
   const catalog = meta?.op_catalog ?? [];

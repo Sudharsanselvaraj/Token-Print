@@ -27,7 +27,6 @@ export default function PlaybackEngine() {
   const opPlaying = useStore((s) => s.opPlaying);
   const wtPlaying = useStore((s) => s.wtPlaying);
   const playSpeed = useStore((s) => s.playSpeed);
-  const hasCatalog = useStore((s) => (s.genMeta?.op_catalog?.length ?? 0) > 0);
   const framesLen = useStore((s) => s.genFrames.length);
   const autoStarted = useStore((s) => s.autoStarted);
 

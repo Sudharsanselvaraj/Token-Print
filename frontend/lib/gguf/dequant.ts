@@ -8,13 +8,8 @@ import { GGML_TYPES, type GgmlType } from "./ggmlTypes";
 // ---- ggml quantization constants ----------------------------------------- //
 const QK4_0 = 32;
 const QK8_0 = 32;
-const QK_K = 256;
 
 // ---- helpers ------------------------------------------------------------- //
-
-function readI16LE(dv: DataView, off: number): number {
-  return dv.getInt16(off, true);
-}
 
 function readU16LE(dv: DataView, off: number): number {
   return dv.getUint16(off, true);
@@ -32,7 +27,6 @@ function readU8(dv: DataView, off: number): number {
 
 /** Q4_0: 2-byte scale (f16) + 32 nibbles packed into 16 bytes. */
 function dequantBlockQ4_0(block: DataView, dst: Float32Array, dstOff: number) {
-  const d = readF32LE(block, 0); // actually f16 but we read as u16 and reinterpret
   // Q4_0 stores the scale as f16.  DataView can't read f16 natively; decode manually.
   const dRaw = readU16LE(block, 0);
   const dF = f16toF32(dRaw);

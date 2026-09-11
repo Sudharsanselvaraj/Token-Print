@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { useStore } from "./store";
 
 const SNAPSHOT_VERSION = 1;
 
 export function useSnapshotUrl() {
-  const pushed = useRef(false);
-
   const mode = useStore((s) => s.mode);
-  const genFrames = useStore((s) => s.genFrames);
   const playIndex = useStore((s) => s.playIndex);
   const genMeta = useStore((s) => s.genMeta);
   const opIndex = useStore((s) => s.opIndex);

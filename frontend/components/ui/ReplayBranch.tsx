@@ -7,7 +7,6 @@ export default function ReplayBranch() {
   const frames = useStore((s) => s.genFrames);
   const meta = useStore((s) => s.genMeta);
   const playIndex = useStore((s) => s.playIndex);
-  const setPlayIndex = useStore((s) => s.setPlayIndex);
   const [forkPoint, setForkPoint] = useState<number | null>(null);
 
   if (!frames.length || !meta) return null;

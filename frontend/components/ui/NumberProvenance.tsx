@@ -24,8 +24,6 @@ export default function NumberProvenance() {
     setProvenanceTrail(trail);
   };
 
-  const firstWithParams = catalog.findIndex((o) => o.param_count > 0);
-
   return (
     <div className="number-provenance">
       <div className="np-title">Number Provenance</div>

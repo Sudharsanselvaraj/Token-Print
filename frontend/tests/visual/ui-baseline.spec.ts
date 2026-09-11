@@ -14,7 +14,6 @@
 import { test, expect, type Page } from "@playwright/test";
 
 const API = "http://localhost:8000/analyze";
-const MIN_WEIGHT = 0.05;
 
 /** Set a range input the React-friendly way (fires synthetic input event). */
 async function setRange(page: Page, index: number, value: number) {

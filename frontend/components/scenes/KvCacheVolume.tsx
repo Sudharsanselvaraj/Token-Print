@@ -44,15 +44,6 @@ export default function KvCacheVolume({
     };
   }, [frame, meta]);
 
-  const layerMax = useMemo(() => {
-    if (!frames?.length) return 1;
-    let mx = 1;
-    for (const f of frames) {
-      if (f.cache_len && f.cache_len > mx) mx = f.cache_len;
-    }
-    return Math.min(mx, MAX_CACHE);
-  }, [frames]);
-
   if (!cacheProfile) return null;
 
   const { cacheLen, isPrefill, newCount, totalLen } = cacheProfile;
@@ -123,7 +114,6 @@ export default function KvCacheVolume({
                     } else if (isActiveCell) {
                       // Active decode layer: gradient from dim (stale) to bright (new)
                       const age = cacheLen - 1 - c;
-                      const staleness = Math.min(age / Math.max(1, cacheLen - 1), 1);
                       if (isNewCell) {
                         // Freshly decoded token: bright warm
                         color = "#f0c060";

@@ -1,12 +1,11 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import { fmtShape, fmtCount } from "@/lib/format";
+import { fmtShape } from "@/lib/format";
 import DebugInspector from "./DebugInspector";
 import HeadInspector from "./HeadInspector";
 import TimingReadout from "./TimingReadout";
 import DistributionPanel from "./DistributionPanel";
-import ConfigDiff from "./ConfigDiff";
 import DataExport from "./DataExport";
 import AblationPanel from "./AblationPanel";
 import BreakpointGutter from "./BreakpointGutter";

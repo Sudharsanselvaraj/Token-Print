@@ -3,7 +3,7 @@
 // so multi-GB files parse instantly and nothing is uploaded.
 
 import type { ArchitectureData, ArchMetadata, TensorInfo } from "../types";
-import { tensorBytes, typeName } from "./ggmlTypes";
+import { typeName } from "./ggmlTypes";
 
 // gguf_metadata_value_type
 const T_UINT8 = 0,

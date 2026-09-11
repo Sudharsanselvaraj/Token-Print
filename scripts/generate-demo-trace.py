@@ -41,7 +41,7 @@ BASE = "http://localhost:8000"
 
 def run_generation(prompt: str) -> dict:
     """Start a WebSocket generation and wait for completion, then GET /trace."""
-    import asyncio, json
+    import asyncio
 
     async def _run():
         import websockets

@@ -3,7 +3,7 @@
 import { useMemo, useEffect, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Billboard, Text, Line } from "@react-three/drei";
-import { Color, Vector3, QuadraticBezierCurve3, CatmullRomCurve3 } from "three";
+import { Color, Vector3, QuadraticBezierCurve3 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { useStore } from "@/lib/store";
@@ -29,7 +29,6 @@ export default function GenerationScene() {
   const [hoveredLayer, setHoveredLayer] = useState<number | null>(null);
   const [hoveredKind, setHoveredKind] = useState<OpKind | null>(null);
   const sourceSelectedTensor = useStore((s) => s.sourceSelectedTensor);
-  const setSourceSelectedTensor = useStore((s) => s.setSourceSelectedTensor);
 
   const nLayers = meta?.num_layers ?? 24;
   const catalog = meta?.op_catalog ?? [];

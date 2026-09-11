@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useStore } from "./store";
-import { layerAnchors, anchorPosFor } from "./playback";
 
 /**
  * Global keyboard model (Phase 1.7).

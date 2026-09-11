@@ -23,10 +23,6 @@ export default function TopBar() {
   const { share } = useSnapshotUrl();
   const tileView = useStore((s) => s.tileView);
   const setTileView = useStore((s) => s.setTileView);
-  const sonificationEnabled = useStore((s) => s.sonificationEnabled);
-  const toggleSonification = useStore((s) => s.toggleSonification);
-  const classroomMode = useStore((s) => s.classroomMode);
-  const toggleClassroomMode = useStore((s) => s.toggleClassroomMode);
   const data = useStore((s) => s.data);
 
   const [pluginManagerOpen, setPluginManagerOpen] = useState(false);

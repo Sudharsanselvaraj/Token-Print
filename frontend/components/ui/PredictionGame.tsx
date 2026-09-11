@@ -20,7 +20,6 @@ interface Props {
 
 export default function PredictionGame({ docked }: Props) {
   const genFrames = useStore((s) => s.genFrames);
-  const genText = useStore((s) => s.genText);
   const genStatus = useStore((s) => s.genStatus);
   const genMeta = useStore((s) => s.genMeta);
 

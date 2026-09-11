@@ -5,13 +5,10 @@ import { useStore } from "@/lib/store";
 
 export default function SamplingPlayground() {
   const genFrames = useStore((s) => s.genFrames);
-  const genMeta = useStore((s) => s.genMeta);
   const [temperature, setTemperature] = useState(1.0);
   const [topP, setTopP] = useState(1.0);
   const [topK, setTopK] = useState(10);
 
-  // Simulate how temperature + top-p reshape the distribution.
-  const simulatedDist = useState<{ text: string; orig: number; scaled: number }[]>([]);
   const [dist, setDist] = useState<{ text: string; orig: number; scaled: number }[]>([]);
 
   useEffect(() => {

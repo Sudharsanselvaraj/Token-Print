@@ -6,8 +6,6 @@ import { useStore } from "@/lib/store";
 export default function HeadGrid() {
   const data = useStore((s) => s.data);
   const nLayers = data?.num_layers ?? 0;
-  const nHeads = data?.num_heads ?? 0;
-  const activeLayer = useStore((s) => s.selectedLayer);
   const setLayer = useStore((s) => s.setLayer);
   const setHead = useStore((s) => s.setHead);
   const [viewLayer, setViewLayer] = useState(0);

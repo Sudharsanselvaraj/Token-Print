@@ -69,7 +69,8 @@ _gguf_engines: dict[str, GGUFEngine] = {}
 def _resolve_gguf(path: str) -> str:
     """Canonicalize a requested GGUF path, forbidding traversal outside GGUF_DIR."""
     try:
-        resolved = (GGUF_DIR / path).resolve()
+        safe_name = Path(path).name
+        resolved = (GGUF_DIR / safe_name).resolve()
     except (OSError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid GGUF path.")
     if not str(resolved).startswith(str(GGUF_DIR.resolve())) or not resolved.is_file():
@@ -537,10 +538,11 @@ async def ws_generate(ws: WebSocket) -> None:
         # Store the completed trace so it can be downloaded later.
         if recorder is not None and recorder._done is not None:
             _last_trace = recorder.build()
+            safe_prompt = prompt[:80].replace("\r", " ").replace("\n", " ")
             logger.info(
                 "Trace recorded: %d frames, prompt=%r",
                 len(recorder._frames),
-                prompt[:80],
+                safe_prompt,
             )
         await worker_future
         try:

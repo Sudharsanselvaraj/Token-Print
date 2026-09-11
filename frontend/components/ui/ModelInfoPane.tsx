@@ -1,7 +1,6 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import { fmtCount } from "@/lib/format";
 
 /**
  * Phase 2: Model info pane showing training details, tokenizer info,

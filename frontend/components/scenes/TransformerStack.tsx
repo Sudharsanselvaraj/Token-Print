@@ -443,7 +443,6 @@ export default function TransformerStack({
           position={new Vector3().fromArray([
             (() => {
               const Rc = 1.25;
-              const li = Math.floor(hoveredInstance / nh);
               const h = hoveredInstance % nh;
               const g = Math.floor(h / perGroup);
               const withinN = Math.min(perGroup, dims.numHeads - g * perGroup);
@@ -457,7 +456,6 @@ export default function TransformerStack({
             yAttn(Math.floor(hoveredInstance / nh)),
             (() => {
               const Rc = 1.25;
-              const li = Math.floor(hoveredInstance / nh);
               const h = hoveredInstance % nh;
               const g = Math.floor(h / perGroup);
               const withinN = Math.min(perGroup, dims.numHeads - g * perGroup);

@@ -16,7 +16,6 @@ export default function LogitLensPanel() {
   if (!data?.logit_lens?.length) return null;
 
   const { logit_lens, tokens } = data;
-  const numLayers = logit_lens.length;
   const numPositions = logit_lens[0].length;
 
   return (

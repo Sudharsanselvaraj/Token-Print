@@ -8,7 +8,6 @@ import { useMemo } from "react";
  * Shows a histogram of mean |activation| for each layer in the active frame.
  */
 export default function DistributionPanel() {
-  const playIndex = useStore((s) => s.playIndex);
   const frame = useStore(
     (s) => (s.playIndex >= 0 ? s.genFrames[s.playIndex] : null),
   );
