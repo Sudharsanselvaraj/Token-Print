@@ -44,7 +44,7 @@ jobs:
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          gemini_model: "gemini-1.5-flash"
+          gemini_model: "gemini-2.5-pro"
           language: "English"
 
       - name: Evaluate Gemini Quality Gate Verdict
