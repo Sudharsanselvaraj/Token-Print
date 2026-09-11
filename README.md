@@ -218,9 +218,9 @@ Security issues: see [SECURITY.md](SECURITY.md) (report privately, not via publi
 
 Thanks to everyone building TokenPrint with us!
 
-<p align="center">
+<p align="left">
   <a href="https://github.com/Sudharsanselvaraj/Token-Print/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=Sudharsanselvaraj/Token-Print" alt="TokenPrint Contributors" width="820" />
+    <img src="https://contrib.rocks/image?repo=Sudharsanselvaraj/Token-Print" alt="TokenPrint Contributors" />
   </a>
 </p>
 
