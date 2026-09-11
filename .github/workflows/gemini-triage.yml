@@ -1,0 +1,26 @@
+name: "🏷️ Gemini Issue Triage"
+
+on:
+  issues:
+    types: [opened, reopened]
+
+jobs:
+  triage:
+    name: Gemini issue triage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Gemini issue triage
+        uses: derailed-dash/gemini-review-action@v1
+        with:
+          command: "triage"
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          gemini_model: "gemini-2.0-flash"
+          language: "English"
