@@ -1486,7 +1486,7 @@ code {
 .logit-lens-panel-collapsed {
   position: absolute;
   top: 56px;
-  right: 420px;
+  right: 340px;
   z-index: 15;
 }
 .ll-toggle-btn {
@@ -1621,7 +1621,7 @@ code {
 .timeline-panel-collapsed {
   position: absolute;
   top: 56px;
-  left: 320px;
+  right: 510px;
   z-index: 15;
 }
 .tl-toggle-btn {

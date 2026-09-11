@@ -12,7 +12,7 @@ function tokenBg(tokenId: number, prob: number): string {
 
 export default function LogitLensPanel() {
   const data = useStore((s) => s.data);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   if (!data?.logit_lens?.length) return null;
 

@@ -47,7 +47,7 @@ export default function PredictionTimeline() {
     };
   }, [playing, numPositions]);
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   if (!logit_lens?.length || !tokens) return null;
 
