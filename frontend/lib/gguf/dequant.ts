@@ -15,10 +15,6 @@ function readU16LE(dv: DataView, off: number): number {
   return dv.getUint16(off, true);
 }
 
-function readF32LE(dv: DataView, off: number): number {
-  return dv.getFloat32(off, true);
-}
-
 function readU8(dv: DataView, off: number): number {
   return dv.getUint8(off);
 }

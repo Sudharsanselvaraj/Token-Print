@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -68,12 +69,17 @@ _gguf_engines: dict[str, GGUFEngine] = {}
 
 def _resolve_gguf(path: str) -> str:
     """Canonicalize a requested GGUF path, forbidding traversal outside GGUF_DIR."""
+    if not path or not isinstance(path, str):
+        raise HTTPException(status_code=400, detail="Invalid GGUF path.")
+    filename = os.path.basename(path)
+    if not filename or filename != path or ".." in path or "/" in path or "\\" in path:
+        raise HTTPException(status_code=400, detail="Invalid GGUF path.")
+    base_dir = GGUF_DIR.resolve()
     try:
-        safe_name = Path(path).name
-        resolved = (GGUF_DIR / safe_name).resolve()
+        resolved = (base_dir / filename).resolve()
     except (OSError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid GGUF path.")
-    if not str(resolved).startswith(str(GGUF_DIR.resolve())) or not resolved.is_file():
+    if not str(resolved).startswith(str(base_dir) + os.sep) or not resolved.is_file():
         raise HTTPException(status_code=404, detail="GGUF file not found in data/gguf.")
     return str(resolved)
 
@@ -248,8 +254,14 @@ async def gguf_upload(file: UploadFile = File(None)) -> dict:  # noqa: B008
     """Stream an uploaded .gguf into data/gguf so it can power generation."""
     if file is None or not (file.filename or "").lower().endswith(".gguf"):
         raise HTTPException(status_code=400, detail="Only .gguf files are accepted.")
-    safe = Path(file.filename or "model.gguf").name
-    dest = GGUF_DIR / safe
+    raw_name = file.filename or "model.gguf"
+    safe = os.path.basename(raw_name)
+    if not safe or safe != raw_name or ".." in safe or "/" in safe or "\\" in safe:
+        raise HTTPException(status_code=400, detail="Invalid filename.")
+    base_dir = GGUF_DIR.resolve()
+    dest = (base_dir / safe).resolve()
+    if not str(dest).startswith(str(base_dir) + os.sep):
+        raise HTTPException(status_code=400, detail="Invalid target path.")
     size = 0
     with open(dest, "wb") as fh:  # noqa: ASYNC230
         while chunk := await file.read(1 << 20):
@@ -525,7 +537,7 @@ async def ws_generate(ws: WebSocket) -> None:
     if record_trace:
         recorder = TraceRecorder({"prompt": prompt})
 
-    worker_future = loop.run_in_executor(None, worker)
+    worker_future = asyncio.wrap_future(loop.run_in_executor(None, worker))
     try:
         while True:
             frame = await queue.get()
@@ -533,7 +545,7 @@ async def ws_generate(ws: WebSocket) -> None:
                 break
             await ws.send_json(frame)
     except WebSocketDisconnect:
-        pass
+        logger.info("WebSocket connection closed by client.")
     finally:
         # Store the completed trace so it can be downloaded later.
         if recorder is not None and recorder._done is not None:
@@ -548,7 +560,7 @@ async def ws_generate(ws: WebSocket) -> None:
         try:
             await ws.close()  # graceful close frame after the stream ends
         except RuntimeError:
-            pass  # already closed / client gone
+            logger.debug("WebSocket already closed.")
 
 
 # --------------------------------------------------------------------------- #

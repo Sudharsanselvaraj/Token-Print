@@ -22,7 +22,6 @@ export default function KvCacheVolume({
 }) {
   const meta = useStore((s) => s.genMeta);
   const frame = useStore((s) => (s.playIndex >= 0 ? s.genFrames[s.playIndex] : null));
-  const frames = useStore((s) => s.genFrames);
 
   const cacheProfile = useMemo(() => {
     // Build a per-layer snapshot of the KV-cache from the current frame's

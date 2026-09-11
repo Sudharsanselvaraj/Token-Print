@@ -147,18 +147,17 @@ async function main() {
       : "\nFAIL: see above.",
   );
 
-  writeFileSync(
-    `${OUT}/neuroscope_ui_report.txt`,
-    [
-      `backend: ${analyze.model}`,
-      `status@load: ${s0}`,
-      `status@switched: ${s1}`,
-      `expected beams L0/H0: ${expA}`,
-      `expected beams L${targetLayer}/H${targetHead}: ${expB}`,
-      `page errors: ${errors.length}`,
-      `result: ${ok ? "PASS" : "FAIL"}`,
-    ].join("\n"),
-  );
+  const cleanText = (val) => String(val ?? "").replace(/[\r\n\x00-\x1f]/g, "");
+  const reportLines = [
+    `backend: ${cleanText(analyze.model)}`,
+    `status@load: ${cleanText(s0)}`,
+    `status@switched: ${cleanText(s1)}`,
+    `expected beams L0/H0: ${cleanText(expA)}`,
+    `expected beams L${targetLayer}/H${targetHead}: ${cleanText(expB)}`,
+    `page errors: ${errors.length}`,
+    `result: ${ok ? "PASS" : "FAIL"}`,
+  ];
+  writeFileSync(`${OUT}/neuroscope_ui_report.txt`, reportLines.join("\n"), "utf8");
 
   await browser.close();
   process.exit(ok ? 0 : 1);

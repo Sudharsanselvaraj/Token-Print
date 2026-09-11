@@ -1,7 +1,6 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import { fmtShape } from "@/lib/format";
 import DebugInspector from "./DebugInspector";
 import HeadInspector from "./HeadInspector";
 import TimingReadout from "./TimingReadout";

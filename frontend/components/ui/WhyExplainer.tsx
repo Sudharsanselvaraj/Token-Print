@@ -35,7 +35,6 @@ export default function WhyExplainer() {
     if (!frame) return null;
     const topCand = frame.topk?.[0];
     const chosen = frame.chosen;
-    const step = frame.step;
 
     const parts: { key: string; text: string; terms: string[] }[] = [];
 

@@ -8,7 +8,7 @@ Usage:
 Generates all demo traces defined in DEMOS and saves them to
 frontend/public/demo/.
 """
-import json, sys, time
+import json
 from pathlib import Path
 
 import requests
