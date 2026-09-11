@@ -1,25 +1,40 @@
+<a name="top"></a>
 <div align="center">
-  <img src="TokenPrint logo.png" alt="TokenPrint" width="350" />
+  <img src="TokenPrint logo.png" alt="TokenPrint" width="360" />
+
+  <h3>See a language model think — real internals, real forward pass, real-time 3D.</h3>
+
+  <p>
+    <a href="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml"><img src="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e.svg?style=flat" alt="License: MIT" /></a>
+    <a href="https://github.com/Sudharsanselvaraj/Token-Print/stargazers"><img src="https://img.shields.io/github/stars/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a&label=stars" alt="Stars" /></a>
+    <a href="https://github.com/Sudharsanselvaraj/Token-Print/network/members"><img src="https://img.shields.io/github/forks/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a&label=forks" alt="Forks" /></a>
+    <a href="https://github.com/Sudharsanselvaraj/Token-Print/commits/main"><img src="https://img.shields.io/github/last-commit/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a&label=last%20commit" alt="Last commit" /></a>
+  </p>
+  <p>
+    <img src="https://img.shields.io/badge/data-100%25%20real%20forward%20pass-0a0a0a.svg?style=flat" alt="Real data only" />
+    <img src="https://img.shields.io/badge/backend-FastAPI%20%C2%B7%20PyTorch-009688.svg?style=flat" alt="Backend: FastAPI + PyTorch" />
+    <img src="https://img.shields.io/badge/frontend-Next.js%20%C2%B7%20React%20Three%20Fiber-000000.svg?style=flat" alt="Frontend: Next.js + React Three Fiber" />
+    <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat" alt="PRs Welcome" /></a>
+    <a href="GOOD_FIRST_ISSUES.md"><img src="https://img.shields.io/badge/good%20first%20issues-26-orange.svg?style=flat" alt="26 good first issues" /></a>
+  </p>
+
+  <p>
+    <a href="#quickstart"><b>Quickstart</b></a> ·
+    <a href="docs/README.md"><b>Docs</b></a> ·
+    <a href="wiki/Home.md"><b>Wiki</b></a> ·
+    <a href="ROADMAP.md"><b>Roadmap</b></a> ·
+    <a href="CONTRIBUTING.md"><b>Contributing</b></a> ·
+    <a href="GOOD_FIRST_ISSUES.md"><b>Good First Issues</b></a>
+  </p>
 </div>
-
-<h3 align="center">See a language model think — real internals, real forward pass, real-time 3D.</h3>
-
-<p align="center">
-  <a href="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml"><img src="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e.svg?style=flat" alt="License: MIT" /></a>
-  <img src="https://img.shields.io/badge/data-100%25%20real%20forward%20pass-0a0a0a.svg?style=flat" alt="Real data only" />
-  <img src="https://img.shields.io/badge/backend-FastAPI%20·%20PyTorch-009688.svg?style=flat" alt="Backend: FastAPI + PyTorch" />
-  </a>
-  <a href="https://github.com/Sudharsanselvaraj/Token-Print">
-  <img src="https://img.shields.io/github/stars/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a&label=stars" alt="Stars" />
-</a>
-</p>
 
 ---
 
-
 <p align="center">
   <img src=".github/assets/demo.gif" alt="TokenPrint — live demo" width="820" />
+  <br />
+  <sub><a href=".github/assets/demo.mp4">▶ Watch the full demo (.mp4)</a></sub>
 </p>
 
 **TokenPrint** is a browser-based 3D inspector for the internals of a language model. Load a
@@ -32,6 +47,37 @@ illustrative, sampled from noise, or hardcoded.
 > New here? Open the **Architecture** tab and hit **Use live Qwen model** — you'll get a
 > point cloud of the real `Qwen/Qwen2.5-0.5B-Instruct` tensors (494,032,768 params, 290
 > tensors) with hover-to-inspect names, shapes, and dtypes.
+
+<details>
+<summary><b>Table of contents</b></summary>
+
+- [Feature highlights](#feature-highlights)
+- [Quickstart](#quickstart)
+- [The four modes](#the-four-modes)
+- [Model support and capability matrix](#model-support-and-capability-matrix)
+- [Data provenance system](#data-provenance-system)
+- [Architecture](#architecture)
+- [Proving the data is real](#proving-the-data-is-real)
+- [Documentation](#documentation)
+- [Roadmap](#roadmap)
+- [Honest limitations](#honest-limitations)
+- [Contributing](#contributing)
+- [Creator and contributors](#creator-and-contributors)
+- [License](#license)
+- [Star history](#star-history)
+
+</details>
+
+---
+
+## Feature highlights
+
+- **Zero fabricated data** — every number on screen is parsed from a real model file or produced by an actual forward pass. A build-time guard fails `npm run build` the moment `Math.random` shows up in application code.
+- **Four inspection modes** — Architecture, Generation, Walkthrough, and Debugger, each driven by its own real backend endpoint: a tensor list, a streamed generation, a full analysis pass, and a stepped debug session.
+- **Real-time 3D, not diagrams** — React Three Fiber renders the actual residual stream, one blade per real attention head (grouped for GQA), and a SwiGLU funnel sized by the model's real FFN ratio.
+- **Broad model support** — Qwen, Llama 2/3/3.2, Gemma/Gemma 2, DeepSeek/MoE, Mistral/Mixtral, GPT-2/Pythia, plus any local `.gguf` file, parsed client-side with nothing uploaded.
+- **Provable, not just claimed** — five independent verification scripts and a CI regression gate back up every "real data" claim. See [Proving the data is real](#proving-the-data-is-real).
+- **Honest about limitations** — known gaps are documented in this README, not buried in an issue tracker. See [Honest limitations](#honest-limitations).
 
 ## Quickstart
 
@@ -54,33 +100,12 @@ Open **http://localhost:3000** and pick a mode from the top bar. No model file i
 for the live-model view; drag any local `.gguf` onto the drop zone to inspect it instead
 (the file is parsed in-browser — nothing is uploaded).
 
-### Optional GGUF Backend Support
+### Optional GGUF backend support
+
 ```bash
 # To enable native local GGUF backend execution:
 pip install llama-cpp-python
 ```
-
-## Model Support & Capability Matrix
-
-TokenPrint recognizes many transformer model families. Broad loading support does not imply identical instrumentation depth across all architectures:
-
-| Model Family | Load / Parse | Real Forward Pass | Attention Visualization | Logit Lens | Head Ablation | Activation Patching | GGUF Dequant |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Qwen / Qwen2.5** | ✅ | ✅ (Live) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Llama 2 / 3 / 3.2** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Gemma / Gemma 2** | ✅ | ✅ | ✅ | ✅ | ⚠️ | ⚠️ | ✅ |
-| **DeepSeek / MoE** | ✅ | ✅ (MoE Router) | ✅ | ✅ | ⚠️ | ⚠️ | ✅ |
-| **Mistral / Mixtral**| ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **GPT-2 / Pythia** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | N/A |
-
-## Data Provenance System
-
-TokenPrint follows a strict transparency standard. Every value displayed in the UI is tagged with its provenance level:
-
-* **`REAL`** — Captured directly from live model execution, `named_parameters()`, or `.gguf` file headers.
-* **`DERIVED`** — Computed deterministically from real model data (e.g. PCA, layer norms, entropy).
-* **`CONCEPTUAL`** — Visual 3D geometry representing real model dimensions (e.g., GQA head grouping, SwiGLU funnel ratio).
-* **`SIMULATION`** — Educational fallback data or proxy values (explicitly flagged with `SIMULATION` badge).
 
 ## The four modes
 
@@ -104,6 +129,28 @@ waists. The **KV-cache phase** is real too: step 0 is a pre-fill over the whole 
 UI labels and visibly shrinks the work accordingly. Autoplay pacing is normalized (never
 fabricated in-between frames); a dropped WebGL context recovers automatically and falls back
 to a readable message rather than a broken canvas.
+
+## Model support and capability matrix
+
+TokenPrint recognizes many transformer model families. Broad loading support does not imply identical instrumentation depth across all architectures:
+
+| Model Family | Load / Parse | Real Forward Pass | Attention Visualization | Logit Lens | Head Ablation | Activation Patching | GGUF Dequant |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Qwen / Qwen2.5** | ✅ | ✅ (Live) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Llama 2 / 3 / 3.2** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Gemma / Gemma 2** | ✅ | ✅ | ✅ | ✅ | ⚠️ | ⚠️ | ✅ |
+| **DeepSeek / MoE** | ✅ | ✅ (MoE Router) | ✅ | ✅ | ⚠️ | ⚠️ | ✅ |
+| **Mistral / Mixtral**| ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **GPT-2 / Pythia** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | N/A |
+
+## Data provenance system
+
+TokenPrint follows a strict transparency standard. Every value displayed in the UI is tagged with its provenance level:
+
+* **`REAL`** — Captured directly from live model execution, `named_parameters()`, or `.gguf` file headers.
+* **`DERIVED`** — Computed deterministically from real model data (e.g. PCA, layer norms, entropy).
+* **`CONCEPTUAL`** — Visual 3D geometry representing real model dimensions (e.g., GQA head grouping, SwiGLU funnel ratio).
+* **`SIMULATION`** — Educational fallback data or proxy values (explicitly flagged with `SIMULATION` badge).
 
 ## Architecture
 
@@ -176,6 +223,7 @@ See [`docs/verification.md`](docs/verification.md) for the full evidence with ex
 | [Verification](docs/verification.md) | How "the data is real" is proven |
 | [Roadmap](ROADMAP.md) | Where TokenPrint is headed — the ecosystem gaps and the next four milestones |
 | [Design review](docs/design-review.md) | Full design + engineering audit and the phased "visual debugger" roadmap |
+| [Wiki](wiki/Home.md) | Deep-dive pages: architecture, every supported model family, transformer concepts, developer guides |
 
 ## Roadmap
 
@@ -209,21 +257,71 @@ We would rather under-claim than overstate. Known gaps, stated plainly:
 ## Contributing
 
 Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) and the
-[Code of Conduct](CODE_OF_CONDUCT.md). For a concrete list of what needs doing
-(by difficulty, with files and verification steps), see
-[docs/contributing-ideas.md](docs/contributing-ideas.md). Found a wrong number? That's a top-priority bug.
+[Code of Conduct](CODE_OF_CONDUCT.md). Not sure where to start? [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md)
+has **26 curated issues** across four difficulty tiers — 🟢 Easy, 🟡 Intermediate, 🔴 Advanced,
+🔬 Research — each with the files to touch and how to verify the fix. For a broader list of
+what needs doing, see [docs/contributing-ideas.md](docs/contributing-ideas.md).
+
+Found a wrong number? That's a top-priority bug — TokenPrint's entire premise rests on every
+displayed value being real.
+
 Security issues: see [SECURITY.md](SECURITY.md) (report privately, not via public issues).
 
-## Contributors
+## Creator and contributors
 
-Thanks to everyone building TokenPrint with us!
+### Creator
+
+<table>
+<tr>
+<td align="center" width="160">
+  <a href="https://github.com/Sudharsanselvaraj">
+    <img src="https://github.com/Sudharsanselvaraj.png" width="96" alt="Sudharsan Selvaraj" />
+  </a>
+  <br />
+  <a href="https://github.com/Sudharsanselvaraj"><b>Sudharsan Selvaraj</b></a>
+  <br />
+  <sub>👑 Creator &amp; Maintainer</sub>
+</td>
+<td valign="middle">
+
+TokenPrint was designed and built from the ground up by **[Sudharsan Selvaraj](https://github.com/Sudharsanselvaraj)** — the architecture, the data-provenance system, the verification scripts, and the 3D visualization engine all started as one answer to a single question: *"what is my model actually doing right now?"* As creator and maintainer, Sudharsan owns the roadmap, reviews incoming pull requests, and is the final word on the project's non-negotiable rule — every number shown must be real.
+
+[![GitHub](https://img.shields.io/badge/GitHub-%40Sudharsanselvaraj-181717?style=flat&logo=github)](https://github.com/Sudharsanselvaraj)
+
+</td>
+</tr>
+</table>
+
+### Contributors
+
+Everyone below has a merged pull request in TokenPrint — code, docs, bug fixes, or design. This grid updates automatically as new contributions land.
 
 <p align="left">
   <a href="https://github.com/Sudharsanselvaraj/Token-Print/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=Sudharsanselvaraj/Token-Print" alt="TokenPrint Contributors" />
+    <img src="https://contrib.rocks/image?repo=Sudharsanselvaraj/Token-Print" alt="TokenPrint contributors" />
   </a>
 </p>
+
+Want to be in that grid? Grab one of the **26 curated issues** in [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md),
+read [CONTRIBUTING.md](CONTRIBUTING.md) to get set up, and open a PR. First-time open-source
+contributors are very welcome.
 
 ## License
 
 [MIT](LICENSE) © Sudharsan Selvaraj.
+
+## Star history
+
+<div align="center">
+
+<a href="https://star-history.com/#Sudharsanselvaraj/Token-Print&Date">
+  <img src="https://api.star-history.com/svg?repos=Sudharsanselvaraj/Token-Print&type=Date" alt="Star History Chart" width="640" />
+</a>
+
+<br /><br />
+
+If TokenPrint helped you understand what a transformer is actually doing, consider **starring the repo** ⭐ — it's the easiest way to help other people find it.
+
+<sub><a href="#top">Back to top ↑</a></sub>
+
+</div>
