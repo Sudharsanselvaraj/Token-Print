@@ -1,0 +1,81 @@
+name: "🔎 Gemini Code Review & Issue Triage"
+
+# NOTE: This workflow uses the free-tier Gemini API via
+# derailed-dash/gemini-review-action@v1. Rate limits are expected under heavy
+# PR volume — re-trigger manually with /gemini-review in a PR comment.
+#
+# Required secret: GEMINI_API_KEY
+# → Get a free key at https://aistudio.google.com/apikey
+# → Add it at: Settings → Secrets and variables → Actions → New repository secret
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+  issues:
+    types: [opened, reopened]
+
+jobs:
+  # ── PR Review ───────────────────────────────────────────────────────────────
+  review:
+    name: Gemini PR review
+    # Run on internal PRs, or on /gemini-review comments from owners/members/collaborators.
+    if: |
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      ) ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        startsWith(github.event.comment.body, '/gemini-review') &&
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      statuses: write
+      checks: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || format('refs/pull/{0}/head', github.event.issue.number) }}
+
+      - name: Run Gemini PR review
+        uses: derailed-dash/gemini-review-action@v1
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # gemini-2.0-flash is free-tier on AI Studio; sufficient for code review.
+          gemini_model: "gemini-2.0-flash"
+          language: "English"
+          # Custom instructions live in .github/review-instruction-additions.md
+          # and are automatically picked up by the action.
+
+  # ── Issue Triage ────────────────────────────────────────────────────────────
+  triage:
+    name: Gemini issue triage
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Gemini issue triage
+        uses: derailed-dash/gemini-review-action@v1
+        with:
+          command: "triage"
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          gemini_model: "gemini-2.0-flash"
+          language: "English"
