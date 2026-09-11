@@ -1,0 +1,177 @@
+name: "🔬 Nightly Deep Verification"
+
+on:
+  schedule:
+    # Run nightly at 06:00 UTC.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write  # needed to open failure issues
+
+jobs:
+  # ── Job 1: Trace unit tests (no model needed, fast) ─────────────────────────
+  trace-unit:
+    name: Trace unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install minimal deps (no torch)
+        run: pip install fastapi uvicorn websockets numpy
+
+      - name: Run verify_trace.py
+        # verify_trace.py tests the trace serialisation layer only — it does NOT
+        # load the model. Exit code 0 = all tests pass.
+        run: python scripts/verify_trace.py
+
+  # ── Job 2: Deep model verification (downloads ~1 GB Qwen model) ─────────────
+  deep-verify:
+    name: Deep model verification
+    runs-on: ubuntu-latest
+    # Don't block on trace-unit; failures are reported independently.
+    needs: []
+    env:
+      # HuggingFace caches models here by default.
+      HF_HOME: ${{ github.workspace }}/.cache/huggingface
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Cache the HuggingFace model weights between nightly runs.
+      # Key on the model name so a new model version busts the cache.
+      - name: Cache Qwen2.5-0.5B weights
+        uses: actions/cache@v4
+        with:
+          path: .cache/huggingface
+          key: hf-qwen2.5-0.5b-instruct-v1
+          restore-keys: |
+            hf-qwen2.5-0.5b-instruct-
+
+      - name: Install backend requirements
+        run: |
+          # Install torch CPU-only to avoid the CUDA-only 2 GB wheel.
+          pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install fastapi uvicorn websockets numpy transformers==4.51.3 scikit-learn==1.5.1
+
+      # Each script exits 0 on PASS, 1 on FAIL (verified by reading the scripts).
+      - name: verify_real_data.py
+        id: real_data
+        working-directory: backend
+        run: python scripts/verify_real_data.py
+        continue-on-error: true
+
+      - name: verify_geometry.py
+        id: geometry
+        working-directory: backend
+        run: python scripts/verify_geometry.py
+        continue-on-error: true
+
+      - name: verify_generation.py
+        id: generation
+        working-directory: backend
+        run: python scripts/verify_generation.py
+        continue-on-error: true
+
+      # Generate a live trace to compare against the checked-in baseline.
+      - name: Record trace for diff
+        id: trace_record
+        working-directory: backend
+        run: |
+          python -c "
+          import sys, json
+          sys.path.insert(0, '.')
+          from app.model import ModelEngine
+          from app.trace import TraceRecorder, serialize_trace
+          eng = ModelEngine()
+          frames = list(eng.generate_steps('Hi', max_new_tokens=3, top_k=5))
+          meta = next(f for f in frames if f['type'] == 'meta')
+          done = next(f for f in frames if f['type'] == 'done')
+          tokens = [f for f in frames if f['type'] == 'token']
+          rec = TraceRecorder(meta)
+          for t in tokens: rec.add_frame(t)
+          rec.finalize(done)
+          trace = rec.build()
+          with open('/tmp/live_trace.json', 'w') as fh:
+              fh.write(serialize_trace(trace).decode())
+          print('trace recorded')
+          "
+        continue-on-error: true
+
+      - name: Run trace_diff.py
+        id: trace_diff
+        run: |
+          python scripts/trace_diff.py \
+            fixtures/traces/baseline.json \
+            /tmp/live_trace.json \
+            --tolerance 0.05
+        continue-on-error: true
+
+      # Collect failures and open a GitHub issue if any step failed.
+      - name: Report failures as GitHub Issue
+        if: |
+          steps.real_data.outcome == 'failure' ||
+          steps.geometry.outcome == 'failure' ||
+          steps.generation.outcome == 'failure' ||
+          steps.trace_record.outcome == 'failure' ||
+          steps.trace_diff.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().slice(0, 10);
+            const title = `Nightly verification failed — ${today}`;
+            const label1 = 'bug';
+            const label2 = 'verification';
+
+            // Avoid duplicate issues: check if one already exists from last 24h.
+            const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: `${label1},${label2}`,
+              state: 'open',
+              since: cutoff,
+            });
+            if (open.some(i => i.title.startsWith('Nightly verification failed'))) {
+              console.log('Duplicate issue found — skipping.');
+              return;
+            }
+
+            const failed = [];
+            if ('${{ steps.real_data.outcome }}' === 'failure') failed.push('verify_real_data.py');
+            if ('${{ steps.geometry.outcome }}' === 'failure') failed.push('verify_geometry.py');
+            if ('${{ steps.generation.outcome }}' === 'failure') failed.push('verify_generation.py');
+            if ('${{ steps.trace_record.outcome }}' === 'failure') failed.push('trace recording');
+            if ('${{ steps.trace_diff.outcome }}' === 'failure') failed.push('trace_diff.py');
+
+            const body = [
+              `## Nightly verification failed — ${today}`,
+              '',
+              `**Failing steps:** ${failed.join(', ')}`,
+              '',
+              `**Workflow run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              'Check the workflow logs for full output. See `docs/verification.md` for what each script verifies.',
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: [label1, label2],
+            });
+            console.log('Issue created:', title);

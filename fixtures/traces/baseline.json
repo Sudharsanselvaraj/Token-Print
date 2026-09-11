@@ -1,0 +1,47 @@
+{
+  "_comment": "Minimal synthetic trace fixture — NOT real model output. Used only as the structural baseline for scripts/trace_diff.py in CI. Schema matches the format validated by backend/scripts/verify_trace.py.",
+  "trace_version": 1,
+  "created_at": "2026-01-01T00:00:00Z",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "meta": {
+    "type": "meta",
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "device": "cpu",
+    "architecture": "qwen2",
+    "num_layer_stats": 25,
+    "num_layers": 24,
+    "prompt_tokens": ["Hi"],
+    "prompt_len": 1,
+    "max_new_tokens": 3,
+    "top_k": 5,
+    "decoding": "greedy",
+    "uses_kv_cache": true,
+    "op_catalog": []
+  },
+  "frames": [
+    {
+      "type": "token",
+      "step": 0,
+      "chosen": {"id": 11, "text": "!", "logprob": -0.5},
+      "topk": [
+        {"id": 11, "text": "!", "logit": -0.5, "prob": 0.6065},
+        {"id": 13, "text": ".", "logit": -1.5, "prob": 0.2231},
+        {"id": 30, "text": " Hi", "logit": -2.5, "prob": 0.0821},
+        {"id": 15, "text": ",", "logit": -3.5, "prob": 0.0302},
+        {"id": 17, "text": " there", "logit": -4.5, "prob": 0.0111}
+      ],
+      "layer_stats": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
+                      0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05,
+                      0.04, 0.03, 0.02, 0.01, 0.01],
+      "eos": false,
+      "phase": "prefill",
+      "n_positions": 1,
+      "cache_len": 0
+    }
+  ],
+  "done": {
+    "type": "done",
+    "generated_text": "!",
+    "total_steps": 1
+  }
+}
