@@ -12,9 +12,6 @@ on:
     types: [opened, synchronize, reopened]
   issue_comment:
     types: [created]
-  push:
-    branches: [main]
-  workflow_dispatch:
 
 jobs:
   review:
@@ -22,11 +19,16 @@ jobs:
     if: |
       (
         github.event_name == 'pull_request' &&
+        github.event.pull_request &&
+        github.event.pull_request.head &&
+        github.event.pull_request.head.repo &&
         github.event.pull_request.head.repo.full_name == github.repository
       ) ||
       (
         github.event_name == 'issue_comment' &&
+        github.event.issue &&
         github.event.issue.pull_request &&
+        github.event.comment &&
         startsWith(github.event.comment.body, '/gemini-review') &&
         (
           github.event.comment.author_association == 'OWNER' ||
