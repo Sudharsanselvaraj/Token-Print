@@ -21,17 +21,19 @@ jobs:
   # ── PR Review ───────────────────────────────────────────────────────────────
   review:
     name: Gemini PR review
-    # Run on internal PRs, or on /gemini-review comments from owners/members/collaborators.
+    # Run on internal PRs when API key secret is available, or on /gemini-review comments.
     if: |
-      (
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.head.repo.full_name == github.repository
-      ) ||
-      (
-        github.event_name == 'issue_comment' &&
-        github.event.issue.pull_request &&
-        startsWith(github.event.comment.body, '/gemini-review') &&
-        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+      secrets.GEMINI_API_KEY != '' && (
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        ) ||
+        (
+          github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          startsWith(github.event.comment.body, '/gemini-review') &&
+          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+        )
       )
     runs-on: ubuntu-latest
     permissions:
@@ -52,16 +54,13 @@ jobs:
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # gemini-2.0-flash is free-tier on AI Studio; sufficient for code review.
           gemini_model: "gemini-2.0-flash"
           language: "English"
-          # Custom instructions live in .github/review-instruction-additions.md
-          # and are automatically picked up by the action.
 
   # ── Issue Triage ────────────────────────────────────────────────────────────
   triage:
     name: Gemini issue triage
-    if: github.event_name == 'issues'
+    if: secrets.GEMINI_API_KEY != '' && github.event_name == 'issues'
     runs-on: ubuntu-latest
     permissions:
       contents: read
