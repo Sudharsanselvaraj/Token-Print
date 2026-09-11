@@ -37,9 +37,21 @@ jobs:
 
       - name: Run Gemini PR review
         id: gemini
+        continue-on-error: true
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         if: env.GEMINI_API_KEY != ''
+        uses: derailed-dash/gemini-review-action@v1
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          language: "English"
+
+      - name: Retry Gemini PR review on transient API error
+        id: gemini_retry
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        if: env.GEMINI_API_KEY != '' && steps.gemini.outcome == 'failure'
         uses: derailed-dash/gemini-review-action@v1
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
