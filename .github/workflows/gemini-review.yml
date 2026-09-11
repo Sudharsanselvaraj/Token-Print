@@ -48,6 +48,7 @@ jobs:
 
       - name: Run Gemini PR review
         id: gemini
+        if: ${{ secrets.GEMINI_API_KEY != '' }}
         uses: derailed-dash/gemini-review-action@v1
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
@@ -73,6 +74,21 @@ jobs:
               : (context.payload.issue ? context.payload.issue.number : null);
 
             if (!prNumber) return;
+
+            const hasKey = '${{ secrets.GEMINI_API_KEY }}' !== '';
+
+            if (!hasKey) {
+              await github.rest.repos.createCommitStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha: prSha,
+                state: 'success',
+                context: 'Gemini PR Quality Gate',
+                description: 'Gemini Quality Gate: Skipped for automated Dependabot/fork PR',
+              });
+              console.log(`Commit status set to success (skipped - no secret) for SHA ${prSha}`);
+              return;
+            }
 
             // Fetch recent comments on the PR to find Gemini's review verdict
             const { data: comments } = await github.rest.issues.listComments({
