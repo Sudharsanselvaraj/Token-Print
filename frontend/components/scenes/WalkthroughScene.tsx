@@ -80,26 +80,6 @@ export default function WalkthroughScene() {
   const ch = CHAPTERS[Math.min(chapterIdx, CHAPTERS.length - 1)];
   const nLayers = archMeta?.num_layers ?? 24;
   const [hoveredLayer, setHoveredLayer] = useState<number | null>(null);
-
-  // Gate on data — never render an empty canvas or placeholders.
-  if (!data) {
-    return (
-      <Billboard>
-        <Text
-          fontSize={0.9}
-          color="#5b678c"
-          anchorX="center"
-          anchorY="middle"
-          maxWidth={14}
-          textAlign="center"
-        >
-          {loading
-            ? "Running forward pass…\n(loading real data)"
-            : "No data yet.\nClick a chapter to load the example."}
-        </Text>
-      </Billboard>
-    );
-  }
   const [hoveredKind, setHoveredKind] = useState<OpKind | null>(null);
 
   const { camera } = useThree();
@@ -165,6 +145,26 @@ export default function WalkthroughScene() {
       tweenRef.current?.kill();
     };
   }, [framing, camera, controls]);
+
+  // Gate on data — never render an empty canvas or placeholders.
+  if (!data) {
+    return (
+      <Billboard>
+        <Text
+          fontSize={0.9}
+          color="#5b678c"
+          anchorX="center"
+          anchorY="middle"
+          maxWidth={14}
+          textAlign="center"
+        >
+          {loading
+            ? "Running forward pass…\n(loading real data)"
+            : "No data yet.\nClick a chapter to load the example."}
+        </Text>
+      </Billboard>
+    );
+  }
 
   const hoverProps = {
     hoveredLayer,
