@@ -14,7 +14,7 @@ jobs:
   welcome:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/first-interaction@v1
+      - uses: actions/first-interaction@v3
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           issue-message: "Welcome to **TokenPrint**! 🎉 Thank you for opening your first issue. Please make sure to check out our [CONTRIBUTING.md](https://github.com/Sudharsanselvaraj/Token-Print/blob/main/CONTRIBUTING.md) for guidelines."
