@@ -1,0 +1,57 @@
+name: "📚 Sync Docs to GitHub Wiki"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  wiki-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync docs/ to Wiki
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WIKI_REPO: "${{ github.repository }}.wiki.git"
+        run: |
+          echo "Setting up git user..."
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          WIKI_DIR=$(mktemp -d)
+          WIKI_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${WIKI_REPO}"
+
+          echo "Cloning wiki repo..."
+          if ! git clone "$WIKI_URL" "$WIKI_DIR"; then
+            echo "⚠️ Warning: Could not clone GitHub Wiki repo ($WIKI_REPO). The Wiki may not be initialized yet."
+            echo "To fix: Go to Settings -> Options -> Features -> Enable Wiki, and create the home page."
+            exit 0
+          fi
+
+          if [ ! -d "docs" ]; then
+            echo "No docs directory found to sync."
+            exit 0
+          fi
+
+          echo "Copying docs/* to wiki repo..."
+          cp -R docs/* "$WIKI_DIR/"
+
+          cd "$WIKI_DIR"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes in docs to sync to wiki."
+            exit 0
+          fi
+
+          git add .
+          git commit -m "docs: sync updates from docs/ [skip ci]"
+          git push origin HEAD
+
+          echo "Wiki sync completed successfully!"
