@@ -28,7 +28,6 @@ if hasattr(sys.stderr, "reconfigure"):
 
 import torch
 import torch.nn.functional as F
-
 from app.ablation import ActivationPatch
 from app.model import ModelEngine
 from app.reduce import causal_chunk_scores
@@ -210,7 +209,7 @@ def run_knockout_experiment(
         p_val = res.get("patched_prob", 0.0)
         drop = res.get("causal_effect", 0.0)
         rel = res.get("relative_effect", 0.0)
-        bar = "#" * int(round(rel * 20))
+        bar = "#" * round(rel * 20)
         print(f"{cid:<10} | {span_str:<10} | {p_val:<10.4f} | {drop:<10.4f} | {rel * 100:<9.1f}% | {bar}")
 
     print("-" * 78)
@@ -258,8 +257,7 @@ def run_restoration_experiment(
 
     patched_probs = {}
 
-    for cid in chunk_spans_corrupted:
-        tgt_span = chunk_spans_corrupted[cid]
+    for cid, tgt_span in chunk_spans_corrupted.items():
         src_span = chunk_spans_clean.get(cid, tgt_span)
 
         patch = ActivationPatch(
@@ -292,7 +290,7 @@ def run_restoration_experiment(
         p_val = res.get("patched_prob", 0.0)
         rec = res.get("causal_effect", 0.0)
         rel = res.get("relative_effect", 0.0)
-        bar = "=" * int(round(rel * 20))
+        bar = "=" * round(rel * 20)
         print(f"{cid:<10} | {span_str:<10} | {p_val:<10.4f} | {rec:<10.4f} | {rel * 100:<9.1f}% | {bar}")
 
     print("-" * 78)
