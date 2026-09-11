@@ -72,10 +72,10 @@ def _resolve_gguf(path: str) -> str:
     if not path or not isinstance(path, str):
         raise HTTPException(status_code=400, detail="Invalid GGUF path.")
     safe_name = os.path.basename(path)
-    allowed_files = {p.name for p in GGUF_DIR.iterdir() if p.is_file()}
-    if safe_name not in allowed_files:
+    valid_map = {p.name: p.resolve() for p in GGUF_DIR.iterdir() if p.is_file()}
+    if safe_name not in valid_map:
         raise HTTPException(status_code=404, detail="GGUF file not found in data/gguf.")
-    return str((GGUF_DIR / safe_name).resolve())
+    return str(valid_map[safe_name])
 
 
 def _gguf_engine_for(path: str) -> GGUFEngine:
@@ -550,7 +550,7 @@ async def ws_generate(ws: WebSocket) -> None:
                 len(recorder._frames),
                 safe_prompt,
             )
-        _res = await worker_task
+        await worker_task
         try:
             await ws.close()  # graceful close frame after the stream ends
         except RuntimeError:
