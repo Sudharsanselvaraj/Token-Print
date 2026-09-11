@@ -31,6 +31,6 @@
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.171.0",
     "puppeteer-core": "^23.11.1",
-    "typescript": "^5.7.0"
+    "typescript": "^7.0.2"
   }
 }
