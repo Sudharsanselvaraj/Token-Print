@@ -11,25 +11,25 @@
     "test:visual": "playwright test"
   },
   "dependencies": {
-    "@react-three/drei": "^10.0.0",
-    "@react-three/fiber": "^9.0.0",
-    "@react-three/postprocessing": "^3.0.4",
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
+    "@react-three/postprocessing": "^3.1.1",
     "@types/katex": "^0.16.8",
     "framer-motion": "^11.15.0",
     "gsap": "^3.12.5",
-    "katex": "^0.17.0",
+    "katex": "^0.18.7",
     "next": "^15.1.6",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "three": "^0.171.0",
-    "zustand": "^5.0.2"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "three": "^0.185.1",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",
     "@types/node": "^22.10.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@types/three": "^0.171.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@types/three": "^0.185.4",
     "puppeteer-core": "^23.11.1",
     "typescript": "^5.7.0"
   }
