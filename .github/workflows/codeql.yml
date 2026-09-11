@@ -1,0 +1,47 @@
+name: "CodeQL Security Analysis"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly full scan — every Sunday at 03:00 UTC.
+    - cron: "0 3 * * 0"
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # javascript-typescript covers the Next.js/React frontend.
+        # python covers the FastAPI backend.
+        language: ["javascript-typescript", "python"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # Use the default query suite (security-and-quality).
+          queries: security-and-quality
+
+      # For JavaScript/TypeScript, autobuild compiles the project so CodeQL can
+      # trace the build. For Python (interpreted), autobuild is a no-op but
+      # CodeQL still extracts all .py files.
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
