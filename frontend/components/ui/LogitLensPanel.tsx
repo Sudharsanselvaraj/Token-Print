@@ -1,7 +1,7 @@
 "use client";
 
+import { useState } from "react";
 import { useStore } from "@/lib/store";
-import type { LogitLensEntry } from "@/lib/types";
 
 function tokenBg(tokenId: number, prob: number): string {
   // Deterministic hue from token id
@@ -12,17 +12,44 @@ function tokenBg(tokenId: number, prob: number): string {
 
 export default function LogitLensPanel() {
   const data = useStore((s) => s.data);
+  const [collapsed, setCollapsed] = useState(false);
 
   if (!data?.logit_lens?.length) return null;
 
   const { logit_lens, tokens } = data;
   const numPositions = logit_lens[0].length;
 
+  if (collapsed) {
+    return (
+      <div className="logit-lens-panel-collapsed">
+        <button
+          className="ll-toggle-btn"
+          onClick={() => setCollapsed(false)}
+          title="Expand Logit Lens (layer × position predictions)"
+        >
+          <span>📊 Show Logit Lens</span>
+          <span className="ll-badge">{logit_lens.length} layers</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="logit-lens-panel">
-      <div className="ll-title">Logit Lens</div>
-      <div className="ll-subtitle">
-        Top-1 predicted token at each layer × position
+      <div className="ll-header-bar">
+        <div>
+          <div className="ll-title">Logit Lens</div>
+          <div className="ll-subtitle">
+            Top-1 predicted token at each layer × position
+          </div>
+        </div>
+        <button
+          className="ll-close-btn"
+          onClick={() => setCollapsed(true)}
+          title="Minimize Logit Lens view to reveal full 3D canvas"
+        >
+          ✕ Hide
+        </button>
       </div>
       <div className="ll-grid" style={{ "--cols": numPositions } as React.CSSProperties}>
         <div className="ll-row ll-header">
