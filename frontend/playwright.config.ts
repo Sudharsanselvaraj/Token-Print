@@ -36,5 +36,11 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+    {
+      // Pure-logic unit tests in tests/unit/ — no browser, backend or dev
+      // server needed:  npx playwright test --project=unit
+      name: "unit",
+      testDir: "./tests/unit",
+    },
   ],
 });

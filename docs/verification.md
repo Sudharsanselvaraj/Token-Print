@@ -140,10 +140,11 @@ the rule is enforced by the build rather than by discipline.
 Honesty requires listing where the claim does not yet fully hold. These are
 tracked bugs, not accepted behaviour:
 
-- **`TimingReadout`** derives a proxy from PCA-space hidden-state magnitudes and
-  labels it in milliseconds. A PCA norm is dimensionless and unrelated to elapsed
-  time. Real per-layer timings need `perf_counter()` deltas on the streamed
-  frames — [#18](https://github.com/Sudharsanselvaraj/Token-Print/issues/18).
+- **`TimingReadout`** shows real per-layer `perf_counter()` deltas (`REAL MS`), but
+  no device synchronize is issued, so on MPS/CUDA they are host-side times. Traces
+  without timings fall back to mean |activation| per layer, badged
+  `PROXY · NOT MS` and never shown in milliseconds —
+  [#101](https://github.com/Sudharsanselvaraj/Token-Print/issues/101).
 - **`ActivationPatchCompare`** now shows a real logit-lens trajectory, but the
   panel is still titled "Activation Patching" — a stronger causal claim than the
   experiment performed — [#75](https://github.com/Sudharsanselvaraj/Token-Print/issues/75).
