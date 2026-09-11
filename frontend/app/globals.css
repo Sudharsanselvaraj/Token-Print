@@ -2254,6 +2254,12 @@ code {
   color: var(--muted);
   margin-bottom: 6px;
 }
+.tp-note {
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--muted);
+  margin: 4px 0 6px;
+}
 .tp-bars {
   display: flex;
   flex-direction: column;
