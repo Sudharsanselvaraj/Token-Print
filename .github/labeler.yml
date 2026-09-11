@@ -1,0 +1,24 @@
+backend:
+  - changed-files:
+      - any-glob-to-any-file: "backend/**"
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file: "frontend/**"
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "*.md"
+          - "**/*.md"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: ".github/**"
+
+3d-scene:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "frontend/components/scenes/**"
+          - "frontend/components/three/**"

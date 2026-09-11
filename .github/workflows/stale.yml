@@ -1,0 +1,29 @@
+name: "🧹 Stale Issues & PRs Cleanup"
+
+on:
+  schedule:
+    # Run daily at 01:00 UTC
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-issue-stale: 60
+          days-before-issue-close: 14
+          stale-issue-message: "This issue has been automatically marked as stale because it has not had recent activity in the past 60 days. It will be closed in 14 days if no further activity occurs. Thank you for your contributions!"
+          stale-issue-label: "stale"
+          exempt-issue-labels: "pinned,security,feature-request,in-progress"
+
+          days-before-pr-stale: 45
+          days-before-pr-close: 14
+          stale-pr-message: "This pull request has been automatically marked as stale because it has not had recent activity in the past 45 days. It will be closed in 14 days if no further activity occurs."
+          stale-pr-label: "stale"
+          exempt-pr-labels: "pinned,security,feature-request,in-progress"
