@@ -284,3 +284,37 @@ export async function patchAnalyze(
   }
   return res.json();
 }
+
+// --------------------------------------------------------------------------- //
+// Hugging Face Discovery & Capability Inspection
+// --------------------------------------------------------------------------- //
+
+export async function fetchHFCurated(): Promise<{ models: any[] }> {
+  const res = await fetch(`${API_URL}/api/hf/curated`);
+  if (!res.ok) return { models: [] };
+  return res.json();
+}
+
+export async function searchHFModels(query: string, limit = 10): Promise<any> {
+  const url = `${API_URL}/api/hf/search?query=${encodeURIComponent(query)}&limit=${limit}`;
+  const res = await fetch(url);
+  if (!res.ok) return { query, limit, models: [] };
+  return res.json();
+}
+
+export async function inspectHFModel(modelId: string): Promise<any> {
+  const url = `${API_URL}/api/hf/inspect?model_id=${encodeURIComponent(modelId)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    let msg = `HTTP error ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) msg = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail);
+    } catch {
+      /* fallback */
+    }
+    throw new Error(msg);
+  }
+  return res.json();
+}
+

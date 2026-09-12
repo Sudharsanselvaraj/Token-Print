@@ -95,9 +95,9 @@ function NormWaist({
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[NECK * 0.85, 0.025, 8, 20]} />
         <meshBasicMaterial
-          color="#aaccff"
+          color="#ffffff"
           transparent
-          opacity={active ? 0.7 : hovered ? 0.5 : 0.2}
+          opacity={active ? 0.8 : hovered ? 0.5 : 0.25}
         />
       </mesh>
     </group>
@@ -105,7 +105,7 @@ function NormWaist({
 }
 
 /** SwiGLU MLP: gate+up input prongs → wide belly (ffn) → down-projection.
- *  The gate prong (orange) and up prong (yellow) combine at a junction node,
+ *  The gate prong and up prong combine at a junction node,
  *  representing the element-wise gating that distinguishes SwiGLU from plain ReLU. */
 function MlpFunnel({
   y,
@@ -133,9 +133,8 @@ function MlpFunnel({
   const sc = hovered ? 1.12 : 1;
   return (
     <group position={[0, y, 0]} scale={sc}>
-      {/* Gate prong (warm orange, left) — Swish activation.
-          Up prong (gold, right) — linear projection.
-          SwiGLU = Swish(gate(x)) × up(x), hence always paired. */}
+      {/* Gate prong (left) — Swish activation.
+          Up prong (right) — linear projection. */}
       <mesh
         position={[-0.28, 0.62, 0]}
         onPointerEnter={onPointerEnter}
@@ -144,27 +143,27 @@ function MlpFunnel({
       >
         <cylinderGeometry args={[0.14, 0.14, 0.5, 12]} />
         <meshStandardMaterial
-          color="#e88530"
-          emissive="#e88530"
+          color="#d4d4d4"
+          emissive="#d4d4d4"
           emissiveIntensity={active || hovered ? intensity : 0.08}
-          roughness={0.5}
-          metalness={0.24}
+          roughness={0.4}
+          metalness={0.3}
         />
       </mesh>
       <mesh position={[0.28, 0.62, 0]}>
         <cylinderGeometry args={[0.14, 0.14, 0.5, 12]} />
         <meshStandardMaterial
-          color="#d4a030"
-          emissive="#d4a030"
+          color="#a3a3a3"
+          emissive="#a3a3a3"
           emissiveIntensity={active || hovered ? intensity : 0.08}
-          roughness={0.5}
-          metalness={0.24}
+          roughness={0.4}
+          metalness={0.3}
         />
       </mesh>
       {/* Junction: element-wise multiplication of gate × up */}
       <mesh position={[0, 0.38, 0]}>
         <sphereGeometry args={[0.1, 8, 8]} />
-        <meshBasicMaterial color="#ffcc66" transparent opacity={active ? 0.9 : 0.3} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={active ? 0.9 : 0.4} />
       </mesh>
       <mesh position={[0, 0.16, 0]}>
         <cylinderGeometry args={[radius, 0.28, 0.5, 32]} />
@@ -378,16 +377,16 @@ export default function TransformerStack({
                 <group key={`res-${side}`}>
                   <mesh position={[0.18, yB, 0]}>
                     <sphereGeometry args={[0.06, 8, 8]} />
-                    <meshBasicMaterial color="#5ab87a" transparent opacity={isActive ? 0.8 : 0.3} />
+                    <meshBasicMaterial color="#ffffff" transparent opacity={isActive ? 0.9 : 0.35} />
                   </mesh>
                   <mesh position={[-0.18, yM, 0]}>
                     <sphereGeometry args={[0.06, 8, 8]} />
-                    <meshBasicMaterial color="#5a8ab8" transparent opacity={isActive ? 0.8 : 0.3} />
+                    <meshBasicMaterial color="#d4d4d4" transparent opacity={isActive ? 0.8 : 0.3} />
                   </mesh>
                   {/* Subtle connecting arc from merge back toward the residual axis. */}
                   <mesh position={[-0.1, yM, 0]}>
                     <boxGeometry args={[0.16, 0.02, 0.02]} />
-                    <meshBasicMaterial color="#5a8ab8" transparent opacity={isActive ? 0.5 : 0.15} />
+                    <meshBasicMaterial color="#a3a3a3" transparent opacity={isActive ? 0.6 : 0.2} />
                   </mesh>
                 </group>
               );

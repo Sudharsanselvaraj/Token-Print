@@ -7,40 +7,36 @@ import { layerAnchors, anchorPosFor } from "@/lib/playback";
 import { CHAPTERS } from "@/lib/walkthrough";
 import { sonifyLayerTransition, sonifyFrame } from "@/lib/sonification";
 
-// Pacing is NORMALIZED, not derived from real per-op/per-token compute time
-// (the trace records no timing, and fabricating smoothing data is out of scope).
-// Every layer step takes the same wall-clock time, scaled only by playSpeed.
-const GEN_LAYER_MS = 480; // one "layer by layer" step at 1× speed
-const GEN_FRAME_MS = 900; // one frame step (no-op-catalog trace) at 1×
+// Pacing is NORMALIZED, not derived from real per-op/per-token compute time.
+// Every step takes the same wall-clock time, scaled only by playSpeed.
+const GEN_LAYER_MS  = 480;  // one "layer by layer" step at 1× speed
+const GEN_FRAME_MS  = 900;  // one frame step (no-op-catalog trace) at 1×
 const WT_CHAPTER_MS = 4200; // one chapter at 1× speed (reading pace)
+const ARCH_OP_MS    = 480;  // one architecture-op step at 1× speed
 
 /**
- * Headless autoplay engine for the two modes that have a real temporal
- * sequence. Generation plays a recorded trace token by token, layer by layer;
- * Walkthrough auto-advances chapters. Architecture mode has no timeline and is
- * untouched. Pausing (opPlaying / wtPlaying false) tears down the interval, so
- * playback — and, because the follow camera only tracks the active layer, the
- * camera too — freezes at the exact current state.
+ * Headless autoplay engine for all temporal sequences:
+ *  - Generation mode: recorded trace token-by-token, layer-by-layer.
+ *  - Walkthrough mode: auto-advances chapters.
+ *  - Explorer / Architecture mode: steps through canonical op graph (arch3d).
  */
 export default function PlaybackEngine() {
-  const mode = useStore((s) => s.mode);
-  const opPlaying = useStore((s) => s.opPlaying);
-  const wtPlaying = useStore((s) => s.wtPlaying);
-  const playSpeed = useStore((s) => s.playSpeed);
-  const framesLen = useStore((s) => s.genFrames.length);
+  const mode        = useStore((s) => s.mode);
+  const opPlaying   = useStore((s) => s.opPlaying);
+  const wtPlaying   = useStore((s) => s.wtPlaying);
+  const playSpeed   = useStore((s) => s.playSpeed);
+  const framesLen   = useStore((s) => s.genFrames.length);
   const autoStarted = useStore((s) => s.autoStarted);
 
-  // Autoplay by default: the moment a real trace exists, start playing it
-  // end-to-end. Only once per generation (autoStarted latches until the next run).
+  // Architecture-mode playback state
+  const arch3dPlaying = useStore((s) => s.arch3dPlaying);
+  const arch3dSpeed   = useStore((s) => s.arch3dSpeed);
+
+  // Autoplay by default: the moment a real trace exists, start playing it.
   useEffect(() => {
     if (mode !== "generation") return;
     if (framesLen > 0 && !autoStarted) {
-      useStore.setState({
-        opPlaying: true,
-        autoStarted: true,
-        opIndex: 0,
-        playIndex: 0,
-      });
+      useStore.setState({ opPlaying: true, autoStarted: true, opIndex: 0, playIndex: 0 });
     }
   }, [mode, framesLen, autoStarted]);
 
@@ -60,9 +56,7 @@ export default function PlaybackEngine() {
     return () => clearInterval(id);
   }, [mode, opPlaying, playSpeed]);
 
-  // Generation (with op_catalog): advance one layer per tick; roll to the next
-  // token's forward pass at the end of the stack; stop at the end of the trace.
-  // Pause on breakpoints before advancing to a new op.
+  // Generation (with op_catalog): advance one layer per tick; roll to next token at end.
   useEffect(() => {
     if (mode !== "generation" || !opPlaying) return;
     const id = setInterval(() => {
@@ -76,7 +70,7 @@ export default function PlaybackEngine() {
       if (pos < anchors.length - 1) {
         nextOp = anchors[pos + 1];
       } else if (s.playIndex < s.genFrames.length - 1) {
-        nextOp = 0; // will roll playIndex too
+        nextOp = 0;
       }
 
       if (nextOp != null && s.breakpoints.has(nextOp)) {
@@ -89,29 +83,27 @@ export default function PlaybackEngine() {
       } else if (s.playIndex < s.genFrames.length - 1) {
         useStore.setState({ playIndex: s.playIndex + 1, opIndex: 0 });
       } else if (s.genStatus !== "streaming") {
-        useStore.setState({ opPlaying: false }); // end of trace
+        useStore.setState({ opPlaying: false });
       }
 
-      // Sonification: play layer-advance tone
       const numLayers = s.genMeta?.num_layers ?? 24;
       sonifyLayerTransition(s.opIndex, numLayers);
 
-      // When a full frame is ready, play a richer chord from frame stats
       const frame = s.genFrames[s.playIndex];
       if (frame) {
         const topProbs = frame.topk?.map((t) => t.prob) ?? [];
         const maxP = Math.max(...topProbs, 0.001);
-        // Entropy approximation from top-k probs
-        const entropyNorm = topProbs.reduce((acc, p) => acc - (p / maxP) * Math.log2(p / maxP + 1e-9), 0) / 4;
+        const entropyNorm = topProbs.reduce(
+          (acc, p) => acc - (p / maxP) * Math.log2(p / maxP + 1e-9), 0
+        ) / 4;
         const norm = frame.layer_stats?.[0] ?? 10;
-        const attnSpread = 0.5; // default; real spread needs per-head data
-        sonifyFrame(Math.min(1, entropyNorm), norm, attnSpread);
+        sonifyFrame(Math.min(1, entropyNorm), norm, 0.5);
       }
     }, Math.max(60, GEN_LAYER_MS / playSpeed));
     return () => clearInterval(id);
   }, [mode, opPlaying, playSpeed]);
 
-  // Walkthrough: auto-advance chapters. Never auto-advance before data loads.
+  // Walkthrough: auto-advance chapters.
   useEffect(() => {
     if (mode !== "walkthrough" || !wtPlaying) return;
     const dataReady = !!useStore.getState().data;
@@ -126,6 +118,25 @@ export default function PlaybackEngine() {
     }, Math.max(600, WT_CHAPTER_MS / playSpeed));
     return () => clearInterval(id);
   }, [mode, wtPlaying, playSpeed]);
+
+  // ── Explorer / Architecture mode: canonical op graph autoplay ─────────────
+  // Independent of generation playback. Works in explorer mode even without
+  // a loaded trace. Steps through all 435 ops (embed → L0×18 → … → lm_head).
+  useEffect(() => {
+    if (!arch3dPlaying) return;
+    const interval = Math.max(60, ARCH_OP_MS / arch3dSpeed);
+    const id = setInterval(() => {
+      const s = useStore.getState();
+      if (!s.arch3dPlaying) return;
+      if (s.arch3dOpId === "op_lm_head") {
+        // Reached the end — stop and leave on lm_head
+        useStore.setState({ arch3dPlaying: false });
+        return;
+      }
+      s.stepArch3dOp(1);
+    }, interval);
+    return () => clearInterval(id);
+  }, [arch3dPlaying, arch3dSpeed]);
 
   return null;
 }

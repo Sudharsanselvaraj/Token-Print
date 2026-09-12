@@ -154,3 +154,14 @@ tracked bugs, not accepted behaviour:
 The guard catches fabricated *values*. It cannot catch a real value under a wrong
 *label*, which is the remaining class of error above — those need a periodic
 sweep of every panel title against what it actually computes.
+
+## 3D Interactivity & Fidelity Overhaul Provenance Tags
+
+| Visual Element / Component | Provenance Tag | Source / Derivation Method |
+| --- | --- | --- |
+| `DataWire` 3D Splines | `DERIVED` | Thickness and opacity mapped deterministically from real PyTorch attention weights |
+| Per-Cell Wireframe Grid (`SpatialMatrixPlane`) | `REAL` / `DERIVED` | Real `rows × cols` tensor shapes and real submatrix activation values |
+| `MatrixMultiplyInspector` | `DERIVED` | Live animated matrix multiplication (`X W = Y`) using real model tensor dimensions |
+| `ConceptPopup` Educational Tooltips | `CONCEPTUAL` | Static hand-written educational text explaining RoPE, RMSNorm, SwiGLU, and GQA |
+| PyTorch Backend Sampling (`temperature`, `top_p`) | `REAL` | Live `torch.multinomial` sampling over real logits in PyTorch autoregressive loop |
+

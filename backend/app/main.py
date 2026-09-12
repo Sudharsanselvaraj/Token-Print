@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -299,22 +300,213 @@ async def gguf_open(payload: dict = ...) -> dict:
     resolved = _resolve_gguf(path)
     if resolved not in _gguf_engines:
         _gguf_engines[resolved] = GGUFEngine(resolved)
-    meta = _gguf_engines[resolved].metadata()
+    try:
+        meta = _gguf_engines[resolved].metadata()
+    except (RuntimeError, ModuleNotFoundError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {"ok": True, **meta}
+
+
+from app.inference.adapters import select_model_adapter
+from app.inference.capabilities import (
+    BackendCapabilities,
+    RuntimeCapabilities,
+    calculate_effective_capabilities,
+)
+from app.inference.registry import registry as backend_registry
+from app.schemas import HFInspectResponse, HFModelMeta, HFSearchResponse
+
+# Simple in-memory cache for HF API responses with timestamp
+_hf_search_cache: dict[str, tuple[float, HFSearchResponse]] = {}
+_hf_inspect_cache: dict[str, tuple[float, HFInspectResponse]] = {}
+_CACHE_TTL_SEARCH = 60.0  # seconds
+_CACHE_TTL_INSPECT = 300.0  # seconds
+
+
+@app.get("/api/hf/curated")
+@app.get("/api/hf/curated/")
+def hf_curated() -> dict:
+    """Return config-driven list of curated Hugging Face models."""
+    import yaml
+    config_path = Path(__file__).resolve().parent / "config" / "curated_models.yaml"
+    if config_path.exists():
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+            return data or {"models": []}
+    return {"models": []}
+
+
+@app.get("/api/hf/search", response_model=HFSearchResponse)
+@app.get("/api/hf/search/", response_model=HFSearchResponse)
+def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
+    """Search Hugging Face Hub for text generation models with caching and safety bounds."""
+    query = (query or "").strip()[:200]  # Sanitize and cap length
+    limit = max(1, min(int(limit), 25))  # Bound limit between 1 and 25
+
+    cache_key = f"{query}:{limit}"
+    now = time.time()
+    if cache_key in _hf_search_cache:
+        ts, cached_resp = _hf_search_cache[cache_key]
+        if now - ts < _CACHE_TTL_SEARCH:
+            return cached_resp
+
+    import urllib.error
+    import urllib.parse
+
+    url = f"https://huggingface.co/api/models?limit={limit}&filter=text-generation"
+    if query:
+        url += f"&search={urllib.parse.quote(query)}"
+
+    try:
+        import json
+        import urllib.request
+
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "TokenPrint/0.1.0 (https://github.com/Sudharsanselvaraj/Token-Print)"},
+        )
+        with urllib.request.urlopen(req, timeout=10.0) as resp:
+            if resp.status != 200:
+                raise HTTPException(status_code=502, detail="Failed to fetch search results from Hugging Face Hub.")
+            raw_data = json.loads(resp.read(1 << 20).decode("utf-8"))  # Limit response size to 1MB
+            
+            models = []
+            for item in raw_data:
+                model_id = str(item.get("id") or item.get("modelId") or "")
+                if not model_id:
+                    continue
+                models.append(
+                    HFModelMeta(
+                        id=model_id,
+                        author=item.get("author", model_id.split("/")[0] if "/" in model_id else ""),
+                        downloads=int(item.get("downloads", 0)),
+                        likes=int(item.get("likes", 0)),
+                        tags=item.get("tags", [])[:10],
+                        pipeline_tag=str(item.get("pipeline_tag", "")),
+                        last_modified=str(item.get("lastModified", "")),
+                        private=bool(item.get("private", False)),
+                    )
+                )
+            result = HFSearchResponse(query=query, limit=limit, models=models)
+            _hf_search_cache[cache_key] = (now, result)
+            return result
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        logger.warning(f"HF Hub search failed for '{query}': {exc}")
+        # Return empty search result fallback on error or network offline
+        return HFSearchResponse(query=query, limit=limit, models=[])
+
+
+@app.get("/api/hf/inspect", response_model=HFInspectResponse)
+@app.get("/api/hf/inspect/", response_model=HFInspectResponse)
+def hf_inspect(model_id: str) -> HFInspectResponse:
+    """Fetch HF model config.json and compute deterministic EffectiveCapabilities matrix without downloading model weights."""
+    model_id = (model_id or "").strip()
+    if not model_id or ".." in model_id or "/" not in model_id and not model_id.isalnum():
+        raise HTTPException(status_code=400, detail="Invalid Hugging Face model ID format.")
+
+    now = time.time()
+    if model_id in _hf_inspect_cache:
+        ts, cached_resp = _hf_inspect_cache[model_id]
+        if now - ts < _CACHE_TTL_INSPECT:
+            return cached_resp
+
+    try:
+        import json
+        import urllib.request
+
+        # 1. Fetch commit revision SHA metadata
+        meta_url = f"https://huggingface.co/api/models/{model_id}"
+        meta_req = urllib.request.Request(
+            meta_url,
+            headers={"User-Agent": "TokenPrint/0.1.0"},
+        )
+        revision = "main"
+        with urllib.request.urlopen(meta_req, timeout=10.0) as resp:
+            if resp.status == 200:
+                meta_json = json.loads(resp.read(1 << 20).decode("utf-8"))
+                revision = meta_json.get("sha") or meta_json.get("revision") or "main"
+
+        # 2. Fetch config.json
+        config_url = f"https://huggingface.co/{model_id}/raw/main/config.json"
+        cfg_req = urllib.request.Request(
+            config_url,
+            headers={"User-Agent": "TokenPrint/0.1.0"},
+        )
+        with urllib.request.urlopen(cfg_req, timeout=10.0) as resp:
+            if resp.status != 200:
+                raise HTTPException(status_code=404, detail=f"Config for model '{model_id}' not found on Hugging Face Hub.")
+            config_json = json.loads(resp.read(1 << 20).decode("utf-8"))
+
+        # 3. Select deterministic adapter & compute capabilities
+        adapter = select_model_adapter(config_json)
+        mod_caps = adapter.get_capabilities(config_json)
+        backend_caps = BackendCapabilities(
+            backend_name="hf_local",
+            can_capture_attention=True,
+            can_capture_hidden_states=True,
+            can_ablate=True,
+            can_patch=True,
+        )
+        runtime_caps = RuntimeCapabilities(device="cpu")
+        eff_caps = calculate_effective_capabilities(mod_caps, backend_caps, runtime_caps)
+
+        result = HFInspectResponse(
+            model_id=model_id,
+            revision=revision,
+            architecture=mod_caps.architecture,
+            model_type=str(config_json.get("model_type", "")),
+            parameter_count=mod_caps.parameter_count,
+            max_context_length=mod_caps.max_context_length,
+            estimated_vram_gb=mod_caps.vram_estimate.estimated_vram_gb if mod_caps.vram_estimate else 2.0,
+            estimation_basis=mod_caps.vram_estimate.estimation_basis if mod_caps.vram_estimate else "",
+            compatibility_level=eff_caps.compatibility_level,
+            compatibility_reason=eff_caps.compatibility_reason,
+            capabilities=eff_caps.model_dump(),
+        )
+        _hf_inspect_cache[model_id] = (now, result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"HF inspection error for '{model_id}': {exc}")
+        raise HTTPException(status_code=500, detail=f"Failed to inspect model '{model_id}': {exc}") from exc
+
+
+@app.get("/api/model/capabilities")
+@app.get("/api/model/capabilities/")
+async def model_capabilities() -> dict:
+    """Return effective capabilities of currently loaded model."""
+    eng = _require_engine()
+    from app.inference.adapters import select_model_adapter
+    config_dict = {
+        "architectures": [eng.model.__class__.__name__] if getattr(eng, "model", None) else ["Qwen2ForCausalLM"],
+        "model_type": eng.model_type or "qwen2",
+        "num_hidden_layers": eng.num_layers,
+        "hidden_size": eng.hidden_size,
+    }
+    adapter = select_model_adapter(config_dict)
+    mod_caps = adapter.get_capabilities(config_dict)
+    backend_caps = BackendCapabilities(backend_name="hf_local")
+    runtime_caps = RuntimeCapabilities(device=eng.device)
+    eff = calculate_effective_capabilities(mod_caps, backend_caps, runtime_caps)
+    return eff.model_dump()
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
-    eng = _require_engine()
+    _require_engine()
     try:
-        # The forward pass is CPU/GPU-bound and holds an internal lock; run it off
-        # the event loop so the server stays responsive.
+        # Route analyze call through InferenceBackendRegistry
         import anyio
 
-        data = await anyio.to_thread.run_sync(eng.analyze, req.sentence)
+        backend = backend_registry.get_backend("hf_local")
+        resp = await anyio.to_thread.run_sync(
+            asyncio.run, backend.analyze(req.sentence)
+        )
     except TokenizedTooLong as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return AnalyzeResponse(**data)
+    return resp
+
 
 
 @app.post("/analyze/image", response_model=AnalyzeResponse)
@@ -503,6 +695,9 @@ async def ws_generate(ws: WebSocket) -> None:
 
     max_new_tokens = req.get("max_new_tokens", 40)
     top_k = req.get("top_k", 10)
+    temperature = float(req.get("temperature", 1.0))
+    top_p = float(req.get("top_p", 1.0))
+    seed = req.get("seed") or None
     use_chat_template = bool(req.get("use_chat_template", True))
     include_catalog = bool(req.get("trace", False))
     record_trace = bool(req.get("record_trace", False))
@@ -534,6 +729,7 @@ async def ws_generate(ws: WebSocket) -> None:
                 frames = engine.generate_steps(
                     prompt, max_new_tokens, top_k, use_chat_template, include_catalog,
                     decoding_mode, window_size, draft_gamma, needle,
+                    temperature, top_p, seed,
                 )
             for frame in frames:
                 # Tee to the recorder for trace capture.

@@ -109,7 +109,7 @@ export default function GenerationPanel() {
 
       {showEquations && fk && (
         <div className="gp-formula">
-          {getFormula(family, fk).latex.map((l, i) => (
+          {(getFormula(family, fk)?.latex ?? []).map((l, i) => (
             <Formula key={i} latex={l} />
           ))}
         </div>

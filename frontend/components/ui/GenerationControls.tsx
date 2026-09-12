@@ -9,6 +9,8 @@ const DEFAULT_NEEDLE = "The secret color is mauve.";
 export default function GenerationControls() {
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [mode, setMode] = useState<"greedy" | "sliding_window" | "speculative">("greedy");
+  const [temperature, setTemperature] = useState(1.0);
+  const [topP, setTopP] = useState(1.0);
   const [windowSize, setWindowSize] = useState(512);
   const [draftGamma, setDraftGamma] = useState(4);
   const [needle, setNeedle] = useState(DEFAULT_NEEDLE);
@@ -33,6 +35,8 @@ export default function GenerationControls() {
             start(p, {
               decodingMode: isGGUF ? "greedy" : mode,
               gguf: isGGUF ? activeGguf : undefined,
+              temperature,
+              topP,
               windowSize,
               draftGamma,
               needle: mode === "greedy" ? undefined : needle.trim() || undefined,
@@ -75,6 +79,35 @@ export default function GenerationControls() {
               </span>
             )}
           </label>
+
+          <label className="footer-note" style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            Temp: {temperature.toFixed(1)}
+            <input
+              type="range"
+              min={0.0}
+              max={2.0}
+              step={0.1}
+              value={temperature}
+              onChange={(e) => setTemperature(parseFloat(e.target.value))}
+              disabled={streaming}
+              style={{ width: 64 }}
+            />
+          </label>
+
+          <label className="footer-note" style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            Top-P: {topP.toFixed(2)}
+            <input
+              type="range"
+              min={0.1}
+              max={1.0}
+              step={0.05}
+              value={topP}
+              onChange={(e) => setTopP(parseFloat(e.target.value))}
+              disabled={streaming}
+              style={{ width: 64 }}
+            />
+          </label>
+
           {!isGGUF && mode === "sliding_window" && (
             <label className="footer-note" style={{ display: "flex", gap: 4, alignItems: "center" }}>
               Window:

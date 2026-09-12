@@ -4,6 +4,7 @@ import { cueToken } from "../sound";
 import type { Mode, GenDone, GenMeta, TokenFrame, Trace } from "../types";
 import { wsGenerate } from "../ws";
 import { createArchitectureSlice } from "./architectureSlice";
+import { createArch3dSlice } from "./arch3dSlice";
 import { createGenerationSlice } from "./generationSlice";
 import { createTraceSlice } from "./traceSlice";
 import type { StoreState } from "./types";
@@ -20,6 +21,7 @@ export const useStore = create<StoreState>()((set, get, store) => ({
   ...createGenerationSlice(set, get, store),
   ...createTraceSlice(set, get, store),
   ...createUISlice(set, get, store),
+  ...createArch3dSlice(set, get, store),
 
   // This parses architecture data and changes the top-level UI mode, so it
   // intentionally lives above the slices rather than coupling them together.

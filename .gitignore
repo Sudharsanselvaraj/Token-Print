@@ -18,3 +18,9 @@ tools/node_modules
 
 # OS
 .DS_Store
+
+# Playwright artifacts (generated screenshots are platform-specific; baseline
+# seeding happens in CI, not locally)
+frontend/test-results/
+frontend/playwright-report/
+frontend/tests/visual/*-snapshots/

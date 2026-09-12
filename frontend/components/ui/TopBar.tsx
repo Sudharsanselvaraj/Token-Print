@@ -7,6 +7,7 @@ import type { Mode } from "@/lib/types";
 import { useState } from "react";
 import PluginManager from "./PluginManager";
 import ContributorDrawer from "./ContributorDrawer";
+import { HFModelPicker } from "./HFModelPicker";
 
 const MODES: { id: Mode; label: string }[] = [
   { id: "explorer", label: "Architecture" },
@@ -27,6 +28,7 @@ export default function TopBar() {
 
   const [pluginManagerOpen, setPluginManagerOpen] = useState(false);
   const [contributorDrawerOpen, setContributorDrawerOpen] = useState(false);
+  const [hfPickerOpen, setHfPickerOpen] = useState(false);
 
   const [copied, setCopied] = useState(false);
   const handleShare = () => {
@@ -73,52 +75,60 @@ export default function TopBar() {
               </span>
             ) : null}
             <span className="tstat">{arch?.tensor_count} tensors</span>
-          <span className="tstat accent">
-                {m.quantization ?? m.torch_dtype ?? ""}
-              </span>
-            </>
-          ) : (
-            <span className="tstat muted">loading model…</span>
-          )}
-          <button className="share-btn" onClick={handleShare} title="Copy snapshot URL">
-            {copied ? "Copied" : "Share"}
-          </button>
+            <span className="tstat accent">
+              {m.quantization ?? m.torch_dtype ?? ""}
+            </span>
+          </>
+        ) : (
+          <span className="tstat muted">loading model…</span>
+        )}
+        <button
+          className="chip-btn accent"
+          onClick={() => setHfPickerOpen(true)}
+          title="Search Hugging Face Hub & inspect model capabilities"
+        >
+          Explore HF Models
+        </button>
+        <button className="share-btn" onClick={handleShare} title="Copy snapshot URL">
+          {copied ? "Copied" : "Share"}
+        </button>
+        <button
+          className="chip-btn"
+          onClick={async () => {
+            const { generateHealthReport } = await import("@/lib/healthReport");
+            generateHealthReport(arch, data);
+          }}
+          title="Generate & download Model Health Report"
+        >
+          Report
+        </button>
+        <button
+          className="chip-btn"
+          onClick={() => setPluginManagerOpen(true)}
+          title="Manage TokenPrint extension plugins"
+        >
+          Plugins
+        </button>
+        <button
+          className="chip-btn"
+          onClick={() => setContributorDrawerOpen(true)}
+          title="Browse open issues & contribute to TokenPrint"
+        >
+          Contribute
+        </button>
+        {(mode === "explorer") && (
           <button
-            className="chip-btn"
-            onClick={async () => {
-              const { generateHealthReport } = await import("@/lib/healthReport");
-              generateHealthReport(arch, data);
-            }}
-            title="Generate & download Model Health Report"
+            className={"chip-btn" + (tileView ? " on" : "")}
+            onClick={() => setTileView(!tileView)}
+            title="Toggle tile grid view"
           >
-            Report
+            {tileView ? "3D" : "Grid"}
           </button>
-          <button
-            className="chip-btn"
-            onClick={() => setPluginManagerOpen(true)}
-            title="Manage TokenPrint extension plugins"
-          >
-            Plugins
-          </button>
-          <button
-            className="chip-btn"
-            onClick={() => setContributorDrawerOpen(true)}
-            title="Browse open issues & contribute to TokenPrint"
-          >
-            Contribute
-          </button>
-          {(mode === "explorer") && (
-            <button
-              className={"chip-btn" + (tileView ? " on" : "")}
-              onClick={() => setTileView(!tileView)}
-              title="Toggle tile grid view"
-            >
-              {tileView ? "3D" : "Grid"}
-            </button>
-          )}
-        </div>
-        <PluginManager open={pluginManagerOpen} onClose={() => setPluginManagerOpen(false)} />
-        <ContributorDrawer open={contributorDrawerOpen} onClose={() => setContributorDrawerOpen(false)} />
+        )}
+      </div>
+      <PluginManager open={pluginManagerOpen} onClose={() => setPluginManagerOpen(false)} />
+      <ContributorDrawer open={contributorDrawerOpen} onClose={() => setContributorDrawerOpen(false)} />
+      <HFModelPicker isOpen={hfPickerOpen} onClose={() => setHfPickerOpen(false)} />
     </div>
   );
 }

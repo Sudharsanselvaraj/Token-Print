@@ -22,6 +22,7 @@ export default function GenerationScene() {
   const archMeta = useStore((s) => s.arch?.metadata);
   const opIndex = useStore((s) => s.opIndex);
   const setOpIndex = useStore((s) => s.setOpIndex);
+  const enterInspectMode = useStore((s) => s.enterInspectMode);
   const followMode = useStore((s) => s.followMode);
   const view2D = useStore((s) => s.view2D);
   const playIndex = useStore((s) => s.playIndex);
@@ -116,7 +117,20 @@ export default function GenerationScene() {
       const opLayer = op.layer ?? (kind === "embedding" ? -1 : kind === "output" ? nLayers : null);
       return opLayer === layer && opKindOf(op.op_key) === kind;
     });
-    if (idx >= 0) setOpIndex(idx);
+    if (idx >= 0) {
+      setOpIndex(idx);
+      // Open the inspector for the clicked component
+      const clickedOp = catalog[idx];
+      if (clickedOp?.op_key) {
+        const l = clickedOp.layer ?? -1;
+        const kindStr = opKindOf(clickedOp.op_key);
+        // Build canonical op ID: matches TransformerOperationGraph naming
+        const opId = l < 0
+          ? (kindStr === "embedding" ? "op_embed" : kindStr === "output" ? "op_lm_head" : clickedOp.op_key)
+          : `op_l${l}_${clickedOp.op_key.replace(/^(norm|attn_|res_|mlp_|rope|swiglu|lm_head|embed)/, (m) => m)}`;
+        enterInspectMode(opId);
+      }
+    }
   };
 
   return (
@@ -262,10 +276,10 @@ export default function GenerationScene() {
               }
               return pts;
             })()}
-            color="#6fa8dc"
+            color="#e5e5e5"
             lineWidth={1}
             transparent
-            opacity={0.5}
+            opacity={0.6}
           />
           {Array.from({ length: 4 }, (_, i) => {
             const t = (i / 4) * 2.5 * Math.PI * 2;
@@ -273,12 +287,12 @@ export default function GenerationScene() {
             return (
               <mesh key={i} position={[0.35 * Math.cos(t), y, 0.35 * Math.sin(t)]}>
                 <sphereGeometry args={[0.04, 6, 6]} />
-                <meshBasicMaterial color="#6fa8dc" transparent opacity={0.3 + i * 0.15} />
+                <meshBasicMaterial color="#ffffff" transparent opacity={0.3 + i * 0.15} />
               </mesh>
             );
           })}
           <Billboard position={[0.9, 0.9, 0]}>
-            <Text fontSize={0.28} anchorX="left" color="#6fa8dc" outlineWidth={0.01} outlineColor="#000000">
+            <Text fontSize={0.28} anchorX="left" color="#ffffff" outlineWidth={0.01} outlineColor="#000000">
               RoPE
             </Text>
           </Billboard>

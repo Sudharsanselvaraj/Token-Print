@@ -9,6 +9,9 @@ export interface GenHandlers {
 export interface GenOptions {
   maxNewTokens?: number;
   topK?: number;
+  temperature?: number;
+  topP?: number;
+  seed?: number;
   trace?: boolean;
   recordTrace?: boolean;
   decodingMode?: "greedy" | "sliding_window" | "speculative";
@@ -38,6 +41,9 @@ export function wsGenerate(
         prompt,
         max_new_tokens: opts.maxNewTokens ?? 40,
         top_k: opts.topK ?? 10,
+        temperature: opts.temperature ?? 1.0,
+        top_p: opts.topP ?? 1.0,
+        seed: opts.seed ?? undefined,
         trace: opts.trace ?? false,
         record_trace: opts.recordTrace ?? false,
         decoding_mode: opts.decodingMode ?? "greedy",
