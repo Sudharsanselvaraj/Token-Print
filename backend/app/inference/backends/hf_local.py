@@ -49,7 +49,8 @@ class HFLocalBackend(InferenceBackend):
 
     async def analyze(self, sentence: str, **kwargs: Any) -> AnalyzeResponse:
         eng = self._get_engine()
-        resp: AnalyzeResponse = eng.analyze(sentence)
+        raw = eng.analyze(sentence)
+        resp = AnalyzeResponse(**raw) if isinstance(raw, dict) else raw
 
         # Attach explicit Phase 0 ProvenanceInfo if not already populated
         if resp.provenance is None:
