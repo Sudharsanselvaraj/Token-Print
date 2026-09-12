@@ -20,7 +20,7 @@ def test_api_hf_curated():
     assert "capabilities_preview" in first_model
 
 
-@patch("urllib.request.urlopen")
+@patch("app.hf_guard.safe_urlopen")
 def test_api_hf_search(mock_urlopen):
     mock_resp = MagicMock()
     mock_resp.status = 200
@@ -47,7 +47,7 @@ def test_api_hf_search(mock_urlopen):
     assert data["models"][0]["id"] == "Qwen/Qwen2.5-0.5B-Instruct"
 
 
-@patch("urllib.request.urlopen")
+@patch("app.hf_guard.safe_urlopen")
 def test_api_hf_inspect(mock_urlopen):
     # Mock response for sha metadata request
     mock_sha_resp = MagicMock()

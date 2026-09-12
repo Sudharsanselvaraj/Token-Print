@@ -1,15 +1,18 @@
 name: "🎨 Visual Regression — 3D scenes"
 
-# Triggered only on PRs that touch 3D scene code or core lib — expensive test,
-# don't run it on every PR.
+# Runs on every PR so the required status check always reports, plus a manual
+# dispatch to regenerate the Linux baselines after deliberate UI changes.
 on:
   pull_request:
-    paths:
-      - "frontend/components/scenes/**"
-      - "frontend/lib/**"
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: "Regenerate and commit the Linux baselines"
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -77,20 +80,36 @@ jobs:
       - name: Start frontend (static export server)
         working-directory: frontend
         run: |
-          # `next start` is unavailable for `output: export`; serve the
-          # static export directly.
           python3 -m http.server 3000 --directory out &
           for i in $(seq 1 30); do
             curl -sf http://localhost:3000/ && echo "frontend ready" && break
             sleep 2
           done
 
-      # ── Run visual tests ──────────────────────────────────────────────────
+      # ── Run visual tests (optionally regenerating baselines) ───────────────
       - name: Run Playwright visual tests
         id: playwright
         working-directory: frontend
-        run: npx playwright test
-        continue-on-error: true
+        env:
+          UPDATE_SNAPSHOTS: ${{ inputs.update_snapshots }}
+        run: |
+          if [ "$UPDATE_SNAPSHOTS" = "true" ]; then
+            npx playwright test --update-snapshots
+          else
+            npx playwright test
+          fi
+
+      # ── Commit regenerated Linux baselines (manual dispatch only) ──────────
+      - name: Commit updated baselines
+        if: inputs.update_snapshots == true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "frontend/tests/visual/*.spec.ts-snapshots/" || true
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: regenerate Linux visual regression baselines [skip ci]"
+            git push
+          fi
 
       # ── Upload artifacts and comment on PR ────────────────────────────────
       - name: Upload Playwright report and diffs
@@ -104,10 +123,11 @@ jobs:
           retention-days: 14
 
       - name: Post PR comment with report link
-        if: steps.playwright.outcome == 'failure'
+        if: always()
         uses: actions/github-script@v7
         with:
           script: |
+            if (steps.playwright.outcome !== 'failure') return;
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const body = [
               '## ⚠️ Visual regression tests failed',
@@ -116,11 +136,11 @@ jobs:
               '',
               `**[View the full Playwright report and diff images](${runUrl})**`,
               '',
-              'To update baselines after an intentional change:',
+              'If the change is intentional, regenerate the baselines and commit them:',
               '```bash',
-              'cd frontend && npx playwright test --update-snapshots',
+              'gh workflow run "🎨 Visual Regression — 3D scenes" --ref <branch> ' +
+                '--field update_snapshots=true',
               '```',
-              'Then commit the updated snapshot files.',
             ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -128,10 +148,3 @@ jobs:
               issue_number: context.issue.number,
               body,
             });
-
-      # Non-blocking on purpose: this is a reporting/QA aid, not a required
-      # status check (see branch protection: only Frontend type-check & build
-      # and Backend syntax & lint gate merges). Baselines are platform-specific
-      # (playwright suffixes -linux/-darwin) and the suite currently targets
-      # the pre-v2 default UI, so failing runs comment + upload artifacts rather
-      # than turning PRs red.
