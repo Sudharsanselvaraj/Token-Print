@@ -106,6 +106,70 @@ class TokenizedTooLong(ValueError):
             f"Input is {n_tokens} tokens; the cap is {cap}. "
             "Send a shorter sentence."
         )
+class AttentionEngine:
+    """Sub-engine for processing, thresholding, and formatting multi-head attention weight tensors."""
+
+    def __init__(self, decimals: int = _ATTN_DECIMALS, zero_below: float = _ATTN_ZERO_BELOW):
+        self.decimals = decimals
+        self.zero_below = zero_below
+
+    def process(self, attentions: tuple[torch.Tensor, ...] | list[torch.Tensor]) -> list[list[list[list[float]]]]:
+        """Convert a tuple/list of per-layer attention tensors [1, num_heads, seq, seq] to rounded nested lists."""
+        attn = torch.stack(attentions).squeeze(1).to("cpu").float()
+        attn = torch.round(attn * (10**self.decimals)) / (10**self.decimals)
+        attn[attn < self.zero_below] = 0.0
+        return attn.tolist()
+
+
+class ActivationEngine:
+    """Sub-engine for layer timing hooks, activation collection, and forward hook management."""
+
+    def register_timing_hooks(
+        self, layers: list, layer_elapsed: dict[int, float], lock: threading.Lock
+    ) -> list:
+        """Register pre/post hooks on transformer layers to measure per-layer execution time in ms."""
+        handles = []
+        if layers is None:
+            return handles
+
+        for i, layer in enumerate(layers):
+            marks = {"pre": None}
+
+            def pre_hook(_mod, _in, _i=i, _marks=marks):
+                _marks["pre"] = time.perf_counter()
+
+            def post_hook(_mod, _in, _out, _i=i, _marks=marks):
+                pre = _marks["pre"]
+                if pre is not None:
+                    elapsed_ms = (time.perf_counter() - pre) * 1000.0
+                    with lock:
+                        layer_elapsed[_i] = elapsed_ms
+
+            handles.append(layer.register_forward_pre_hook(pre_hook))
+            handles.append(layer.register_forward_hook(post_hook))
+
+        return handles
+
+    def snapshot_timings(
+        self, num_layers: int, layer_elapsed: dict[int, float], lock: threading.Lock
+    ) -> list[float]:
+        """Snapshot and clear per-layer ms timings."""
+        with lock:
+            timings = [round(layer_elapsed.get(i, 0.0), 4) for i in range(num_layers)]
+            layer_elapsed.clear()
+        return timings
+
+
+class ReductionEngine:
+    """Sub-engine for 3D dimensionality reduction and explained variance calculation."""
+
+    def project_hidden_states(self, hidden_states: list[np.ndarray]) -> dict[str, list[list[float]]]:
+        """Project each layer's hidden state array [seq, hidden] to 3D."""
+        return {str(i): project_3d(h) for i, h in enumerate(hidden_states)}
+
+    def calculate_explained_variance(self, hidden_layer: np.ndarray) -> dict[str, float]:
+        """Calculate PCA explained variance for a hidden layer matrix."""
+        return explained_variance(hidden_layer)
 
 
 class ModelEngine:
@@ -117,6 +181,11 @@ class ModelEngine:
         self.attn_implementation = "eager"
         # A single model is not safe for concurrent forward passes; serialize them.
         self._lock = threading.Lock()
+
+        # Modular sub-engines (issue #112)
+        self.attn_engine = AttentionEngine()
+        self.activation_engine = ActivationEngine()
+        self.reduction_engine = ReductionEngine()
 
         # Detect the model family up front (issue #87): decoder-only causal
         # LMs, encoder-only embedding models, and vision transformers load
@@ -185,35 +254,15 @@ class ModelEngine:
 
     def _register_layer_timing_hooks(self) -> None:
         """Register pre/post hooks on each transformer layer writing ms timings."""
-        layers = self._layer_list()
-        if layers is None:
-            return
-
-        for i, layer in enumerate(layers):
-            marks = {"pre": None}
-
-            def pre_hook(_mod, _in, _i=i, _marks=marks):
-                _marks["pre"] = time.perf_counter()
-
-            def post_hook(_mod, _in, _out, _i=i, _marks=marks):
-                pre = _marks["pre"]
-                if pre is not None:
-                    elapsed_ms = (time.perf_counter() - pre) * 1000.0
-                    with self._layer_timing_lock:
-                        self._layer_elapsed[_i] = elapsed_ms
-
-            self._timing_handles.append(layer.register_forward_pre_hook(pre_hook))
-            self._timing_handles.append(layer.register_forward_hook(post_hook))
+        self._timing_handles = self.activation_engine.register_timing_hooks(
+            self._layer_list(), self._layer_elapsed, self._layer_timing_lock
+        )
 
     def _last_layer_timings_ms(self) -> list[float]:
         """Snapshot and clear the per-layer ms timings from the last forward pass."""
-        with self._layer_timing_lock:
-            timings = [
-                round(self._layer_elapsed.get(i, 0.0), 4)
-                for i in range(self.num_layers)
-            ]
-            self._layer_elapsed.clear()
-        return timings
+        return self.activation_engine.snapshot_timings(
+            self.num_layers, self._layer_elapsed, self._layer_timing_lock
+        )
 
     def release_timing_hooks(self) -> None:
         for h in self._timing_handles:
@@ -387,12 +436,7 @@ class ModelEngine:
                 )
 
             # --- Phase 1: attention ----------------------------------------
-            # tuple(len=num_layers) of [1, num_heads, seq, seq] -> [L, H, seq, seq]
-            attn = torch.stack(out.attentions).squeeze(1).to("cpu").float()
-            # Round to a few decimals and zero-out near-zero weights to shrink payload.
-            attn = torch.round(attn * (10**_ATTN_DECIMALS)) / (10**_ATTN_DECIMALS)
-            attn[attn < _ATTN_ZERO_BELOW] = 0.0
-            attention = attn.tolist()  # [layer][head][from][to]
+            attention = self.attn_engine.process(out.attentions)
 
             # --- Phase 2: per-token geometry from real hidden states -------
             # out.hidden_states: tuple(len = num_layers + 1) of [1, seq, hidden].
@@ -401,7 +445,7 @@ class ModelEngine:
                 h.squeeze(0).to("cpu").float().numpy() for h in out.hidden_states
             ]
             # PCA-project each layer's residual stream to 3D (see reduce.py).
-            hidden_states_3d = {str(i): project_3d(h) for i, h in enumerate(hidden)}
+            hidden_states_3d = self.reduction_engine.project_hidden_states(hidden)
             embeddings_3d = hidden_states_3d["0"]  # layer 0 = token embeddings
             # Per-token embedding norm (L2), for optional node sizing.
             emb_norms = [round(float(v), 4) for v in (hidden[0] ** 2).sum(1) ** 0.5]
@@ -481,13 +525,10 @@ class ModelEngine:
                 out = self.model(
                     **enc, output_attentions=True, output_hidden_states=True
                 )
-            attn = torch.stack(out.attentions).squeeze(1).to("cpu").float()
-            attn = torch.round(attn * (10**_ATTN_DECIMALS)) / (10**_ATTN_DECIMALS)
-            attn[attn < _ATTN_ZERO_BELOW] = 0.0
-            attention = attn.tolist()
+            attention = self.attn_engine.process(out.attentions)
 
             hidden = [h.squeeze(0).to("cpu").float().numpy() for h in out.hidden_states]
-            hidden_states_3d = {str(i): project_3d(h) for i, h in enumerate(hidden)}
+            hidden_states_3d = self.reduction_engine.project_hidden_states(hidden)
             embeddings_3d = hidden_states_3d["0"]
             emb_norms = [round(float(v), 4) for v in (hidden[0] ** 2).sum(1) ** 0.5]
 
