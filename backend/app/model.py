@@ -11,8 +11,10 @@ Design decisions (see plan):
 
 from __future__ import annotations
 
+import functools
 import io
 import os
+import re
 import threading
 import time
 from typing import ClassVar
@@ -1459,12 +1461,27 @@ class ModelEngine:
         }
 
     # ------------------------------------------------------------------ #
-    # Checkpoint loading (v0.6)
+    # Checkpoint loading (v0.6 & ENG-11)
     # ------------------------------------------------------------------ #
+    MODEL_ID_REGEX: ClassVar[re.Pattern] = re.compile(r"^[a-zA-Z0-9_\-\./]{1,128}$")
+
     @staticmethod
-    def checkpoint_architecture(model_id: str) -> dict:
-        """Quickly load just the config for any HuggingFace model and return
-        architecture metadata (no weights loaded)."""
+    def _validate_model_id(model_id: str) -> str:
+        """Validate and sanitize a Hugging Face model identifier (ENG-11)."""
+        if not model_id or not isinstance(model_id, str):
+            raise ValueError("model_id must be a non-empty string.")
+        clean = model_id.strip()
+        if ".." in clean or clean.startswith("/") or clean.endswith("/"):
+            raise ValueError(f"Invalid model_id format: '{clean}'")
+        if not ModelEngine.MODEL_ID_REGEX.match(clean):
+            raise ValueError(f"Invalid model_id characters: '{clean}'")
+        return clean
+
+    @staticmethod
+    @functools.lru_cache(maxsize=128)
+    def _fetch_cached_checkpoint_architecture(model_id: str) -> dict:
+        from transformers import AutoConfig
+
         cfg = AutoConfig.from_pretrained(model_id)
         head_dim = getattr(
             cfg, "head_dim", cfg.hidden_size // cfg.num_attention_heads
@@ -1494,3 +1511,10 @@ class ModelEngine:
             "tensor_count": 0,
             "tensors": [],
         }
+
+    @staticmethod
+    def checkpoint_architecture(model_id: str) -> dict:
+        """Quickly load just the config for any HuggingFace model and return
+        architecture metadata (no weights loaded). Cached with LRU (ENG-11)."""
+        clean_id = ModelEngine._validate_model_id(model_id)
+        return ModelEngine._fetch_cached_checkpoint_architecture(clean_id)
