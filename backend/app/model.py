@@ -43,6 +43,7 @@ from transformers import (
     DynamicCache,
 )
 
+from .adapters import get_model_adapter
 from .debug import DebugCapture
 from .reduce import explained_variance, project_3d
 
@@ -124,6 +125,7 @@ class ModelEngine:
         probe_cfg = AutoConfig.from_pretrained(model_id)
         self.model_type: str = str(getattr(probe_cfg, "model_type", "unknown"))
         self.mode: str = _classify_model_type(self.model_type)
+        self.adapter = get_model_adapter(self.mode)
 
         self.tokenizer: AutoTokenizer | None = None
         self.image_processor = None
@@ -372,8 +374,10 @@ class ModelEngine:
                 "use POST /analyze/image."
             )
         if self.mode == "encoder":
-            return self._analyze_encoder(sentence)
-        return self._analyze_causal_lm(sentence)
+            raw = self._analyze_encoder(sentence)
+        else:
+            raw = self._analyze_causal_lm(sentence)
+        return self.adapter.process_analysis(raw)
 
     def _analyze_causal_lm(self, sentence: str) -> dict:
         """Decoder-only causal LM forward pass (tokens, attention, geometry)."""
