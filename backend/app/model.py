@@ -34,6 +34,7 @@ os.environ.setdefault("USE_TF", "0")
 os.environ.setdefault("USE_FLAX", "0")
 os.environ.setdefault("TRANSFORMERS_NO_ADVISORY_WARNINGS", "1")
 
+import numpy as np
 import torch
 from transformers import (
     AutoConfig,

@@ -5,9 +5,10 @@ and adhere to their expected contracts.
 """
 
 import threading
-import torch
+
 import numpy as np
-from app.model import AttentionEngine, ActivationEngine, ReductionEngine
+import torch
+from app.model import ActivationEngine, AttentionEngine, ReductionEngine
 
 
 def test_attention_engine_processing():
