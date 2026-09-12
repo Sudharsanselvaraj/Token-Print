@@ -1,0 +1,151 @@
+name: "📊 Repository Health Report"
+
+# Weekly self-audit that condenses security, hygiene, and CI flakiness into one
+# rolling issue so problems stop hiding between milestones.
+on:
+  schedule:
+    # Weekly: Monday 08:00 UTC.
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  security-events: read
+  actions: read
+
+jobs:
+  health:
+    name: Generate health report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and post health report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().slice(0, 10);
+            const repo = { owner: context.repo.owner, repo: context.repo.repo };
+            const lines = [`## 📊 Repository Health Report — ${today}`, ""];
+            const notes = [];
+
+            const grab = async (label, fn) => {
+              try {
+                return await fn();
+              } catch (e) {
+                notes.push(`- **${label}**: API not available (${e.status ?? e.message})`);
+                return null;
+              }
+            };
+
+            // ── Code scanning (CodeQL) ─────────────────────────────────────────
+            const alerts = await grab("Code scanning", () =>
+              github.rest.codeScanning.listAlertsForRepo({ ...repo, state: "open", per_page: 100 }));
+            if (alerts) {
+              const bySev = { error: 0, warning: 0, note: 0, unspecified: 0 };
+              const refs = {};
+              for (const a of alerts.data) {
+                const sev = a.rule?.severity ?? "unspecified";
+                bySev[sev] = (bySev[sev] ?? 0) + 1;
+                refs[a.most_recent_instance?.ref ?? "?ref"] = (refs[a.most_recent_instance?.ref ?? "?ref"] ?? 0) + 1;
+              }
+              lines.push(
+                "### 🛡️ Code scanning",
+                "",
+                `| Severity | Count |`,
+                `|----------|-------|`,
+                `| error    | ${bySev.error} |`,
+                `| warning  | ${bySev.warning} |`,
+                `| note     | ${bySev.note} |`,
+                `| unspecified | ${bySev.unspecified} |`,
+                "",
+                `Refs: ${Object.entries(refs).map(([r, n]) => `\`${r}\` ${n}`).join(", ") || "—"}`,
+                ""
+              );
+              if (bySev.error > 0) {
+                notes.push(`- 🛡️ **${bySev.error} error-tier CodeQL alert(s) open on ${Object.keys(refs).join(", ")}** — see SEC issues.`);
+              }
+            }
+
+            // ── Dependabot ─────────────────────────────────────────────────────
+            const dep = await grab("Dependabot", () =>
+              github.rest.dependabot.listAlertsForRepo({ ...repo, state: "open", per_page: 100 }));
+            if (dep) {
+              const crit = dep.data.filter(a => a.security_advisory?.severity === "critical").length;
+              const high = dep.data.filter(a => a.security_advisory?.severity === "high").length;
+              lines.push(
+                "### 🔁 Dependabot",
+                "",
+                `Open alerts: **${dep.data.length}** (critical ${crit}, high ${high}).`,
+                ""
+              );
+              if (crit + high > 0) notes.push(`- 🔁 **${crit + high} critical/high dependabot alert(s) open.**`);
+            } else {
+              lines.push("### 🔁 Dependabot", "", "Dependabot API unavailable — likely disabled in repo settings (see SEC-02).", "");
+              notes.push("- 🔁 **Dependabot appears disabled** — enable under Settings → Code security.");
+            }
+
+            // ── Issue hygiene ──────────────────────────────────────────────────
+            const issues = await grab("Issues", () =>
+              github.rest.issues.listForRepo({ ...repo, state: "open", per_page: 100 }));
+            if (issues) {
+              const cutoff = new Date(Date.now() - 60 * 24 * 3600 * 1000);
+              const stale = issues.data.filter(i => !i.pull_request && new Date(i.updated_at) < cutoff);
+              const unlabeled = issues.data.filter(i => !i.pull_request && i.labels.length === 0);
+              lines.push(
+                "### 🧾 Issue hygiene",
+                "",
+                `Open issues: **${issues.data.filter(i => !i.pull_request).length}** · stale (no activity >60d): ${stale.length} · unlabeled: ${unlabeled.length}`,
+                "",
+                `Stale: ${stale.slice(0, 8).map(i => `[#${i.number}](https://github.com/${repo.owner}/${repo.repo}/issues/${i.number})`).join(", ") || "none"}`,
+                ""
+              );
+            }
+
+            // ── CI flakiness (last 14 days) ────────────────────────────────────
+            const runs = await grab("Workflow runs", () =>
+              github.rest.actions.listWorkflowRunsForRepo({ ...repo, per_page: 100, status: "failure" }));
+            if (runs) {
+              const cutoff = Date.now() - 14 * 24 * 3600 * 1000;
+              const recent = runs.data.workflow_runs.filter(r => Date.parse(r.created_at) > cutoff);
+              const byName = {};
+              recent.forEach(r => { byName[r.name] = (byName[r.name] ?? 0) + 1; });
+              const flaky = Object.entries(byName).filter(([, n]) => n > 1);
+              lines.push(
+                "### ⚠️ CI failures (last 14 days)",
+                "",
+                flaky.length
+                  ? flaky.map(([name, n]) => `- **${name}** — ${n} failure(s)`).join("\n")
+                  : "No repeated workflow failures observed.",
+                ""
+              );
+              if (flaky.length) notes.push(`- ⚠️ **${flaky.map(([n, c]) => `${n} (${c})`).join(", ")}** repeated failures — flagged by CI gate automation.`);
+            }
+
+            // ── Summary / rollout ──────────────────────────────────────────────
+            if (notes.length) {
+              lines.push(
+                "## Action items",
+                "",
+                ...notes
+              );
+            } else {
+              lines.push("## All clear! 🎉", "", "No security, hygiene, or CI issues currently flagged.");
+            }
+            lines.push(
+              "",
+              "---",
+              `_Auto-generated by **📊 Repository Health Report** (retained as a rolling single issue; previous contents superseded). Live CI state: ${context.serverUrl}/${repo.owner}/${repo.repo}/actions`
+            );
+
+            const title = "📊 Repository Health Report";
+            const list = await github.rest.issues.listForRepo({ ...repo, state: "open" });
+            const existing = list.data.find(i => i.title === title && !i.pull_request);
+            if (existing) {
+              await github.rest.issues.update({ ...repo, issue_number: existing.number, body: lines.join("\n") });
+              console.log(`Updated health report #${existing.number}`);
+            } else {
+              const created = await github.rest.issues.create({ ...repo, title, body: lines.join("\n"), labels: ["documentation"] });
+              console.log(`Created health report #${created.data.number}`);
+            }

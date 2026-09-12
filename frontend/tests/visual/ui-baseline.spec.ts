@@ -1,54 +1,39 @@
 /**
  * ui-baseline.spec.ts
  *
- * CI port of frontend/scripts/verify_ui.mjs
- *
- * Verifies:
- * - The default (explorer) view loads and the .status line reflects real data
- *   from the backend (/analyze endpoint).
- * - The layer and head sliders update the status line when changed.
- * - No fatal JS console errors occur during the page load.
+ * v2 baseline: the default explorer view renders the real Qwen architecture
+ * returned by the live backend (top-bar stats + tensor list) with no fatal
+ * JS errors. Cross-checks the rendered numbers against GET /architecture.
  *
  * Requires: backend running on :8000, frontend on :3000.
  */
 import { test, expect, type Page } from "@playwright/test";
 
-const API = "http://localhost:8000/analyze";
+const ARCH_API = "http://localhost:8000/architecture";
 
-/** Set a range input the React-friendly way (fires synthetic input event). */
-async function setRange(page: Page, index: number, value: number) {
-  await page.evaluate(
-    ({ idx, val }: { idx: number; val: number }) => {
-      const el = document.querySelectorAll(
-        'input[type="range"]'
-      )[idx] as HTMLInputElement;
-      const setter = Object.getOwnPropertyDescriptor(
-        Object.getPrototypeOf(el),
-        "value"
-      )!.set!;
-      setter.call(el, String(val));
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    },
-    { idx: index, val: value }
-  );
+async function textOf(page: Page, selector: string): Promise<string> {
+  const el = await page.$(selector);
+  return ((await el?.textContent()) ?? "").trim();
 }
 
-test.describe("UI baseline — real data from backend", () => {
-  test("status line reflects real token count, layer/head sliders work", async ({
+test.describe("UI baseline — real backend data percolates to the DOM", () => {
+  test("top bar and tensor list reflect live /architecture metadata", async ({
     page,
   }) => {
-    // Pull real data from the backend first so we can cross-check.
-    const analyze = await fetch(API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sentence: "The cat sat on the mat." }),
-    }).then((r) => r.json());
-
-    const nLayers: number = analyze.num_layers;
-    const nHeads: number = analyze.num_heads;
-    const tokenCount: number = analyze.tokens.length;
+    // Ground truth straight from the backend.
+    const arch = await fetch(ARCH_API).then((r) => {
+      if (!r.ok) throw new Error(`/architecture failed: ${r.status}`);
+      return r.json() as Promise<{
+        metadata: {
+          name: string;
+          num_layers: number;
+          num_heads: string | number;
+        };
+        tensor_count: number;
+      }>;
+    });
     console.log(
-      `backend: ${analyze.model} · ${tokenCount} tokens · ${nLayers}×${nHeads}`
+      `backend: ${arch.metadata.name} · ${arch.metadata.num_layers}×${arch.metadata.num_heads} · ${arch.tensor_count} tensors`
     );
 
     const errors: string[] = [];
@@ -62,33 +47,31 @@ test.describe("UI baseline — real data from backend", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "networkidle" });
-    await page.waitForSelector(".status", { timeout: 30_000 });
-    await page.waitForTimeout(2_500);
+    await page.goto("/", { waitUntil: "load" });
+    await page.waitForSelector(".tensor-row", { timeout: 60_000 });
+    await page.waitForSelector(".tstat.name", { timeout: 10_000 });
 
-    const s0 = await page.$eval(".status", (el) => el.textContent!.trim());
-    console.log("status @ load:", s0);
+    // Top bar shows the real model name and the true layer/head counts.
+    const name = await textOf(page, ".tstat.name");
+    expect(name).toBe(arch.metadata.name);
+    expect(await textOf(page, ".tstat:has-text('layers')")).toContain(
+      String(arch.metadata.num_layers)
+    );
+    expect(await textOf(page, ".tstat:has-text('heads')")).toContain(
+      String(arch.metadata.num_heads)
+    );
 
-    // Status must mention the real token count and start at layer 0 / head 0.
-    expect(s0).toContain(`${tokenCount} tokens`);
-    expect(s0).toContain("layer 0");
-    expect(s0).toContain("head 0");
+    // Tensor list reflects the backend's full tensor inventory.
+    expect(await page.locator(".tensor-row").count()).toBe(
+      arch.tensor_count
+    );
 
-    // Drive sliders to last layer + a different head.
-    const targetLayer = nLayers - 1;
-    const targetHead = Math.min(13, nHeads - 1);
-    await setRange(page, 0, targetLayer);
-    await setRange(page, 1, targetHead);
-    await page.waitForTimeout(1_800);
-
-    const s1 = await page.$eval(".status", (el) => el.textContent!.trim());
-    console.log("status @ switched:", s1);
-    expect(s1).toContain(`layer ${targetLayer}`);
-    expect(s1).toContain(`head ${targetHead}`);
-
-    expect(errors).toHaveLength(0);
+    // All four mode tabs are present; explorer is active by default.
+    expect(await page.locator(".mode-tab").count()).toBe(4);
+    await expect(page.locator(".mode-tab.active")).toHaveText("Architecture");
 
     // Screenshot for visual diff baseline.
     await expect(page).toHaveScreenshot("ui-baseline.png");
+    expect(errors).toHaveLength(0);
   });
 });
