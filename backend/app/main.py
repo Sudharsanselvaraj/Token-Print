@@ -63,6 +63,9 @@ _last_trace: dict | None = None
 GGUF_DIR = Path(__file__).resolve().parent.parent / "data" / "gguf"
 GGUF_DIR.mkdir(parents=True, exist_ok=True)
 
+# Hard upload limit for GGUF files (ENG-09). 10 GB expressed in bytes.
+MAX_GGUF_BYTES = 10 * 1024 * 1024 * 1024
+
 # Cache of opened GGUF engines keyed by resolved path.
 _gguf_engines: dict[str, GGUFEngine] = {}
 
@@ -257,10 +260,25 @@ async def gguf_upload(file: UploadFile = File(None)) -> dict:  # noqa: B008
     if not str(dest).startswith(str(base_dir) + os.sep):
         raise HTTPException(status_code=400, detail="Invalid target path.")
     size = 0
-    with open(dest, "wb") as fh:  # noqa: ASYNC230
-        while chunk := await file.read(1 << 20):
-            size += len(chunk)
-            fh.write(chunk)
+    try:
+        with open(dest, "wb") as fh:  # noqa: ASYNC230
+            while chunk := await file.read(8 << 20):  # 8 MB chunks
+                size += len(chunk)
+                if size > MAX_GGUF_BYTES:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=(
+                            f"Upload rejected: file exceeds the "
+                            f"{MAX_GGUF_BYTES // (1024 ** 3)} GB limit."
+                        ),
+                    )
+                fh.write(chunk)
+    except HTTPException:
+        dest.unlink(missing_ok=True)
+        raise
+    except Exception:
+        dest.unlink(missing_ok=True)
+        raise
     return {"name": safe, "path": safe, "size_bytes": size, "quant": _quant_guess(safe)}
 
 

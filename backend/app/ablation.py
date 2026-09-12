@@ -116,22 +116,73 @@ class ActivationPatch:
     Run ``capture`` once with the source prompt to record the residual stream
     entering each patch layer, then run the target forward pass with the patch
     hooks registered: layer inputs at ``patch_layers`` are replaced by the
-    source's states (position-wise, truncated to the shorter sequence).
+    source's states (or ablated / noised).
+
+    Position-Aware Patching (Issue #115):
+        Specify ``patch_spans=[(start, end), ...]`` (inclusive 0-indexed token spans)
+        to restrict the intervention strictly to specific token positions (e.g.
+        retrieved RAG context chunks), preserving the surrounding prompt.
+
+    Modes:
+        * ``"replace"`` (default): Injects captured source activations.
+        * ``"zero"``: Zeroes out activations at the target positions (knockout).
+        * ``"noise"``: Replaces activations at the target positions with Gaussian noise.
 
     Usage::
 
-        patch = ActivationPatch(model.model, patch_layers={8, 12})
-        source = patch.capture(model, source_input_ids)
-        with patch(source):
+        # Position-aware RAG chunk patching
+        patch = ActivationPatch(
+            model.model,
+            patch_layers={8, 12, 16},
+            patch_spans=[(14, 28)],  # Token span for Chunk 2
+        )
+        source_states = patch.capture(model, source_input_ids)
+        with patch:
             out = model(**target_inputs)
     """
 
-    def __init__(self, model: nn.Module, patch_layers: set[int] | None = None):
+    def __init__(
+        self,
+        model: nn.Module,
+        patch_layers: set[int] | None = None,
+        patch_spans: list[tuple[int, int]] | tuple[int, int] | None = None,
+        source_spans: list[tuple[int, int]] | tuple[int, int] | None = None,
+        mode: str = "replace",
+        noise_std: float = 0.1,
+    ):
         self._model = model
         self._patch_layers = patch_layers or set()
         self._handles: list = []
         self._source: dict[int, torch.Tensor] = {}
         self._capture_handles: list = []
+        self._mode = mode
+        self._noise_std = noise_std
+        self.set_patch_spans(patch_spans, source_spans)
+
+    def set_patch_spans(
+        self,
+        patch_spans: list[tuple[int, int]] | tuple[int, int] | None,
+        source_spans: list[tuple[int, int]] | tuple[int, int] | None = None,
+    ) -> None:
+        """Configure target token spans (inclusive [start, end]) to patch."""
+        if patch_spans is None:
+            self._patch_spans = None
+        elif isinstance(patch_spans, tuple) and len(patch_spans) == 2 and isinstance(patch_spans[0], int):
+            self._patch_spans = [patch_spans]
+        else:
+            self._patch_spans = list(patch_spans)
+
+        if source_spans is None:
+            self._source_spans = None
+        elif isinstance(source_spans, tuple) and len(source_spans) == 2 and isinstance(source_spans[0], int):
+            self._source_spans = [source_spans]
+        else:
+            self._source_spans = list(source_spans)
+
+    def set_mode(self, mode: str, noise_std: float = 0.1) -> None:
+        """Set patch mode: 'replace', 'zero', or 'noise'."""
+        self._mode = mode
+        self._noise_std = noise_std
 
     # --- Source capture --------------------------------------------------- #
     def capture(
@@ -183,19 +234,87 @@ class ActivationPatch:
 
         def make_hook(i: int):
             def hook(_mod, args):
-                src = self._source.get(i)
-                if src is None or not args:
+                if not args:
                     return None
                 target = args[0]
-                n = min(src.shape[1], target.shape[1])
                 patched = target.clone()
-                patched[:, :n, :] = src[:, :n, :].to(target.device, target.dtype)
+
+                if self._mode == "zero":
+                    if self._patch_spans:
+                        for s_start, s_end in self._patch_spans:
+                            s = max(0, s_start)
+                            e = min(target.shape[1], s_end + 1)
+                            if s < e:
+                                patched[:, s:e, :] = 0.0
+                    else:
+                        patched.zero_()
+                    return (patched,) + args[1:]
+
+                if self._mode == "noise":
+                    import torch
+
+                    if self._patch_spans:
+                        for s_start, s_end in self._patch_spans:
+                            s = max(0, s_start)
+                            e = min(target.shape[1], s_end + 1)
+                            if s < e:
+                                noise = torch.randn_like(target[:, s:e, :]) * self._noise_std
+                                patched[:, s:e, :] = noise
+                    else:
+                        patched = torch.randn_like(target) * self._noise_std
+                    return (patched,) + args[1:]
+
+                # Default mode: "replace" from source activations
+                src = self._source.get(i)
+                if src is None:
+                    return None
+
+                if self._patch_spans:
+                    # Position-targeted patching
+                    for idx, (tgt_start, tgt_end) in enumerate(self._patch_spans):
+                        src_span = (
+                            self._source_spans[idx]
+                            if (self._source_spans and idx < len(self._source_spans))
+                            else (tgt_start, tgt_end)
+                        )
+                        src_start, src_end = src_span
+
+                        tgt_len = max(0, tgt_end - tgt_start + 1)
+                        src_len = max(0, src_end - src_start + 1)
+                        patch_len = min(tgt_len, src_len)
+                        if patch_len <= 0:
+                            continue
+
+                        t_s = max(0, tgt_start)
+                        t_e = min(target.shape[1], t_s + patch_len)
+                        s_s = max(0, src_start)
+                        s_e = min(src.shape[1], s_s + patch_len)
+
+                        actual_len = min(t_e - t_s, s_e - s_s)
+                        if actual_len > 0:
+                            patched[:, t_s : t_s + actual_len, :] = src[
+                                :, s_s : s_s + actual_len, :
+                            ].to(target.device, target.dtype)
+                else:
+                    # Full sequence replacement up to shorter length
+                    n = min(src.shape[1], target.shape[1])
+                    patched[:, :n, :] = src[:, :n, :].to(target.device, target.dtype)
+
                 return (patched,) + args[1:]
+
             return hook
 
         for i in self._patch_layers:
             if 0 <= i < len(layers):
-                self._handles.append(layers[i].register_forward_pre_hook(make_hook(i)))
+                try:
+                    self._handles.append(layers[i].register_forward_pre_hook(make_hook(i), prepend=True))
+                except TypeError:
+                    self._handles.append(layers[i].register_forward_pre_hook(make_hook(i)))
+
+    def __call__(self, source: dict[int, torch.Tensor] | None = None) -> ActivationPatch:
+        if source is not None:
+            self._source = source
+        return self
 
     def __enter__(self):
         self._register_patch_hooks()
@@ -208,3 +327,8 @@ class ActivationPatch:
         for h in self._handles:
             h.remove()
         self._handles.clear()
+
+
+# Alias for explicit position-aware naming
+PositionActivationPatch = ActivationPatch
+

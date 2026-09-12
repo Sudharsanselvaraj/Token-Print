@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useStore } from "@/lib/store";
+import { useArchitectureTensors, useStore } from "@/lib/store";
 import { fmtShape, middleTruncate } from "@/lib/format";
 
 export default function TensorList() {
   const arch = useStore((s) => s.arch);
+  const architectureTensors = useArchitectureTensors();
   const hovered = useStore((s) => s.hoveredTensor);
   const selected = useStore((s) => s.selectedTensor);
   const setHovered = useStore((s) => s.setHoveredTensor);
@@ -13,11 +14,11 @@ export default function TensorList() {
   const [q, setQ] = useState("");
 
   const tensors = useMemo(() => {
-    const list = arch?.tensors ?? [];
+    const list = architectureTensors ?? [];
     if (!q.trim()) return list;
     const needle = q.toLowerCase();
     return list.filter((t) => t.name.toLowerCase().includes(needle));
-  }, [arch, q]);
+  }, [architectureTensors, q]);
 
   if (!arch) return null;
 

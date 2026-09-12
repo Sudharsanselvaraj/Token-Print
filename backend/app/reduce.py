@@ -172,3 +172,46 @@ def ungrounded_flags(
         self_mass = query_self[i] if i < len(query_self) else 0.0
         flags.append(max_chunk < threshold and max_chunk < self_mass)
     return flags
+
+
+def causal_chunk_scores(
+    baseline_prob: float,
+    patched_probs: dict[str, float],
+    mode: str = "knockout",
+    corrupted_prob: float = 0.0,
+) -> dict[str, dict[str, float]]:
+    """Compute causal attribution metrics from activation patching probabilities.
+
+    Parameters:
+        baseline_prob: Probability of target token under clean prompt.
+        patched_probs: Map of chunk_id -> probability of target token under intervention.
+        mode: "knockout" (measuring probability drop) or "restoration" (measuring recovery).
+        corrupted_prob: Probability under corrupted prompt (used in restoration mode).
+
+    Returns:
+        Map of chunk_id -> {
+            "patched_prob": float,
+            "causal_effect": float,
+            "relative_effect": float,
+        }
+    """
+    scores: dict[str, dict[str, float]] = {}
+    denom = max(baseline_prob - corrupted_prob, 1e-7) if mode == "restoration" else max(baseline_prob, 1e-7)
+
+    for chunk_id, p_patched in patched_probs.items():
+        if mode == "restoration":
+            raw_effect = p_patched - corrupted_prob
+            relative = max(0.0, min(1.0, raw_effect / denom))
+        else:
+            # Knockout mode: higher drop means higher causal importance
+            raw_effect = baseline_prob - p_patched
+            relative = max(0.0, min(1.0, raw_effect / denom))
+
+        scores[chunk_id] = {
+            "patched_prob": round(float(p_patched), 5),
+            "causal_effect": round(float(raw_effect), 5),
+            "relative_effect": round(float(relative), 5),
+        }
+
+    return scores
+
