@@ -1,4 +1,4 @@
-"""Pydantic request/response models for the NeuroScope API.
+"""Pydantic request/response models for the TokenPrint API.
 
 Phase 1 covers tokens + the full attention tensor. Phase 2 fields
 (embeddings_3d, hidden_states_3d, projection) are added additively later.

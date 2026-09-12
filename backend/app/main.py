@@ -1,4 +1,4 @@
-"""FastAPI application for NeuroScope.
+"""FastAPI application for TokenPrint.
 
 Endpoints:
   * GET  /health      — liveness + whether the model is loaded
@@ -50,7 +50,7 @@ from .schemas import (
 from .trace import TraceRecorder, parse_trace, serialize_trace
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("neuroscope")
+logger = logging.getLogger("tokenprint")
 
 # Single process-wide engine handle, populated in the lifespan handler.
 engine: ModelEngine | None = None
@@ -105,7 +105,7 @@ async def lifespan(app: FastAPI):
     engine = None
 
 
-app = FastAPI(title="NeuroScope", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="TokenPrint", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
