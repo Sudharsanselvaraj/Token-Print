@@ -1,7 +1,13 @@
 // Scoped tensor dequantization: decode quantized bytes from a GGUF file into
-// Float32Array values.  Only dequantizes a single tensor on demand (bounded to
-// the selected tensor, never the whole file).  Runs synchronously for small
+// Float32Array values. Only dequantizes a single tensor on demand (bounded to
+// the selected tensor, never the whole file). Runs synchronously for small
 // tensors; wrap in a Web Worker for large ones.
+//
+// NOTE ON QUANTIZATION LIMITATIONS (DOC-05):
+// Dequantization routines in this file (specifically K-quants Q4_K, Q5_K, and Q8_K)
+// use simplified block scale reconstructions optimized for fast in-browser WebGL
+// visual exploration. Displayed values represent approximate reconstructions.
+// For exact full-precision numeric weights, use live backend execution (/architecture).
 
 import { GGML_TYPES, type GgmlType } from "./ggmlTypes";
 

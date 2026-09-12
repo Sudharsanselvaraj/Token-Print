@@ -19,7 +19,7 @@ on:
 jobs:
   review:
     name: Gemini PR review
-    if: github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && github.event.issue.pull_request)
+    if: github.actor != 'dependabot[bot]' && (github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && github.event.issue.pull_request))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -82,15 +82,19 @@ jobs:
             const hasKey = !!process.env.GEMINI_API_KEY;
 
             if (!hasKey) {
-              await github.rest.repos.createCommitStatus({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                sha: prSha,
-                state: 'success',
-                context: 'Gemini PR Quality Gate',
-                description: 'Gemini Quality Gate: Skipped for automated Dependabot/fork PR',
-              });
-              console.log(`Commit status set to success (skipped - no secret) for SHA ${prSha}`);
+              try {
+                await github.rest.repos.createCommitStatus({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  sha: prSha,
+                  state: 'success',
+                  context: 'Gemini PR Quality Gate',
+                  description: 'Gemini Quality Gate: Skipped for automated Dependabot/fork PR',
+                });
+                console.log(`Commit status set to success (skipped - no secret) for SHA ${prSha}`);
+              } catch (err) {
+                console.warn(`Skipped setting commit status (fork PR without write access to upstream statuses): ${err.message}`);
+              }
               return;
             }
 
@@ -123,12 +127,16 @@ jobs:
               }
             }
 
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: prSha,
-              state: state,
-              context: 'Gemini PR Quality Gate',
-              description: description,
-            });
-            console.log(`Commit status set to ${state} for SHA ${prSha}: ${description}`);
+            try {
+              await github.rest.repos.createCommitStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha: prSha,
+                state: state,
+                context: 'Gemini PR Quality Gate',
+                description: description,
+              });
+              console.log(`Commit status set to ${state} for SHA ${prSha}: ${description}`);
+            } catch (err) {
+              console.warn(`Could not set commit status (fork PR without write access to upstream statuses): ${err.message}`);
+            }

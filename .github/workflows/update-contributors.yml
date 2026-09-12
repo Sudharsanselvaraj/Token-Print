@@ -1,0 +1,97 @@
+name: "🧑‍🤝‍🧑 Update Contributors"
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-contributors
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.CONTRIBUTORS_TOKEN }}
+          fetch-depth: 0
+
+      - name: Regenerate contributor avatars
+        id: update
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const { data: contributors } = await github.rest.repos.listContributors({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+              anon: false,
+            });
+
+            const avatars = contributors
+              .filter((c) => c.type === 'User' && !c.login.endsWith('[bot]'))
+              .map(
+                (c) =>
+                  `<a href="https://github.com/${c.login}">` +
+                  `<img src="https://github.com/${c.login}.png?size=96" ` +
+                  `alt="${c.login}" title="${c.login}" width="48" height="48" align="top" />` +
+                  `</a>`
+              )
+              .join('\n');
+
+            const start = '<!-- CONTRIBUTORS:START -->';
+            const end = '<!-- CONTRIBUTORS:END -->';
+            const block = `${start}\n<div align="center">\n${avatars}\n</div>\n${end}`;
+
+            let readme = fs.readFileSync('README.md', 'utf8');
+            if (!readme.includes(start)) {
+              console.log('Contributors markers not found in README.md; skipping update.');
+              return;
+            }
+
+            const next = readme.replace(new RegExp(`${start}[\\s\\S]*?${end}`), block);
+            if (next === readme) {
+              console.log('README contributor avatars unchanged; nothing to commit.');
+              return;
+            }
+
+            fs.writeFileSync('README.md', next);
+            console.log('README.md updated with fresh contributor avatars.');
+
+      - name: Push updated avatars straight to main
+        run: |
+          if [ -z "$(git status --porcelain README.md)" ]; then
+            echo "No README changes; nothing to do."
+            exit 0
+          fi
+
+          # Author the commit as the repository owner so contributor updates land
+          # under their profile (pushing is already done with the owner's PAT).
+          git config user.name "Sudharsanselvaraj"
+          git config user.email "178299750+Sudharsanselvaraj@users.noreply.github.com"
+          git add README.md
+          git commit -m "chore: auto-update contributors in README"
+
+          # The checkout above used CONTRIBUTORS_TOKEN (a classic PAT owned by the
+          # repository owner), so this push authenticates as the owner. main's branch
+          # protection has enforce_admins disabled, so the owner's push bypasses the
+          # required status checks and lands directly. Rebase-retry to ride over any
+          # merge that races in between.
+          for attempt in 1 2 3; do
+            if git push origin main --quiet; then
+              echo "Pushed README update to main."
+              exit 0
+            fi
+            echo "Push attempt $attempt rejected; rebasing onto origin/main..."
+            git pull --rebase --autostash origin main --quiet
+            sleep 3
+          done
+          echo "Could not push after 3 attempts." >&2
+          exit 1

@@ -105,7 +105,7 @@ for the live-model view; drag any local `.gguf` onto the drop zone to inspect it
 
 ```bash
 # To enable native local GGUF backend execution:
-pip install llama-cpp-python
+pip install -r backend/requirements-gguf.txt
 ```
 
 ## The four modes
@@ -242,11 +242,15 @@ design/engineering audit is in [docs/design-review.md](docs/design-review.md).
 We would rather under-claim than overstate. Known gaps, stated plainly:
 
 - **Quantized GGUF Backend Instrumentation:** Real quantized GGUF inference is supported via `llama.cpp` (`llama-cpp-python`). When executing via GGUF, tokens and top-k probabilities come directly from the quantized model; per-layer internal activations are not exposed by `llama.cpp`, so layer lighting is cleanly disabled to maintain data honesty.
+- **Attention Mass vs. Causal Attribution:** 3D visual attention lines indicate mathematical attention distribution, not causal proof of token necessity. High attention mass is an interpretability signal, not proof of output dependence (see [docs/visual-mapping.md](docs/visual-mapping.md#causality-warning)).
 - The **live PyTorch model is Qwen** (real, loaded); GPT-2's formula set is wired and
   selected by architecture but not run locally.
-- **`TimingReadout` does not report real time.** It currently derives a proxy from PCA-space
-  hidden-state magnitudes and labels it in milliseconds — this is a known bug
-  ([#18](https://github.com/Sudharsanselvaraj/Token-Print/issues/18)), not a measurement.
+- **Per-layer timings are host wall-clock.** `TimingReadout` shows real ms (`REAL MS`) from
+  per-layer `perf_counter()` hooks on live PyTorch generations. No device synchronize is
+  issued, so on MPS/CUDA a layer's time can reflect when its work was queued rather than when
+  it finished. Traces recorded without timings fall back to mean |activation| per layer,
+  badged `PROXY · NOT MS` and never shown in milliseconds
+  ([#101](https://github.com/Sudharsanselvaraj/Token-Print/issues/101)).
 - **`ActivationPatchCompare` shows a logit-lens trajectory, not activation patching.** The
   numbers are real; the panel title overstates the method
   ([#75](https://github.com/Sudharsanselvaraj/Token-Print/issues/75)).
@@ -308,15 +312,21 @@ TokenPrint was designed and built from the ground up by **[Sudharsan Selvaraj](h
 
 ### Contributors
 
-Everyone below has a merged pull request in TokenPrint — code, docs, bug fixes, or design. This grid updates automatically as new contributions land.
+Everyone below has a merged pull request in TokenPrint.
 
-<p align="left">
-  <a href="https://github.com/Sudharsanselvaraj/Token-Print/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=Sudharsanselvaraj/Token-Print" alt="TokenPrint contributors" />
-  </a>
-</p>
+<!-- CONTRIBUTORS:START -->
+<div align="center">
+<a href="https://github.com/Sudharsanselvaraj"><img src="https://github.com/Sudharsanselvaraj.png?size=96" alt="Sudharsanselvaraj" title="Sudharsanselvaraj" width="48" height="48" align="top" /></a>
+<a href="https://github.com/ManoShruthiS"><img src="https://github.com/ManoShruthiS.png?size=96" alt="ManoShruthiS" title="ManoShruthiS" width="48" height="48" align="top" /></a>
+<a href="https://github.com/Sew-a"><img src="https://github.com/Sew-a.png?size=96" alt="Sew-a" title="Sew-a" width="48" height="48" align="top" /></a>
+<a href="https://github.com/Shivamyadav1312"><img src="https://github.com/Shivamyadav1312.png?size=96" alt="Shivamyadav1312" title="Shivamyadav1312" width="48" height="48" align="top" /></a>
+<a href="https://github.com/ris422"><img src="https://github.com/ris422.png?size=96" alt="ris422" title="ris422" width="48" height="48" align="top" /></a>
+<a href="https://github.com/Sriram-Selvaperumal"><img src="https://github.com/Sriram-Selvaperumal.png?size=96" alt="Sriram-Selvaperumal" title="Sriram-Selvaperumal" width="48" height="48" align="top" /></a>
+<a href="https://github.com/challenge456"><img src="https://github.com/challenge456.png?size=96" alt="challenge456" title="challenge456" width="48" height="48" align="top" /></a>
+</div>
+<!-- CONTRIBUTORS:END -->
 
-Want to be in that grid? Grab one of the **26 curated issues** in [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md),
+Want to be in that gallery? Grab one of the **26 curated issues** in [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md),
 read [CONTRIBUTING.md](CONTRIBUTING.md) to get set up, and open a PR. First-time open-source
 contributors are very welcome.
 
