@@ -682,13 +682,16 @@ class ModelEngine:
         )
 
     # ------------------------------------------------------------------ #
-    # Activation patching (issue #75)
+    # Activation patching (issue #75, issue #115)
     # ------------------------------------------------------------------ #
     def analyze_patched(
         self,
         sentence: str,
         source_sentence: str,
         patch_layers: list[int],
+        patch_spans: list[tuple[int, int]] | tuple[int, int] | None = None,
+        source_spans: list[tuple[int, int]] | tuple[int, int] | None = None,
+        mode: str = "replace",
     ) -> dict:
         """Run the target sentence with residual states patched from the source.
 
@@ -696,6 +699,8 @@ class ModelEngine:
         block describing what was replaced, plus ``analysis_clean`` (the
         unpatched target run) and ``analysis_source`` (the source run) so the
         frontend can compare before/after and visualize trajectories.
+
+        Supports position-aware patching via ``patch_spans`` (issue #115).
         """
         from .ablation import ActivationPatch
 
@@ -704,7 +709,13 @@ class ModelEngine:
                 "Activation patching is only supported for decoder-only causal LMs."
             )
         with self._lock:
-            patch = ActivationPatch(self.model.model, set(patch_layers))
+            patch = ActivationPatch(
+                self.model.model,
+                set(patch_layers),
+                patch_spans=patch_spans,
+                source_spans=source_spans,
+                mode=mode,
+            )
             enc_src = self.tokenizer(source_sentence, return_tensors="pt").to(self.device)
             with torch.no_grad():
                 source_states = patch.capture(
@@ -724,11 +735,14 @@ class ModelEngine:
             "source_sentence": source_sentence,
             "target_sentence": sentence,
             "patch_layers": sorted(patch_layers),
+            "patch_spans": patch._patch_spans,
+            "mode": mode,
             "n_captured": len(source_states),
         }
         data["analysis_clean"] = clean
         data["analysis_source"] = source_data
         return data
+
 
     def _analyze_forward_only(self, sentence: str) -> dict:
         """Run one forward pass and return the analyze()-shaped result without

@@ -244,9 +244,12 @@ We would rather under-claim than overstate. Known gaps, stated plainly:
 - **Quantized GGUF Backend Instrumentation:** Real quantized GGUF inference is supported via `llama.cpp` (`llama-cpp-python`). When executing via GGUF, tokens and top-k probabilities come directly from the quantized model; per-layer internal activations are not exposed by `llama.cpp`, so layer lighting is cleanly disabled to maintain data honesty.
 - The **live PyTorch model is Qwen** (real, loaded); GPT-2's formula set is wired and
   selected by architecture but not run locally.
-- **`TimingReadout` does not report real time.** It currently derives a proxy from PCA-space
-  hidden-state magnitudes and labels it in milliseconds — this is a known bug
-  ([#18](https://github.com/Sudharsanselvaraj/Token-Print/issues/18)), not a measurement.
+- **Per-layer timings are host wall-clock.** `TimingReadout` shows real ms (`REAL MS`) from
+  per-layer `perf_counter()` hooks on live PyTorch generations. No device synchronize is
+  issued, so on MPS/CUDA a layer's time can reflect when its work was queued rather than when
+  it finished. Traces recorded without timings fall back to mean |activation| per layer,
+  badged `PROXY · NOT MS` and never shown in milliseconds
+  ([#101](https://github.com/Sudharsanselvaraj/Token-Print/issues/101)).
 - **`ActivationPatchCompare` shows a logit-lens trajectory, not activation patching.** The
   numbers are real; the panel title overstates the method
   ([#75](https://github.com/Sudharsanselvaraj/Token-Print/issues/75)).
