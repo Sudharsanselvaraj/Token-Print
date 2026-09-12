@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
-const repo = process.env.GITHUB_REPOSITORY?.split("/")[1];
+// The GitHub Actions runner pre-sets GITHUB_REPOSITORY (read-only, cannot be
+// overridden per-step), so the deploy build picks up the /Token-Print basePath
+// from it automatically. CI smoke/visual builds set NEXT_DISABLE_BASEPATH=1
+// to produce a basePath-free static export served at "/".
+const repo = process.env.NEXT_DISABLE_BASEPATH
+  ? undefined
+  : process.env.GITHUB_REPOSITORY?.split("/")[1];
 const nextConfig = {
   reactStrictMode: true,
   output: "export",
