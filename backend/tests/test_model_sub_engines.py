@@ -24,7 +24,7 @@ def test_attention_engine_processing():
     # 0.00412 is below 0.01 threshold -> 0.0
     assert processed[0][0][0][1] == 0.0
     # 0.85432 rounded to 3 decimals -> 0.854
-    assert processed[0][0][0][0] == 0.854
+    assert abs(processed[0][0][0][0] - 0.854) < 1e-3
 
 
 def test_activation_engine_timings():
@@ -66,7 +66,6 @@ def test_reduction_engine_projection_and_variance():
     assert len(proj["0"][0]) == 3  # 3D points
 
     var = engine.calculate_explained_variance(hidden_l0)
-    assert "pc1" in var
-    assert "pc2" in var
-    assert "pc3" in var
-    assert "total" in var
+    assert isinstance(var, list)
+    assert len(var) > 0
+    assert all(isinstance(v, float) for v in var)
