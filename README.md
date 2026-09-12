@@ -315,7 +315,15 @@ TokenPrint was designed and built from the ground up by **[Sudharsan Selvaraj](h
 Everyone below has a merged pull request in TokenPrint.
 
 <!-- CONTRIBUTORS:START -->
-
+<div align="center">
+<a href="https://github.com/Sudharsanselvaraj"><img src="https://github.com/Sudharsanselvaraj.png?size=96" alt="Sudharsanselvaraj" title="Sudharsanselvaraj" width="48" height="48" align="top" /></a>
+<a href="https://github.com/ManoShruthiS"><img src="https://github.com/ManoShruthiS.png?size=96" alt="ManoShruthiS" title="ManoShruthiS" width="48" height="48" align="top" /></a>
+<a href="https://github.com/Sew-a"><img src="https://github.com/Sew-a.png?size=96" alt="Sew-a" title="Sew-a" width="48" height="48" align="top" /></a>
+<a href="https://github.com/Shivamyadav1312"><img src="https://github.com/Shivamyadav1312.png?size=96" alt="Shivamyadav1312" title="Shivamyadav1312" width="48" height="48" align="top" /></a>
+<a href="https://github.com/ris422"><img src="https://github.com/ris422.png?size=96" alt="ris422" title="ris422" width="48" height="48" align="top" /></a>
+<a href="https://github.com/Sriram-Selvaperumal"><img src="https://github.com/Sriram-Selvaperumal.png?size=96" alt="Sriram-Selvaperumal" title="Sriram-Selvaperumal" width="48" height="48" align="top" /></a>
+<a href="https://github.com/challenge456"><img src="https://github.com/challenge456.png?size=96" alt="challenge456" title="challenge456" width="48" height="48" align="top" /></a>
+</div>
 <!-- CONTRIBUTORS:END -->
 
 Want to be in that gallery? Grab one of the **26 curated issues** in [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md),
