@@ -1,6 +1,6 @@
 "use client";
 
-import { useStore } from "@/lib/store";
+import { useStore, useUIMode } from "@/lib/store";
 import { fmtCount } from "@/lib/format";
 import { useSnapshotUrl } from "@/lib/useSnapshotUrl";
 import type { Mode } from "@/lib/types";
@@ -16,7 +16,7 @@ const MODES: { id: Mode; label: string }[] = [
 ];
 
 export default function TopBar() {
-  const mode = useStore((s) => s.mode);
+  const mode = useUIMode();
   const setMode = useStore((s) => s.setMode);
   const arch = useStore((s) => s.arch);
   const m = arch?.metadata;

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""NeuroScope trace-dump client — capture JSON traces programmatically.
+"""TokenPrint trace-dump client — capture JSON traces programmatically.
 
 Usage:
     python trace_client.py --prompt "The capital of France is" --output trace.json
@@ -20,7 +20,7 @@ import urllib.request
 import urllib.parse
 
 
-TRACE_API = "/api/trace"
+TRACE_API = "/trace"
 
 
 def capture_trace(base_url: str, prompt: str, max_new_tokens: int = 10, 
@@ -100,7 +100,7 @@ def trace_diff(baseline_path: str, head_path: str, tolerance: float = 0.05):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="NeuroScope trace client")
+    parser = argparse.ArgumentParser(description="TokenPrint trace client")
     parser.add_argument("--url", default="http://localhost:8000", help="Server URL")
     parser.add_argument("--prompt", default="The capital of France is", help="Prompt text")
     parser.add_argument("--max-tokens", type=int, default=10, help="Max generated tokens")
