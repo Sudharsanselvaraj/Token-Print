@@ -89,3 +89,22 @@ architectures — e.g. **qwen3** (399 tensors, Q4_K) and **llama** 3.2 (255
 tensors, Q4_K). The parsed tensor counts match the counts encoded in the binary
 header, and each model reports its own real vocab, RoPE base, and context length.
 See [verification.md](verification.md).
+
+## Backend Execution & Optional Dependencies
+
+To enable native local GGUF backend execution via `llama.cpp`:
+
+```bash
+pip install -r backend/requirements-gguf.txt
+```
+
+### Capability Matrix: Client Parser vs Backend Engine
+
+| Feature / Capability | Client-Side Browser Parser (`lib/gguf/`) | Server-Side `GGUFEngine` (`llama.cpp`) |
+| :--- | :---: | :---: |
+| **Header & Metadata Extraction** | ✅ Full Support (v2/v3) | ✅ Full Support |
+| **Tensor Info & Pointcloud Geometry** | ✅ Full Support | ✅ Full Support |
+| **Weight Value Preview** | ⚠️ F32/F16 + Q4_K/Q5_K block reconstruction | ✅ Native Weight Sampling |
+| **Live Quantized Token Generation** | N/A (Browser Client Only) | ✅ Real Quantized Logits & Top-K |
+| **KV-Cache Position Accounting** | N/A | ✅ True Context Length |
+| **Per-Layer Activation & Attention Stats** | N/A | ❌ Not Exposed by `llama.cpp` |

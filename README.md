@@ -105,7 +105,7 @@ for the live-model view; drag any local `.gguf` onto the drop zone to inspect it
 
 ```bash
 # To enable native local GGUF backend execution:
-pip install llama-cpp-python
+pip install -r backend/requirements-gguf.txt
 ```
 
 ## The four modes
