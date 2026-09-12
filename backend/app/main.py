@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -322,6 +323,12 @@ _hf_inspect_cache: dict[str, tuple[float, HFInspectResponse]] = {}
 _CACHE_TTL_SEARCH = 60.0  # seconds
 _CACHE_TTL_INSPECT = 300.0  # seconds
 
+# Allowlist regexes for user-supplied request parameters. Kept as re.compile
+# objects at module scope so CodeQL's py/partial-ssrf query sees the inline
+# fullmatch() guards as barriers on values that feed HF Hub URLs.
+_MODEL_ID_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}/[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$")
+_SEARCH_TERM_RE = re.compile(r"^[A-Za-z0-9 _.,'+-]{1,200}$")
+
 
 @app.get("/api/hf/curated")
 @app.get("/api/hf/curated/")
@@ -343,11 +350,11 @@ def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
     query = (query or "").strip()[:200]  # Sanitize and cap length
     limit = max(1, min(int(limit), 25))  # Bound limit between 1 and 25
 
-    from app.hf_guard import safe_urlopen, sanitize_log, validate_search_term
+    from app.hf_guard import safe_urlopen
 
-    if query and not validate_search_term(query):
+    if query and not _SEARCH_TERM_RE.fullmatch(query):
         # Reject control characters / non-url-safe input with an empty result.
-        logger.warning("Rejected non-printable HF search term: %s", sanitize_log(query))
+        logger.warning("Rejected non-printable HF search term: %s", query.replace("\n", ""))
         return HFSearchResponse(query=query, limit=limit, models=[])
 
     cache_key = f"{query}:{limit}"
@@ -394,7 +401,7 @@ def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
             _hf_search_cache[cache_key] = (now, result)
             return result
     except (urllib.error.URLError, OSError, ValueError) as exc:
-        logger.warning("HF Hub search failed for '%s': %s", sanitize_log(query), exc)
+        logger.warning("HF Hub search failed for '%s': %s", query.replace("\n", ""), exc)
         # Return empty search result fallback on error or network offline
         return HFSearchResponse(query=query, limit=limit, models=[])
 
@@ -403,10 +410,10 @@ def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
 @app.get("/api/hf/inspect/", response_model=HFInspectResponse)
 def hf_inspect(model_id: str) -> HFInspectResponse:
     """Fetch HF model config.json and compute deterministic EffectiveCapabilities matrix without downloading model weights."""
-    from app.hf_guard import safe_urlopen, sanitize_log, validate_model_id
+    from app.hf_guard import safe_urlopen
 
     model_id = (model_id or "").strip()
-    if not validate_model_id(model_id):
+    if not _MODEL_ID_RE.fullmatch(model_id):
         raise HTTPException(status_code=400, detail="Invalid Hugging Face model ID format.")
 
     now = time.time()
@@ -417,9 +424,10 @@ def hf_inspect(model_id: str) -> HFInspectResponse:
 
     try:
         import json
+        import urllib.parse
 
         # 1. Fetch commit revision SHA metadata
-        meta_url = f"https://huggingface.co/api/models/{model_id}"
+        meta_url = "https://huggingface.co/api/models/" + urllib.parse.quote(model_id, safe="/")
         revision = "main"
         with safe_urlopen(meta_url) as resp:
             if resp.status == 200:
@@ -427,7 +435,7 @@ def hf_inspect(model_id: str) -> HFInspectResponse:
                 revision = meta_json.get("sha") or meta_json.get("revision") or "main"
 
         # 2. Fetch config.json
-        config_url = f"https://huggingface.co/{model_id}/raw/main/config.json"
+        config_url = "https://huggingface.co/" + urllib.parse.quote(model_id, safe="/") + "/raw/main/config.json"
         with safe_urlopen(config_url) as resp:
             if resp.status != 200:
                 raise HTTPException(status_code=404, detail=f"Config for model '{model_id}' not found on Hugging Face Hub.")
@@ -464,10 +472,10 @@ def hf_inspect(model_id: str) -> HFInspectResponse:
     except HTTPException:
         raise
     except ValueError as exc:
-        logger.warning("HF inspection rejected for '%s': %s", sanitize_log(model_id), exc)
+        logger.warning("HF inspection rejected for '%s': %s", model_id.replace("\n", ""), exc)
         raise HTTPException(status_code=400, detail="Model inspection blocked by security policy.") from exc
     except Exception as exc:
-        logger.error("HF inspection error for '%s': %s", sanitize_log(model_id), exc)
+        logger.error("HF inspection error for '%s': %s", model_id.replace("\n", ""), exc)
         raise HTTPException(status_code=500, detail="Failed to inspect model.") from exc
 
 
