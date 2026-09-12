@@ -23,7 +23,7 @@ from app.reduce import (
     query_self_attribution,
     ungrounded_flags,
 )
-from app.schemas import AnalyzeRequest, ModelInfo, RagAnalyzeRequest, RagChunk
+from app.schemas import AnalyzeRequest, RagAnalyzeRequest, RagChunk
 
 
 def test_project_3d_standard_shape():

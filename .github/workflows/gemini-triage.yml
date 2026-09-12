@@ -7,6 +7,7 @@ on:
 jobs:
   triage:
     name: Gemini issue triage
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read

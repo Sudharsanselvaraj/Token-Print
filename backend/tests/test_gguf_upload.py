@@ -8,10 +8,9 @@ model is downloaded.
 from __future__ import annotations
 
 import sys
-import types
-import unittest.mock as mock
 from io import BytesIO
 from pathlib import Path
+from unittest import mock
 
 # ---------------------------------------------------------------------------
 # Pre-mock all native deps BEFORE importing anything from app.*
@@ -30,12 +29,10 @@ for _mod in _HEAVY_MODS:
 # Add backend directory to sys.path (matches existing test pattern).
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import pytest
-from starlette.testclient import TestClient
-
 import app.main as main_module
+import pytest
 from app.main import GGUF_DIR, app
-
+from starlette.testclient import TestClient
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -65,9 +62,8 @@ def client():
     mock_engine.mode = "text"
     mock_engine.model_type = "gpt2"
 
-    with mock.patch.object(main_module, "ModelEngine", return_value=mock_engine):
-        with TestClient(app) as c:
-            yield c
+    with mock.patch.object(main_module, "ModelEngine", return_value=mock_engine), TestClient(app) as c:
+        yield c
 
 
 @pytest.fixture(autouse=True)
