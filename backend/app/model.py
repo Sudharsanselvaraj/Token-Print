@@ -46,12 +46,8 @@ from transformers import (
 from .debug import DebugCapture
 from .reduce import explained_variance, project_3d
 
-DEFAULT_MODEL_ID = os.environ.get(
-    "TOKENPRINT_MODEL", os.environ.get("NEUROSCOPE_MODEL", "Qwen/Qwen2.5-0.5B-Instruct")
-)
-MAX_TOKENS = int(
-    os.environ.get("TOKENPRINT_MAX_TOKENS", os.environ.get("NEUROSCOPE_MAX_TOKENS", "40"))
-)
+DEFAULT_MODEL_ID = os.environ.get("TOKENPRINT_MODEL", "Qwen/Qwen2.5-0.5B-Instruct")
+MAX_TOKENS = int(os.environ.get("TOKENPRINT_MAX_TOKENS", "40"))
 
 # Rounding / thresholding for the attention payload.
 _ATTN_DECIMALS = 3
@@ -92,7 +88,7 @@ def _classify_model_type(model_type: str) -> str:
 
 def _pick_device() -> str:
     """Choose the compute device, honoring an explicit override."""
-    override = os.environ.get("TOKENPRINT_DEVICE", os.environ.get("NEUROSCOPE_DEVICE"))
+    override = os.environ.get("TOKENPRINT_DEVICE")
     if override:
         return override
     if torch.backends.mps.is_available():
