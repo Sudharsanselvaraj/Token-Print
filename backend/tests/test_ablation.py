@@ -7,8 +7,8 @@ Tests cover:
 """
 
 import sys
-import unittest.mock as mock
 from pathlib import Path
+from unittest import mock
 
 # Add backend directory to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -21,7 +21,6 @@ for _mod in _HEAVY_MODS:
     if _mod not in sys.modules:
         sys.modules[_mod] = mock.MagicMock()
 
-import pytest
 from app.ablation import Ablation
 
 
