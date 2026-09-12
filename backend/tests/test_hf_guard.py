@@ -12,7 +12,12 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.hf_guard import sanitize_log, safe_urlopen, validate_model_id, validate_search_term
+from app.hf_guard import (
+    safe_urlopen,
+    sanitize_log,
+    validate_model_id,
+    validate_search_term,
+)
 
 
 class TestValidateModelId:
