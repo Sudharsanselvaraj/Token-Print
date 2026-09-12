@@ -105,7 +105,7 @@ for the live-model view; drag any local `.gguf` onto the drop zone to inspect it
 
 ```bash
 # To enable native local GGUF backend execution:
-pip install llama-cpp-python
+pip install -r backend/requirements-gguf.txt
 ```
 
 ## The four modes
@@ -242,6 +242,7 @@ design/engineering audit is in [docs/design-review.md](docs/design-review.md).
 We would rather under-claim than overstate. Known gaps, stated plainly:
 
 - **Quantized GGUF Backend Instrumentation:** Real quantized GGUF inference is supported via `llama.cpp` (`llama-cpp-python`). When executing via GGUF, tokens and top-k probabilities come directly from the quantized model; per-layer internal activations are not exposed by `llama.cpp`, so layer lighting is cleanly disabled to maintain data honesty.
+- **Attention Mass vs. Causal Attribution:** 3D visual attention lines indicate mathematical attention distribution, not causal proof of token necessity. High attention mass is an interpretability signal, not proof of output dependence (see [docs/visual-mapping.md](docs/visual-mapping.md#causality-warning)).
 - The **live PyTorch model is Qwen** (real, loaded); GPT-2's formula set is wired and
   selected by architecture but not run locally.
 - **Per-layer timings are host wall-clock.** `TimingReadout` shows real ms (`REAL MS`) from
