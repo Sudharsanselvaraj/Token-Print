@@ -1,245 +1,183 @@
 "use client";
 
+import React from "react";
 import { useStore } from "@/lib/store";
 import { fmtCount, fmtShape } from "@/lib/format";
-import { roleLabel } from "@/lib/tensorName";
-import {
-  contextOp,
-  detectArch,
-  getFormula,
-  roleToOpKey,
-} from "@/lib/formulas";
-import Formula from "./Formula";
 import GenerationPanel from "./GenerationPanel";
-import LogitLensPanel from "./LogitLensPanel";
+import { AttentionMatrixWidget } from "./AttentionMatrixWidget";
+import { ResidualStreamWidget } from "./ResidualStreamWidget";
+import { LogitLensWidget } from "./LogitLensWidget";
+import DataProvenanceBadge from "./DataProvenanceBadge";
+import ComponentInspectorPanel from "./ComponentInspectorPanel";
 
 function valueNote(dtype: string): string {
   return /^(F32|F16|BF16|float)/i.test(dtype)
-    ? "Float tensor — real values are inspectable."
-    : `Quantized (${dtype}) — values need block dequantization to inspect; shape/offset/type are exact.`;
+    ? "Float tensor • real values inspectable"
+    : `Quantized (${dtype}) • values require dequantization`;
 }
 
-const FAMILY_SUMMARY: Record<string, string> = {
-  llama: "RMSNorm · RoPE · SwiGLU · GQA",
-  gpt2: "LayerNorm · Learned Pos · GELU",
-};
+interface RightPanelProps {
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+}
 
-export default function RightPanel() {
+export default function RightPanel({ collapsed, onToggleCollapse }: RightPanelProps) {
   const mode = useStore((s) => s.mode);
   const arch = useStore((s) => s.arch);
+  const data = useStore((s) => s.data);
   const selName = useStore((s) => s.selectedTensor);
   const hovName = useStore((s) => s.hoveredTensor);
-  const data = useStore((s) => s.data);
+  const expandedBlockId = useStore((s) => s.expandedBlockId);
+  const selectedLayer = useStore((s) => s.selectedLayer);
+  const inspectingComponentId = useStore((s) => s.inspectingComponentId);
 
-  if (mode === "generation") return <GenerationPanel />;
-  if (mode === "debugger") {
+  if (collapsed) {
     return (
-      <div className="rightpanel">
-        <div className="side-title">Debugger</div>
-        <div className="rp-overview">
-          {arch ? (
-            <>
-              <div className="rp-modelname">{arch.metadata.name}</div>
-              <div className="side-hint">
-                All debug tools are shown in the main canvas area. Select a
-                tensor in the sidebar to inspect.
-              </div>
-              <div className="rp-statgrid">
-                <div className="rp-stat">
-                  <span>Tensors</span>
-                  <b>{arch.tensor_count}</b>
-                </div>
-                <div className="rp-stat">
-                  <span>Layers</span>
-                  <b>{arch.metadata.num_layers}</b>
-                </div>
-                <div className="rp-stat">
-                  <span>Heads</span>
-                  <b>{arch.metadata.num_heads}</b>
-                </div>
-                <div className="rp-stat">
-                  <span>Params</span>
-                  <b>{fmtCount(arch.metadata.total_params)}</b>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="rp-empty">Load a model to begin debugging.</div>
-          )}
-        </div>
+      <div className="right-panel-collapsed">
+        <button
+          onClick={onToggleCollapse}
+          className="sidebar-toggle-btn"
+          title="Expand Inspector (Ctrl+])"
+        >
+          <span>&lt;</span>
+        </button>
       </div>
     );
   }
-  if (mode === "walkthrough") {
-    const d = data;
+
+  const arch3dOpId = useStore((s) => s.arch3dOpId);
+  const activeComponentId = inspectingComponentId || arch3dOpId;
+
+  if (activeComponentId) {
     return (
-      <div className="rightpanel">
-        <div className="side-title">Worked Example</div>
-        {d ? (
-          <>
-            <div
-              className="family-chip"
-              title="This walkthrough uses real recorded inference data from a concrete prompt and model. Every tensor value, attention pattern, and logit is from an actual execution — not a simulation or idealized diagram."
-            >
-              real forward pass · <span>{d.model}</span>
+      <aside className="rightpanel rp-inspector">
+        <ComponentInspectorPanel />
+      </aside>
+    );
+  }
+
+  if (mode === "generation") return <GenerationPanel />;
+
+  const targetName = selName || hovName;
+  const t = targetName ? arch?.tensors.find((x) => x.name === targetName) : null;
+  const backend = data?.provenance?.backend || "hf_local";
+
+  // Derive mathematical context for selected block
+  const getOpFormula = (id: string | null) => {
+    if (!id) return null;
+    const lower = id.toLowerCase();
+    if (lower.includes("q_proj")) return { title: "Q PROJECTION", formula: "x → xW_q", inDim: "896", outDim: "14 × 64" };
+    if (lower.includes("k_proj")) return { title: "K PROJECTION", formula: "x → xW_k", inDim: "896", outDim: "2 × 64" };
+    if (lower.includes("v_proj")) return { title: "V PROJECTION", formula: "x → xW_v", inDim: "896", outDim: "2 × 64" };
+    if (lower.includes("o_proj")) return { title: "O PROJECTION", formula: "x → xW_o", inDim: "14 × 64", outDim: "896" };
+    if (lower.includes("rope")) return { title: "ROTARY EMBEDDING", formula: "RoPE(q, k, pos)", inDim: "64", outDim: "64" };
+    if (lower.includes("gate")) return { title: "GATE PROJECTION", formula: "x → Swish(xW_gate)", inDim: "896", outDim: "4864" };
+    if (lower.includes("up")) return { title: "UP PROJECTION", formula: "x → xW_up", inDim: "896", outDim: "4864" };
+    if (lower.includes("swiglu")) return { title: "SWIGLU MERGE", formula: "Gate ⊙ Up", inDim: "4864", outDim: "4864" };
+    if (lower.includes("down")) return { title: "DOWN PROJECTION", formula: "x → xW_down", inDim: "4864", outDim: "896" };
+    if (lower.includes("norm")) return { title: "RMSNORM", formula: "RMSNorm(x, ε) × γ", inDim: "896", outDim: "896" };
+    return null;
+  };
+
+  const opCtx = getOpFormula(expandedBlockId || targetName);
+
+  return (
+    <aside className="rightpanel rp-inspector">
+      {/* HEADER & TOGGLE */}
+      <div className="rp-header">
+        <span className="rp-header-title">INSPECTOR</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <DataProvenanceBadge origin="real" label="REAL" />
+          <button
+            onClick={onToggleCollapse}
+            className="sidebar-toggle-btn"
+            title="Collapse Inspector"
+          >
+            <span>&gt;</span>
+          </button>
+        </div>
+      </div>
+
+      {/* OPERATION CONTEXT (If 3D object / node selected) */}
+      {opCtx && (
+        <div className="rp-section op-context-box">
+          <div className="op-ctx-header">
+            <span className="op-ctx-title">{opCtx.title}</span>
+            <span className="op-ctx-formula">{opCtx.formula}</span>
+          </div>
+          <div className="op-spec-grid">
+            <div className="op-spec-item">
+              <span className="op-spec-label">INPUT</span>
+              <span className="op-spec-val">{opCtx.inDim}</span>
             </div>
-            <div className="td-grid">
-              <div>
-                <span>Sentence</span>
-                <b style={{ fontSize: 12 }}>{d.sentence}</b>
+            <div className="op-spec-item">
+              <span className="op-spec-label">OUTPUT</span>
+              <span className="op-spec-val">{opCtx.outDim}</span>
+            </div>
+            <div className="op-spec-item">
+              <span className="op-spec-label">LAYER</span>
+              <span className="op-spec-val">L{selectedLayer}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TENSOR INSPECTOR */}
+      <div className="rp-section">
+        <div className="rp-section-header">
+          <span className="rp-section-title">TENSOR INSPECTOR</span>
+        </div>
+
+        {t ? (
+          <div className="tensor-details-box">
+            <div className="tensor-name-display">{t.name}</div>
+
+            <div className="spec-grid tensor-specs">
+              <div className="spec-item">
+                <span className="spec-key">SHAPE</span>
+                <span className="spec-val accent">{fmtShape(t.shape)}</span>
               </div>
-              <div>
-                <span>Tokens</span>
-                <b>{d.tokens.length}</b>
+              <div className="spec-item">
+                <span className="spec-key">DTYPE</span>
+                <span className="spec-val">{t.dtype}</span>
               </div>
-              <div>
-                <span>Layers</span>
-                <b>{d.num_layers}</b>
+              <div className="spec-item">
+                <span className="spec-key">PARAMS</span>
+                <span className="spec-val">{fmtCount(t.n_params)}</span>
               </div>
-              <div>
-                <span>Heads</span>
-                <b>{d.num_heads}</b>
+              <div className="spec-item">
+                <span className="spec-key">LAYER</span>
+                <span className="spec-val">{t.layer ?? "Global"}</span>
               </div>
-              <div>
-                <span>Hidden</span>
-                <b>{d.hidden_size}</b>
+              <div className="spec-item">
+                <span className="spec-key">BACKEND</span>
+                <span className="spec-val">{backend}</span>
               </div>
             </div>
-            <div className="td-note">
-              Every number in the reading pane is read from this real forward
-              pass — no illustrative values.
+
+            <div className="tensor-value-note">
+              {valueNote(t.dtype)}
             </div>
-            <LogitLensPanel />
-          </>
+          </div>
         ) : (
-          <div className="rp-empty">
-            <div className="wt-spinner" />
-            <span>Loading the real example forward pass…</span>
+          <div className="rp-empty-hint">
+            Select any tensor or 3D operational node in the central computational graph to inspect properties.
           </div>
         )}
       </div>
-    );
-  }
 
-  const name = selName ?? hovName;
-  const t = name ? arch?.tensors.find((x) => x.name === name) : null;
+      {/* SCIENTIFIC INSPECTION WIDGETS */}
+      <div className="rp-section">
+        <AttentionMatrixWidget />
+      </div>
 
-  const family = detectArch(arch?.metadata.architecture);
-  const opKey = t ? roleToOpKey(t.role) : null;
+      <div className="rp-section">
+        <ResidualStreamWidget />
+      </div>
 
-  return (
-    <div className="rightpanel">
-      <div className="side-title">Tensor Inspector</div>
-      {arch && (
-        <div
-          className="family-chip"
-          title={
-            family === "llama"
-              ? "Real GQA: query heads are grouped into KV-head clusters (e.g., 14→2). Only a real model has consistent group assignments that match its architecture config — synthetic data invents or evenly splits them."
-              : "The architecture family determines which normalization, position encoding, and activation functions are used. These are read from the real model's config."
-          }
-        >
-          <span>{arch.metadata.architecture}</span> · {FAMILY_SUMMARY[family]}
-        </div>
-      )}
-      {t ? (
-        <div className="tensor-detail">
-          <div className="td-role">
-            {roleLabel(t.role)}
-            {t.layer != null ? ` — Layer ${t.layer}` : ""}
-          </div>
-          <div className="td-name">{t.name}</div>
-          <div className="td-grid">
-            <div>
-              <span>Shape</span>
-              <b>{fmtShape(t.shape)}</b>
-            </div>
-            <div>
-              <span>Dtype</span>
-              <b>{t.dtype}</b>
-            </div>
-            <div>
-              <span>Params</span>
-              <b>{fmtCount(t.n_params)}</b>
-            </div>
-            <div>
-              <span>Layer</span>
-              <b>{t.layer ?? "—"}</b>
-            </div>
-            {t.offset != null && (
-              <div>
-                <span>Byte Offset</span>
-                <b>{t.offset.toLocaleString()}</b>
-              </div>
-            )}
-          </div>
-          <div className="td-note">{valueNote(t.dtype)}</div>
-
-          {opKey && (
-            <div className="formula-section">
-              {(() => {
-                const spec = getFormula(family, opKey);
-                const ctx = contextOp(opKey);
-                const ctxSpec = ctx !== opKey ? getFormula(family, ctx) : null;
-                return (
-                  <>
-                    <div className="formula-title">{spec.title}</div>
-                    {spec.latex.map((l, i) => (
-                      <Formula key={i} latex={l} />
-                    ))}
-                    {ctxSpec && ctxSpec.latex.length > 0 && (
-                      <>
-                        <div className="formula-title sub">{ctxSpec.title}</div>
-                        {ctxSpec.latex.map((l, i) => (
-                          <Formula key={`c${i}`} latex={l} />
-                        ))}
-                      </>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          )}
-        </div>
-      ) : arch ? (
-        <div className="rp-overview">
-          <div className="rp-modelname">{arch.metadata.name}</div>
-
-          <div className="rp-statgrid">
-            <Stat label="KV heads" value={arch.metadata.num_kv_heads} />
-            <Stat label="Hidden" value={arch.metadata.hidden_size} />
-            <Stat label="Head dim" value={arch.metadata.head_dim} />
-            <Stat label="FFN" value={fmtCount(arch.metadata.ffn_size)} />
-            <Stat label="Vocab" value={fmtCount(arch.metadata.vocab_size)} />
-            <Stat label="Context" value={fmtCount(arch.metadata.context_length)} />
-          </div>
-
-          <div className="rp-legend">
-            <div className="rp-legend-label">Colour · layer depth</div>
-            <div className="legend-bar" />
-            <div className="legend-row">
-              <span>Layer 0</span>
-              <span>Layer {Math.max(0, arch.metadata.num_layers - 1)}</span>
-            </div>
-          </div>
-
-          <div className="rp-hint">
-            Each point is a real parameter. Hover or click any cluster — or a row
-            in the list — to inspect a real tensor&rsquo;s name, shape, and dtype.
-          </div>
-        </div>
-      ) : (
-        <div className="rp-empty">Loading the model&rsquo;s real structure…</div>
-      )}
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rp-stat">
-      <span>{label}</span>
-      <b>{value}</b>
-    </div>
+      <div className="rp-section">
+        <LogitLensWidget />
+      </div>
+    </aside>
   );
 }

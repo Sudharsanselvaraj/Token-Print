@@ -138,7 +138,22 @@ export default function KvCacheVolume({
                     }
 
                     return (
-                      <mesh key={z} position={[0, 0, zPos]}>
+                      <mesh
+                        key={z}
+                        position={[0, 0, zPos]}
+                        onPointerOver={(e) => {
+                          e.stopPropagation();
+                          useStore.getState().setHoveredTensor(`model.layers.${l}.self_attn.k_proj.cache[pos=${c}]`);
+                        }}
+                        onPointerOut={(e) => {
+                          e.stopPropagation();
+                          useStore.getState().setHoveredTensor(null);
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          useStore.getState().setSelectedTensor(`model.layers.${l}.self_attn.k_proj.cache[pos=${c}]`);
+                        }}
+                      >
                         <boxGeometry args={[CELL_W, CELL_H, CELL_D]} />
                         <meshStandardMaterial
                           color={color}

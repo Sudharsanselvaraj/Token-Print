@@ -1,4 +1,10 @@
 import { create } from "zustand";
+import {
+  opById as _opById,
+  nextOpId as _nextOpId,
+  prevOpId as _prevOpId,
+  firstOpOfLayer as _firstOpOfLayer,
+} from "@/components/scenes/TransformerOperationGraph";
 import { analyzeSentence, analyzeImage, listGgufs, uploadGguf, openGguf, fetchArchitecture, loadTraceFile, downloadTrace as apiDownloadTrace } from "./api";
 import type { GgufItem } from "./api";
 import { layerAnchors, anchorPosFor } from "./playback";
@@ -34,6 +40,14 @@ interface NeuroState {
   // Top-level app mode (replaces the district flythrough).
   mode: Mode;
   setMode: (m: Mode) => void;
+
+  // Data-first computation graph view modes
+  graphViewMode: "full" | "single_layer" | "attention_flow" | "residual_stream" | "logit_lens" | "activations" | "token_flow";
+  setGraphViewMode: (m: NeuroState["graphViewMode"]) => void;
+  selectedTokenIndex: number;
+  setSelectedTokenIndex: (i: number) => void;
+  expandedBlockId: string | null;
+  setExpandedBlockId: (id: string | null) => void;
 
   // --- Architecture Explorer ------------------------------------------- //
   arch: ArchitectureData | null;
@@ -225,6 +239,38 @@ interface NeuroState {
   classroomPresenting: boolean;
   toggleClassroomMode: () => void;
   classroomStep: () => void;  // Advance to next op for all viewers
+
+  // --- 3D Camera & Focus Mode ---
+  cameraMode: "overview" | "layer" | "operation" | "token_follow";
+  setCameraMode: (m: NeuroState["cameraMode"]) => void;
+  focusMode: boolean;
+  toggleFocusMode: () => void;
+  expandedLayer: number | null;
+  setExpandedLayer: (l: number | null) => void;
+
+  // --- Architecture 3D Interaction State Machine (Phase 7) ---
+  // Single authoritative selection state consumed by every 3D scene component.
+  arch3dOpId: string;               // canonical op ID, e.g. "op_l11_attn_softmax"
+  arch3dLayer: number;              // 0-23 (or -1 for embed, 24+ for final nodes)
+  arch3dOpKind: string;             // OperationKind string
+  arch3dPlaying: boolean;           // architecture-mode autoplay (explorer tab)
+  arch3dSpeed: number;              // 0.25 | 0.5 | 1 | 2
+
+  // The ONE authoritative selection action — sets op, layer, tensor, camera.
+  selectArch3dOp: (opId: string) => void;
+  stepArch3dOp: (dir: 1 | -1) => void;
+  stepArch3dLayer: (dir: 1 | -1) => void;
+  toggleArch3dPlay: () => void;
+  setArch3dSpeed: (n: number) => void;
+
+  // --- 3D Component Inspect Mode ---
+  inspectingComponentId: string | null;
+  inspectPreviousCamera: { position: [number, number, number]; target: [number, number, number] } | null;
+  inspectAutoRotate: boolean;
+  enterInspectMode: (componentId: string) => void;
+  exitInspectMode: () => void;
+  toggleInspectAutoRotate: () => void;
+  navigateInspectComponent: (dir: 1 | -1) => void;
 }
 
 let genSocket: WebSocket | null = null;
@@ -238,6 +284,13 @@ export const useStore = create<NeuroState>((set, get) => ({
 
   mode: "explorer",
   setMode: (m) => set({ mode: m }),
+
+  graphViewMode: "full",
+  setGraphViewMode: (m) => set({ graphViewMode: m }),
+  selectedTokenIndex: 0,
+  setSelectedTokenIndex: (i) => set({ selectedTokenIndex: i }),
+  expandedBlockId: null,
+  setExpandedBlockId: (id) => set({ expandedBlockId: id }),
 
   embedMode: false,
   setEmbedMode: (b) => set({ embedMode: b }),
@@ -268,6 +321,131 @@ export const useStore = create<NeuroState>((set, get) => ({
       const numOps = s.genMeta?.op_catalog?.length ?? 1;
       const nextOp = (s.opIndex + 1) % numOps;
       return { opIndex: nextOp };
+    }),
+
+  // --- 3D Camera & Focus Mode ---
+  cameraMode: "overview",
+  setCameraMode: (m) => set({ cameraMode: m }),
+  focusMode: false,
+  toggleFocusMode: () => set((s) => ({ focusMode: !s.focusMode })),
+  expandedLayer: null,
+  setExpandedLayer: (l) => set({ expandedLayer: l }),
+
+  // --- Architecture 3D Interaction State Machine ---
+  arch3dOpId: "op_embed",
+  arch3dLayer: -1,
+  arch3dOpKind: "embedding",
+  arch3dPlaying: false,
+  arch3dSpeed: 1,
+
+  selectArch3dOp: (opId) =>
+    set((s) => {
+      const op = _opById.get(opId);
+      if (!op) return {};
+      const layer = op.layer ?? -1;
+      const nextCam =
+        s.cameraMode === "overview" ? "overview" :
+        s.cameraMode === "token_follow" ? "token_follow" :
+        "operation";
+      return {
+        arch3dOpId: opId,
+        arch3dLayer: layer,
+        arch3dOpKind: op.kind,
+        selectedLayer: layer >= 0 ? layer : s.selectedLayer,
+        selectedTensor: op.tensorName ?? s.selectedTensor,
+        cameraMode: nextCam,
+        inspectingComponentId: opId,
+      };
+    }),
+
+  stepArch3dOp: (dir) =>
+    set((s) => {
+      const next = dir > 0 ? _nextOpId(s.arch3dOpId) : _prevOpId(s.arch3dOpId);
+      if (!next) return {};
+      const op = _opById.get(next);
+      if (!op) return {};
+      const layer = op.layer ?? -1;
+      return {
+        arch3dOpId: next,
+        arch3dLayer: layer,
+        arch3dOpKind: op.kind,
+        selectedLayer: layer >= 0 ? layer : s.selectedLayer,
+        selectedTensor: op.tensorName ?? s.selectedTensor,
+      };
+    }),
+
+  stepArch3dLayer: (dir) =>
+    set((s) => {
+      const current = s.arch3dLayer >= 0 ? s.arch3dLayer : 0;
+      const next = Math.max(0, Math.min(23, current + dir));
+      const opId = _firstOpOfLayer(next);
+      const op = _opById.get(opId);
+      return {
+        arch3dOpId: opId,
+        arch3dLayer: next,
+        arch3dOpKind: op?.kind ?? "norm1",
+        selectedLayer: next,
+        selectedTensor: op?.tensorName ?? s.selectedTensor,
+        cameraMode: "layer" as const,
+        userOrbiting: false,
+      };
+    }),
+
+  toggleArch3dPlay: () =>
+    set((s) => {
+      if (!s.arch3dPlaying && s.arch3dOpId === "op_lm_head") {
+        return { arch3dPlaying: true, arch3dOpId: "op_embed", arch3dLayer: -1, arch3dOpKind: "embedding" };
+      }
+      return { arch3dPlaying: !s.arch3dPlaying };
+    }),
+
+  setArch3dSpeed: (n) => set({ arch3dSpeed: Math.max(0.25, Math.min(n, 4)) }),
+
+  // --- 3D Component Inspect Mode ---
+  inspectingComponentId: null,
+  inspectPreviousCamera: null,
+  inspectAutoRotate: true,
+
+  enterInspectMode: (componentId) =>
+    set((s) => {
+      const op = _opById.get(componentId);
+      const layer = op?.layer ?? -1;
+      return {
+        inspectingComponentId: componentId,
+        arch3dOpId: componentId,
+        arch3dLayer: layer,
+        arch3dOpKind: op?.kind ?? "embedding",
+        selectedLayer: layer >= 0 ? layer : s.selectedLayer,
+        selectedTensor: op?.tensorName ?? s.selectedTensor,
+        inspectAutoRotate: true,
+        userOrbiting: false,
+      };
+    }),
+
+  exitInspectMode: () =>
+    set({
+      inspectingComponentId: null,
+    }),
+
+  toggleInspectAutoRotate: () =>
+    set((s) => ({ inspectAutoRotate: !s.inspectAutoRotate })),
+
+  navigateInspectComponent: (dir) =>
+    set((s) => {
+      if (!s.inspectingComponentId) return {};
+      const next = dir > 0 ? _nextOpId(s.inspectingComponentId) : _prevOpId(s.inspectingComponentId);
+      if (!next) return {};
+      const op = _opById.get(next);
+      const layer = op?.layer ?? -1;
+      return {
+        inspectingComponentId: next,
+        arch3dOpId: next,
+        arch3dLayer: layer,
+        arch3dOpKind: op?.kind ?? "embedding",
+        selectedLayer: layer >= 0 ? layer : s.selectedLayer,
+        selectedTensor: op?.tensorName ?? s.selectedTensor,
+        userOrbiting: false,
+      };
     }),
 
   arch: null,

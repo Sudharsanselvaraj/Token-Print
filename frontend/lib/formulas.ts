@@ -191,8 +191,11 @@ export function getFormula(
   family: ArchFamily,
   op: OpKey,
 ): { title: string; latex: string[] } {
-  return SETS[family][op];
+  const familySet = SETS[family] ?? LLAMA;
+  const entry = op ? familySet[op] : null;
+  return entry ?? { title: "Operation Formula", latex: [] };
 }
+
 
 /** The high-level op that a given op key belongs to (for context). */
 export function contextOp(op: OpKey): OpKey {

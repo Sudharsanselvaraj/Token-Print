@@ -73,15 +73,47 @@ export default function WalkthroughPane() {
           {wtPlaying ? "Pause" : "Play"}
         </button>
         <button
+          className="pb-btn"
+          onClick={prev}
+          disabled={idx <= 0}
+          title="Previous chapter"
+        >
+          Skip Back
+        </button>
+        <button
+          className="pb-btn"
+          onClick={next}
+          disabled={idx >= CHAPTERS.length - 1}
+          title="Next chapter"
+          style={{ background: "#0284c7", color: "#ffffff" }}
+        >
+          Continue ›
+        </button>
+        <button
           className="chip-btn"
           onClick={() => setPlaySpeed(playSpeed >= 4 ? 0.5 : playSpeed * 2)}
           title="Autoplay speed"
         >
           {playSpeed}× speed
         </button>
-        <span className="side-hint">
-          {wtPlaying ? "playing walkthrough…" : "auto-advance chapters"}
-        </span>
+      </div>
+
+      {/* Chapter Progress Bar Scrubber */}
+      <div style={{ margin: "8px 0", display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#a3a3a3" }}>
+          <span>Progress</span>
+          <span>Chapter {idx + 1} of {CHAPTERS.length}</span>
+        </div>
+        <div style={{ height: 4, background: "#252525", borderRadius: 2, overflow: "hidden" }}>
+          <div
+            style={{
+              height: "100%",
+              width: `${((idx + 1) / CHAPTERS.length) * 100}%`,
+              background: "#ffffff",
+              transition: "width 0.3s ease",
+            }}
+          />
+        </div>
       </div>
 
       <div className="side-title" style={{ marginTop: 6 }}>

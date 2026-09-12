@@ -5,7 +5,7 @@ import { useStore, restoreFromUrl } from "@/lib/store";
 import SceneLoader from "./SceneLoader";
 import PlaybackEngine from "./PlaybackEngine";
 import TopBar from "./ui/TopBar";
-import Sidebar from "./ui/Sidebar";
+import LeftSidebar from "./ui/LeftSidebar";
 import RightPanel from "./ui/RightPanel";
 import BottomBar from "./ui/BottomBar";
 import PredictionTimeline from "./ui/PredictionTimeline";
@@ -20,6 +20,11 @@ import TileView from "./ui/TileView";
 import DebuggerPane from "./ui/DebuggerPane";
 import TraceGallery from "./ui/TraceGallery";
 import PluginManager from "./ui/PluginManager";
+import { ContextualExplanationOverlay } from "./ui/ContextualExplanationOverlay";
+import { TransformerControlBar3D } from "./ui/TransformerControlBar3D";
+import { ModelMiniMap } from "./ui/ModelMiniMap";
+import { DevDiagnosticsHUD } from "./ui/DevDiagnosticsHUD";
+import { InspectControls } from "./scenes/inspect/InspectControls";
 import "@/lib/plugins/demoPlugin";
 import { fmtShape } from "@/lib/format";
 import { roleLabel } from "@/lib/tensorName";
@@ -33,8 +38,14 @@ export default function AppShell() {
   const devMode = useStore((s) => s.devMode);
   const tileView = useStore((s) => s.tileView);
   const embedMode = useStore((s) => s.embedMode);
+  const focusMode = useStore((s) => s.focusMode);
+  const toggleFocusMode = useStore((s) => s.toggleFocusMode);
   const [mouse, setMouse] = useState({ x: 0, y: 0, inside: false });
   const [pluginManagerOpen, setPluginManagerOpen] = useState(false);
+
+  // Responsive sidebar collapse state
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
 
   useKeyboard();
 
@@ -72,11 +83,31 @@ export default function AppShell() {
 
   const hov = hovName ? arch?.tensors.find((t) => t.name === hovName) : null;
 
+  // Sidebars are hidden in embedMode and focusMode
+  const showSidebars = !embedMode && !focusMode;
+  // 3D canvas overlays (control bar, mini-map) shown in non-debugger 3D modes
+  const showCanvas3DOverlays = mode !== "debugger" && !tileView;
+
+  // Dynamic grid template columns based on sidebar collapse states
+  const gridStyle = {
+    gridTemplateColumns: embedMode
+      ? "0px 1fr 0px"
+      : `${leftCollapsed ? "36px" : "300px"} 1fr ${rightCollapsed ? "36px" : "360px"}`,
+  };
+
   return (
-    <div className={`app mode-${mode} ${embedMode ? "embed" : ""}`}>
+    <div
+      className={`app mode-${mode} ${embedMode ? "embed" : ""} ${focusMode ? "focus-mode" : ""}`}
+      style={gridStyle}
+    >
       <PlaybackEngine />
-      {!embedMode && <TopBar />}
-      {!embedMode && <Sidebar />}
+      {showSidebars && <TopBar />}
+      {showSidebars && (
+        <LeftSidebar
+          collapsed={leftCollapsed}
+          onToggleCollapse={() => setLeftCollapsed(!leftCollapsed)}
+        />
+      )}
       <div
         className="canvas-area"
         onMouseMove={(e) => {
@@ -90,10 +121,42 @@ export default function AppShell() {
         ) : tileView ? (
           <TileView />
         ) : (
-          <SceneLoader />
+          <>
+            <SceneLoader />
+            {mode === "explorer" && <ContextualExplanationOverlay />}
+          </>
         )}
+
+        {/* Focus Mode exit button (top-right corner of canvas) */}
+        {focusMode && (
+          <button
+            onClick={toggleFocusMode}
+            title="Exit Focus Mode (Esc)"
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              zIndex: 80,
+              background: "rgba(10,12,24,0.85)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: 8,
+              color: "#94a3b8",
+              fontSize: 12,
+              fontWeight: 600,
+              padding: "5px 12px",
+              cursor: "pointer",
+              backdropFilter: "blur(12px)",
+              letterSpacing: "0.03em",
+              fontFamily: "Inter, system-ui, sans-serif",
+            }}
+          >
+            ✕ Exit Focus Mode
+          </button>
+        )}
+
         {mode === "walkthrough" && <PredictionTimeline />}
         {mode === "walkthrough" && <TokenDetailView />}
+        <DevDiagnosticsHUD />
         {devMode && <DebugInspector />}
         {devMode && <HeadInspector />}
         {devMode && <DataExport />}
@@ -119,16 +182,16 @@ export default function AppShell() {
             </div>
           </div>
         )}
-        {!tileView && (
-          <div className="canvas-hint">
-            drag to orbit · scroll to zoom · <kbd>Space</kbd> play · <kbd>F10</kbd> op · <kbd>J</kbd><kbd>K</kbd> token
-          </div>
-        )}
       </div>
       <TraceGallery />
       <PluginManager open={pluginManagerOpen} onClose={() => setPluginManagerOpen(false)} />
       <BottomBar />
-      {!embedMode && <RightPanel />}
+      {showSidebars && (
+        <RightPanel
+          collapsed={rightCollapsed}
+          onToggleCollapse={() => setRightCollapsed(!rightCollapsed)}
+        />
+      )}
     </div>
   );
 }

@@ -880,6 +880,9 @@ class ModelEngine:
         window_size: int = 512,
         draft_gamma: int = 4,
         needle: str | None = None,
+        temperature: float = 1.0,
+        top_p: float = 1.0,
+        seed: int | None = None,
     ):
         """Yield one frame per generated token from a real autoregressive loop.
 
@@ -1123,7 +1126,26 @@ class ModelEngine:
                     cur = torch.tensor([[chosen_id]], device=self.device)
                     continue
                 else:
-                    chosen_id = int(probs.argmax().item())
+                    if seed is not None:
+                        torch.manual_seed(seed)
+
+                    if temperature <= 0.001:
+                        chosen_id = int(probs.argmax().item())
+                    else:
+                        scaled_logits = logits / max(temperature, 1e-4)
+                        # Top-P (nucleus) filtering if requested
+                        if top_p < 0.999:
+                            sorted_logits, sorted_indices = torch.sort(scaled_logits, descending=True)
+                            cumulative_probs = torch.cumsum(sorted_logits.softmax(-1), dim=-1)
+                            sorted_indices_to_remove = cumulative_probs > top_p
+                            sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+                            sorted_indices_to_remove[..., 0] = 0
+                            indices_to_remove = sorted_indices_to_remove.scatter(1, sorted_indices, sorted_indices_to_remove)
+                            scaled_logits[indices_to_remove] = float('-inf')
+
+                        sample_probs = scaled_logits.softmax(-1)[0].float().cpu()
+                        chosen_id = int(torch.multinomial(sample_probs, 1).item())
+
                     generated_ids.append(chosen_id)
                     yield emit_frame(step, chosen_id, probs, logits, out.hidden_states,
                                      phase, n_positions, cache_len_in)

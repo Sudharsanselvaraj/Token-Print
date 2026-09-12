@@ -1,40 +1,65 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { Component, ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { useStore } from "@/lib/store";
 
-// The R3F <Canvas> touches WebGL / `window` and cannot be server-rendered.
-// `ssr: false` is only allowed inside a Client Component, which is exactly
-// what this wrapper is — it's the SSR boundary for the whole 3D scene.
 const Scene = dynamic(() => import("./Scene"), {
   ssr: false,
   loading: () => null,
 });
 
-/** True if this browser/tab can actually create a WebGL context right now. */
-function webglAvailable(): boolean {
-  try {
-    const c = document.createElement("canvas");
-    return !!(
-      c.getContext("webgl2") ||
-      c.getContext("webgl") ||
-      c.getContext("experimental-webgl")
-    );
-  } catch {
-    return false;
+interface ErrorBoundaryProps {
+  fallback: (error: Error, reset: () => void) => ReactNode;
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class WebGLErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.warn("[WebGLErrorBoundary] WebGL Canvas initialization failed:", error, errorInfo);
+  }
+
+  reset = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
+  render() {
+    if (this.state.hasError && this.state.error) {
+      return this.props.fallback(this.state.error, this.reset);
+    }
+    return this.props.children;
   }
 }
 
-/**
- * Hosts the 3D canvas and keeps it alive across WebGL context loss — which
- * otherwise leaves a dead canvas (the browser's broken-image glyph) after a
- * dev-server reload, a GPU hiccup, or too many live contexts. On loss we ask
- * the browser to restore; if it can't within a moment, we remount the canvas
- * (a fresh <canvas> = a brand-new context). If WebGL can't init at all, we show
- * a readable fallback with the real fix instead of a broken icon.
- */
+function webglAvailable(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const c = document.createElement("canvas");
+    const gl = c.getContext("webgl2", { failIfMajorPerformanceCaveat: false }) ||
+               c.getContext("webgl", { failIfMajorPerformanceCaveat: false }) ||
+               c.getContext("experimental-webgl", { failIfMajorPerformanceCaveat: false });
+    return gl !== null;
+  } catch {
+    return true;
+  }
+}
+
 export default function SceneLoader() {
-  // null = not checked yet (avoid a flash before the mount-time probe).
+  const mode = useStore((s) => s.mode);
   const [available, setAvailable] = useState<boolean | null>(null);
   const [status, setStatus] = useState<"ok" | "lost">("ok");
   const [sceneKey, setSceneKey] = useState(0);
@@ -56,8 +81,6 @@ export default function SceneLoader() {
 
   const onContextLost = useCallback(() => {
     setStatus("lost");
-    // Give the browser ~1.2s to restore the same context; if it doesn't fire
-    // webglcontextrestored by then, hard-remount a fresh canvas.
     if (restoreTimer.current) clearTimeout(restoreTimer.current);
     restoreTimer.current = setTimeout(remount, 1200);
   }, [remount]);
@@ -68,35 +91,31 @@ export default function SceneLoader() {
     setStatus("ok");
   }, []);
 
+  const renderFallback = (error?: Error, reset?: () => void) => (
+    <div className="webgl-fallback">
+      <div className="webgl-fallback-title">3D View Requires WebGL</div>
+      <p>
+        This browser couldn&rsquo;t initialize a WebGL graphics context. The rest of the panels and debug views work normally.
+      </p>
+      <button
+        className="chip-btn"
+        onClick={() => {
+          reset?.();
+          setAvailable(webglAvailable());
+          remount();
+        }}
+      >
+        Retry WebGL
+      </button>
+    </div>
+  );
+
   if (available === false) {
-    return (
-      <div className="webgl-fallback">
-        <div className="webgl-fallback-title">3D view needs WebGL</div>
-        <p>
-          This tab couldn&rsquo;t start hardware-accelerated graphics, so the 3D
-          scene can&rsquo;t render. The rest of the app (panels, playback, real
-          numbers) works normally.
-        </p>
-        <p className="webgl-fallback-steps">
-          Enable <b>chrome://settings/system → “Use graphics acceleration when
-          available”</b>, then <b>Relaunch</b> — or check{" "}
-          <b>chrome://gpu</b> shows WebGL as <i>Hardware accelerated</i>.
-        </p>
-        <button
-          className="chip-btn"
-          onClick={() => {
-            setAvailable(webglAvailable());
-            remount();
-          }}
-        >
-          Retry 3D
-        </button>
-      </div>
-    );
+    return renderFallback();
   }
 
   return (
-    <>
+    <WebGLErrorBoundary fallback={(err, reset) => renderFallback(err, reset)}>
       <Scene
         key={sceneKey}
         onContextLost={onContextLost}
@@ -104,12 +123,12 @@ export default function SceneLoader() {
       />
       {status === "lost" && (
         <div className="webgl-lost">
-          <span>Restoring 3D…</span>
+          <span>Restoring WebGL Canvas…</span>
           <button className="chip-btn" onClick={remount}>
-            Reload 3D
+            Reload Scene
           </button>
         </div>
       )}
-    </>
+    </WebGLErrorBoundary>
   );
 }

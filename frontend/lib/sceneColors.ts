@@ -4,34 +4,34 @@ export type OpKind = "embedding" | "norm" | "attn" | "mlp" | "output";
 
 export type RGB = [number, number, number];
 
-/* Per-fine-grained-operation colour map (GenerationScene).
-   The single allowed colour axis in the 3D view: component class / depth. */
+/* Monochrome per-fine-grained-operation luminance map.
+   Communicates operation structure via grayscale brightness levels. */
 export const OP_COLORS: Record<string, RGB> = {
-  embedding: [0.6, 0.4, 0.95],
-  norm: [0.55, 0.6, 0.72],
-  "attn.q": [0.3, 0.7, 1],
-  "attn.k": [0.3, 0.85, 0.9],
-  "attn.v": [0.3, 0.9, 0.6],
-  attention: [0.4, 0.8, 1],
-  "attn.o": [0.6, 0.7, 1],
-  "mlp.gate": [1, 0.72, 0.3],
-  "mlp.up": [1, 0.6, 0.3],
-  "mlp.down": [0.95, 0.45, 0.5],
-  output: [0.9, 0.4, 0.95],
+  embedding: [0.85, 0.85, 0.85],
+  norm: [0.45, 0.45, 0.45],
+  "attn.q": [0.92, 0.92, 0.92],
+  "attn.k": [0.85, 0.85, 0.85],
+  "attn.v": [0.78, 0.78, 0.78],
+  attention: [0.95, 0.95, 0.95],
+  "attn.o": [0.88, 0.88, 0.88],
+  "mlp.gate": [0.72, 0.72, 0.72],
+  "mlp.up": [0.68, 0.68, 0.68],
+  "mlp.down": [0.60, 0.60, 0.60],
+  output: [0.90, 0.90, 0.90],
 };
 
-/* Per-component-class colour map (WalkthroughScene, TransformerStack fallback). */
+/* Monochrome per-component-class luminance map. */
 export const KIND_COLORS: Record<OpKind, RGB> = {
-  norm: [0.55, 0.6, 0.72],
-  mlp: [1, 0.6, 0.3],
-  output: [0.9, 0.4, 0.95],
-  attn: [0.4, 0.8, 1],
-  embedding: [0.6, 0.4, 0.95],
+  norm: [0.45, 0.45, 0.45],
+  mlp: [0.68, 0.68, 0.68],
+  output: [0.90, 0.90, 0.90],
+  attn: [0.95, 0.95, 0.95],
+  embedding: [0.85, 0.85, 0.85],
 };
 
-/* Shared material base tints. */
-export const GRAY = new Color(0.44, 0.48, 0.56);
-export const DIM = new Color(0.28, 0.31, 0.38);
+/* Shared monochrome material base tints. */
+export const GRAY = new Color(0.50, 0.50, 0.50);
+export const DIM = new Color(0.20, 0.20, 0.20);
 export const HOVER_GLOW = new Color(1, 1, 1);
 
 /* Lighten a base colour when hovered (but not already active). */

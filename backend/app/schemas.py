@@ -117,6 +117,63 @@ class Projection(BaseModel):
     embedding_explained_variance: list[float] = []
 
 
+class ProvenanceInfo(BaseModel):
+    """Extensible provenance metadata declaring data origin and execution parameters."""
+
+    source_type: Literal["REAL", "DERIVED", "CONCEPTUAL", "SIMULATION"] = Field(
+        ..., description="Data origin classification."
+    )
+    backend: str = Field(..., description="Inference backend name (e.g. hf_local, gguf).")
+    device: str = Field(..., description="Compute device (e.g. cpu, mps, cuda).")
+
+    model_id: str | None = Field(default=None, description="Hugging Face model ID.")
+    model_revision: str | None = Field(
+        default=None, description="Commit SHA hash for reproducibility."
+    )
+
+    operation: str | None = Field(default=None, description="Forward pass or transform operation name.")
+    layer: int | None = Field(default=None, description="Layer index if layer-specific.")
+    head: int | None = Field(default=None, description="Attention head index if head-specific.")
+    tensor: str | None = Field(default=None, description="Source tensor name.")
+    dtype: str | None = Field(default=None, description="Tensor data type (e.g. float32, float16).")
+    shape: list[int] | None = Field(default=None, description="Tensor shape dimensions.")
+    parent_operation: str | None = Field(default=None, description="Upstream operation ID.")
+    notes: str | None = Field(default=None, description="Contextual execution notes.")
+
+
+class HFModelMeta(BaseModel):
+    """Hugging Face Hub model metadata struct."""
+
+    id: str = Field(..., description="Full Hugging Face model repository ID.")
+    author: str = ""
+    downloads: int = 0
+    likes: int = 0
+    tags: list[str] = Field(default_factory=list)
+    pipeline_tag: str = ""
+    last_modified: str = ""
+    private: bool = False
+
+
+class HFSearchResponse(BaseModel):
+    query: str
+    limit: int
+    models: list[HFModelMeta]
+
+
+class HFInspectResponse(BaseModel):
+    model_id: str
+    revision: str = "main"
+    architecture: str = "Unknown"
+    model_type: str = ""
+    parameter_count: int | None = None
+    max_context_length: int = 2048
+    estimated_vram_gb: float = 2.0
+    estimation_basis: str = "params × dtype + overhead"
+    compatibility_level: Literal["High", "Partial", "Basic", "Unsupported"] = "High"
+    compatibility_reason: str = ""
+    capabilities: dict = Field(default_factory=dict)
+
+
 class AnalyzeResponse(BaseModel):
     sentence: str
     model: str = Field(..., description="HF model id that produced this data.")
@@ -157,6 +214,10 @@ class AnalyzeResponse(BaseModel):
     pooling_note: str = ""
     # Vision detail: how many patches / the patch grid for this image.
     image_meta: dict = Field(default_factory=dict)
+
+    # --- Phase 0 metadata -------------------------------------------------- #
+    provenance: ProvenanceInfo | None = None
+    capabilities: dict | None = None
 
 
 class RagAnalyzeResponse(AnalyzeResponse):
@@ -203,3 +264,6 @@ class ModelInfo(BaseModel):
     attn_implementation: str
     max_tokens: int
     ready: bool
+    provenance: ProvenanceInfo | None = None
+    capabilities: dict | None = None
+
