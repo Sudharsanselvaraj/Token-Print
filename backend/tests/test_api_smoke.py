@@ -15,9 +15,8 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app.main import _hf_inspect_cache, _hf_search_cache, app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
