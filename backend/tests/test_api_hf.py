@@ -1,9 +1,9 @@
 """Integration tests for Hugging Face discovery and inspection endpoints using TestClient."""
 
 from unittest.mock import MagicMock, patch
-import pytest
-from fastapi.testclient import TestClient
+
 from app.main import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 

@@ -13,12 +13,12 @@ from app.inference.capabilities import (
 from app.inference.registry import registry
 
 __all__ = [
+    "BackendCapabilities",
+    "CapabilityStatus",
+    "EffectiveCapabilities",
     "InferenceBackend",
     "ModelCapabilities",
-    "BackendCapabilities",
     "RuntimeCapabilities",
-    "EffectiveCapabilities",
-    "CapabilityStatus",
     "VRAMEstimate",
     "calculate_effective_capabilities",
     "registry",

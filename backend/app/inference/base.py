@@ -46,14 +46,11 @@ class InferenceBackend(ABC):
     @abstractmethod
     async def analyze(self, sentence: str, **kwargs: Any) -> AnalyzeResponse:
         """Run full forward pass analysis returning unified Trace payload."""
-        pass
 
     @abstractmethod
     def get_capabilities(self, model_id: str | None = None) -> Any:
         """Return backend capability flags and constraints."""
-        pass
 
     @abstractmethod
     def health_check(self) -> bool:
         """Return True if backend is healthy and ready for inference."""
-        pass

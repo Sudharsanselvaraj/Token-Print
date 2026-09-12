@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from app.inference.capabilities import CapabilityStatus, ModelCapabilities, VRAMEstimate
+from app.inference.capabilities import ModelCapabilities, VRAMEstimate
 
 
 class ModelAdapter(ABC):
@@ -16,12 +16,10 @@ class ModelAdapter(ABC):
     @abstractmethod
     def matches_config(self, config: dict[str, Any]) -> bool:
         """Return True if this adapter handles the given HF model config."""
-        pass
 
     @abstractmethod
     def get_capabilities(self, config: dict[str, Any]) -> ModelCapabilities:
         """Inspect HF model config.json dictionary and compute ModelCapabilities matrix."""
-        pass
 
     def estimate_vram(self, config: dict[str, Any]) -> VRAMEstimate:
         """Heuristic VRAM estimation based on parameter count & precision."""

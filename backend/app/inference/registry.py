@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 
-from app.inference.base import InferenceBackend
 from app.inference.backends.gguf import GGUFBackend
 from app.inference.backends.hf_local import HFLocalBackend
+from app.inference.base import InferenceBackend
 
 logger = logging.getLogger(__name__)
 

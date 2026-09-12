@@ -325,7 +325,7 @@ _CACHE_TTL_INSPECT = 300.0  # seconds
 
 @app.get("/api/hf/curated")
 @app.get("/api/hf/curated/")
-async def hf_curated() -> dict:
+def hf_curated() -> dict:
     """Return config-driven list of curated Hugging Face models."""
     import yaml
     config_path = Path(__file__).resolve().parent / "config" / "curated_models.yaml"
@@ -338,7 +338,7 @@ async def hf_curated() -> dict:
 
 @app.get("/api/hf/search", response_model=HFSearchResponse)
 @app.get("/api/hf/search/", response_model=HFSearchResponse)
-async def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
+def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
     """Search Hugging Face Hub for text generation models with caching and safety bounds."""
     query = (query or "").strip()[:200]  # Sanitize and cap length
     limit = max(1, min(int(limit), 25))  # Bound limit between 1 and 25
@@ -350,9 +350,11 @@ async def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
         if now - ts < _CACHE_TTL_SEARCH:
             return cached_resp
 
+    import urllib.error
+    import urllib.parse
+
     url = f"https://huggingface.co/api/models?limit={limit}&filter=text-generation"
     if query:
-        import urllib.parse
         url += f"&search={urllib.parse.quote(query)}"
 
     try:
@@ -388,7 +390,7 @@ async def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
             result = HFSearchResponse(query=query, limit=limit, models=models)
             _hf_search_cache[cache_key] = (now, result)
             return result
-    except Exception as exc:
+    except (urllib.error.URLError, OSError, ValueError) as exc:
         logger.warning(f"HF Hub search failed for '{query}': {exc}")
         # Return empty search result fallback on error or network offline
         return HFSearchResponse(query=query, limit=limit, models=[])
@@ -396,7 +398,7 @@ async def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
 
 @app.get("/api/hf/inspect", response_model=HFInspectResponse)
 @app.get("/api/hf/inspect/", response_model=HFInspectResponse)
-async def hf_inspect(model_id: str) -> HFInspectResponse:
+def hf_inspect(model_id: str) -> HFInspectResponse:
     """Fetch HF model config.json and compute deterministic EffectiveCapabilities matrix without downloading model weights."""
     model_id = (model_id or "").strip()
     if not model_id or ".." in model_id or "/" not in model_id and not model_id.isalnum():

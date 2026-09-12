@@ -6,7 +6,7 @@ from typing import Any
 
 from app.inference.base import InferenceBackend
 from app.inference.capabilities import BackendCapabilities
-from app.schemas import AnalyzeResponse, ProvenanceInfo
+from app.schemas import AnalyzeResponse
 
 
 class GGUFBackend(InferenceBackend):
