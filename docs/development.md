@@ -23,7 +23,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # Optional: GGUF execution support
-pip install llama-cpp-python
+pip install -r requirements-gguf.txt
 
 # Run backend API server with auto-reload
 python -m uvicorn app.main:app --app-dir . --port 8000 --reload
