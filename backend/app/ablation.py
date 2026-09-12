@@ -58,11 +58,12 @@ class Ablation:
             if i in self._zero_layers:
                 def make_layer_hook():
                     def hook(_mod, _in, output):
-                        # Safely handle tuple outputs (hidden_states, present_key_value, ...)
+                        # Retain input residual state while zeroing the layer's additive contribution (ENG-03)
+                        res_in = _in[0] if (isinstance(_in, (tuple, list)) and len(_in) > 0) else None
                         if isinstance(output, tuple):
-                            # Retain input residual state while zeroing the layer's additive contribution
-                            return (_in[0] if len(_in) > 0 else output[0] * 0.0,) + output[1:]
-                        return output * 0.0
+                            base = res_in if res_in is not None else output[0] * 0.0
+                            return (base,) + output[1:]
+                        return res_in if res_in is not None else output * 0.0
                     return hook
                 handle = layer.register_forward_hook(make_layer_hook())
                 self._handles.append(handle)
@@ -72,7 +73,7 @@ class Ablation:
             if attn is None:
                 continue
 
-            heads_to_zero = self._zero_heads.get(str(i), [])
+            heads_to_zero = self._zero_heads.get(str(i)) or self._zero_heads.get(i) or []
             if not heads_to_zero:
                 continue
 
