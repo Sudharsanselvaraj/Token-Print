@@ -546,6 +546,45 @@ class ModelEngine:
         return self.image_processor
 
     @staticmethod
+    def _validate_url_ssrf(url: str) -> None:
+        """Validate an image URL to prevent Server-Side Request Forgery (SSRF).
+
+        Rejects loopback, private RFC1918, link-local, multicast, and reserved IP addresses.
+        """
+        import ipaddress
+        import socket
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError(f"Unsupported URL scheme: {parsed.scheme}")
+
+        hostname = parsed.hostname
+        if not hostname:
+            raise ValueError("Invalid URL: missing hostname.")
+
+        try:
+            addr_info = socket.getaddrinfo(hostname, None)
+        except socket.gaierror as exc:
+            raise ValueError(f"Could not resolve hostname '{hostname}': {exc}") from exc
+
+        for info in addr_info:
+            ip_str = info[4][0]
+            try:
+                ip = ipaddress.ip_address(ip_str)
+                if (
+                    ip.is_loopback
+                    or ip.is_private
+                    or ip.is_link_local
+                    or ip.is_multicast
+                    or ip.is_reserved
+                    or ip.is_unspecified
+                ):
+                    raise ValueError(f"Access to internal IP address '{ip_str}' is forbidden.")
+            except ValueError:
+                raise
+
+    @staticmethod
     def _load_image_bytes(image: str) -> torch.Tensor | bytes:
         """Turn an image payload (base64 data URL or http(s) URL) into bytes.
 
@@ -563,6 +602,7 @@ class ModelEngine:
         if image.startswith(("http://", "https://")):
             import urllib.request
 
+            ModelEngine._validate_url_ssrf(image)
             try:
                 with urllib.request.urlopen(image, timeout=30) as resp:
                     return resp.read()
