@@ -73,13 +73,14 @@ recorded, as the vocabulary size) — the parser never `TextDecode`s 150k string
 byte size is `ceil(nElements / blockSize) * typeSize`; parameter count is the
 product of the dims.
 
-## Honest limitation: value inspection
+## Honest limitation: value inspection & dequantization approximations
 
 The point cloud needs shapes/offsets/types only — never dequantized weights. The
-tensor inspector therefore offers **value preview for F32/F16 tensors** and, for
-quantized tensors, clearly says values need block dequantization rather than
-showing fabricated numbers. The live-model source (`GET /architecture`) sidesteps
-this — those tensors are float32 server-side.
+tensor inspector offers **value preview for F32/F16 tensors** and client-side block dequantization for quantized formats (`lib/gguf/dequant.ts`).
+
+> [!NOTE]
+> **K-Quant Approximation Disclaimer (DOC-05):**
+> Dequantization algorithms for K-quant formats (`Q4_K`, `Q5_K`, `Q8_K`) in `lib/gguf/dequant.ts` use simplified block scale reconstructions optimized for fast in-browser WebGL visualization. While sufficient for visual pointcloud sampling and histogram previews, displayed float values represent approximate reconstructions rather than bit-exact full precision values. The live-model backend source (`GET /architecture`) provides exact full-precision values.
 
 ## Verified against real files
 
