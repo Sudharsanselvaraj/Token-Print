@@ -1,4 +1,4 @@
-# NeuroScope backend dependencies.
+# TokenPrint backend dependencies.
 # torch / transformers / scikit-learn are pinned to the versions verified present
 # on this machine so behavior matches what was tested. The web stack is left
 # unpinned (latest is fine).

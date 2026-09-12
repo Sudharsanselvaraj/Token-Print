@@ -101,7 +101,7 @@ async function main() {
 
   const s0 = await statusText(page);
   console.log("status @ load:", s0);
-  await page.screenshot({ path: `${OUT}/neuroscope_layer0_head0.png` });
+  await page.screenshot({ path: `${OUT}/tokenprint_layer0_head0.png` });
 
   const minWeight = 0.05; // store default
   const expA = expectedBeams(analyze.attention, 0, 0, minWeight);
@@ -117,7 +117,7 @@ async function main() {
   const s1 = await statusText(page);
   console.log("status @ switched:", s1);
   await page.screenshot({
-    path: `${OUT}/neuroscope_layer${targetLayer}_head${targetHead}.png`,
+    path: `${OUT}/tokenprint_layer${targetLayer}_head${targetHead}.png`,
   });
 
   const expB = expectedBeams(
@@ -157,7 +157,7 @@ async function main() {
     `page errors: ${errors.length}`,
     `result: ${ok ? "PASS" : "FAIL"}`,
   ];
-  writeFileSync(`${OUT}/neuroscope_ui_report.txt`, reportLines.join("\n"), "utf8");
+  writeFileSync(`${OUT}/tokenprint_ui_report.txt`, reportLines.join("\n"), "utf8");
 
   await browser.close();
   process.exit(ok ? 0 : 1);
