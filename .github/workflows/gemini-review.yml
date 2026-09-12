@@ -19,7 +19,7 @@ on:
 jobs:
   review:
     name: Gemini PR review
-    if: github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && github.event.issue.pull_request)
+    if: github.actor != 'dependabot[bot]' && (github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && github.event.issue.pull_request))
     runs-on: ubuntu-latest
     permissions:
       contents: read

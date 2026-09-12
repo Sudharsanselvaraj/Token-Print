@@ -1,8 +1,8 @@
 """Unit tests for remote Hugging Face model lookup restriction & caching (ENG-11)."""
 
 import sys
-import unittest.mock as mock
 from pathlib import Path
+from unittest import mock
 
 # Add backend directory to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -62,7 +62,7 @@ def test_cached_checkpoint_architecture():
 
     with mock.patch("transformers.AutoConfig.from_pretrained", return_value=mock_config) as mock_from_pretrained:
         res1 = ModelEngine.checkpoint_architecture("test-org/dummy-model")
-        res2 = ModelEngine.checkpoint_architecture("test-org/dummy-model")
+        ModelEngine.checkpoint_architecture("test-org/dummy-model")
 
         assert res1["model"] == "test-org/dummy-model"
         assert res1["metadata"]["num_layers"] == 24

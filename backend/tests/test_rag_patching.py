@@ -10,10 +10,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pytest
 import torch
-import torch.nn as nn
-
 from app.ablation import ActivationPatch, PositionActivationPatch
 from app.reduce import causal_chunk_scores
+from torch import nn
 
 
 class DummyLayer(nn.Module):
@@ -74,10 +73,9 @@ def test_position_aware_zero_knockout():
     with patch:
         # Pre-hook on layer 1 intercepts layer input
         # We trace what layer 1 receives by testing forward hook on dummy model
-        out = model(inputs_embeds=input_tensor.clone())
+        model(inputs_embeds=input_tensor.clone())
 
     # Test the hook directly on an input tensor
-    hooks = []
     layer_inputs = []
     def record_in(_mod, args):
         layer_inputs.append(args[0].clone())

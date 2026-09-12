@@ -570,19 +570,16 @@ class ModelEngine:
 
         for info in addr_info:
             ip_str = info[4][0]
-            try:
-                ip = ipaddress.ip_address(ip_str)
-                if (
-                    ip.is_loopback
-                    or ip.is_private
-                    or ip.is_link_local
-                    or ip.is_multicast
-                    or ip.is_reserved
-                    or ip.is_unspecified
-                ):
-                    raise ValueError(f"Access to internal IP address '{ip_str}' is forbidden.")
-            except ValueError:
-                raise
+            ip = ipaddress.ip_address(ip_str)
+            if (
+                ip.is_loopback
+                or ip.is_private
+                or ip.is_link_local
+                or ip.is_multicast
+                or ip.is_reserved
+                or ip.is_unspecified
+            ):
+                raise ValueError(f"Access to internal IP address '{ip_str}' is forbidden.")
 
     @staticmethod
     def _load_image_bytes(image: str) -> torch.Tensor | bytes:
