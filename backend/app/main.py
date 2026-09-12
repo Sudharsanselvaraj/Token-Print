@@ -336,6 +336,53 @@ def hf_curated() -> dict:
     return {"models": []}
 
 
+def _sanitize_log_str(val: str) -> str:
+    """Sanitize user-supplied strings before logging to prevent CRLF log injection attacks."""
+    s = str(val or "")
+    return s.replace("\r", "").replace("\n", "")
+
+
+def _validate_ssrf_target_url(url: str) -> str:
+    """Validate target URL scheme, hostname, and IP range to prevent SSRF attacks.
+
+    Strictly enforces https://huggingface.co/ domain and checks resolved IP against
+    loopback, private, link-local, multicast, reserved, and unspecified ranges.
+    """
+    import ipaddress
+    import socket
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        raise HTTPException(status_code=400, detail="Only HTTPS URLs are allowed.")
+    if parsed.hostname != "huggingface.co" and not (parsed.hostname or "").endswith(".huggingface.co"):
+        raise HTTPException(status_code=400, detail="Only Hugging Face URLs are allowed.")
+
+    hostname = parsed.hostname
+    if not hostname:
+        raise HTTPException(status_code=400, detail="Missing URL hostname.")
+
+    try:
+        addr_info = socket.getaddrinfo(hostname, None)
+    except socket.gaierror as exc:
+        raise HTTPException(status_code=502, detail=f"Hostname resolution failed: {exc}") from exc
+
+    for info in addr_info:
+        ip_str = info[4][0]
+        ip = ipaddress.ip_address(ip_str)
+        if (
+            ip.is_loopback
+            or ip.is_private
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+        ):
+            raise HTTPException(status_code=403, detail=f"Access to forbidden IP '{ip_str}' is denied.")
+
+    return url
+
+
 @app.get("/api/hf/search", response_model=HFSearchResponse)
 @app.get("/api/hf/search/", response_model=HFSearchResponse)
 def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
@@ -356,6 +403,7 @@ def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
     url = f"https://huggingface.co/api/models?limit={limit}&filter=text-generation"
     if query:
         url += f"&search={urllib.parse.quote(query)}"
+    url = _validate_ssrf_target_url(url)
 
     try:
         import json
@@ -391,7 +439,7 @@ def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
             _hf_search_cache[cache_key] = (now, result)
             return result
     except (urllib.error.URLError, OSError, ValueError) as exc:
-        logger.warning(f"HF Hub search failed for '{query}': {exc}")
+        logger.warning(f"HF Hub search failed for '{_sanitize_log_str(query)}': {exc}")
         # Return empty search result fallback on error or network offline
         return HFSearchResponse(query=query, limit=limit, models=[])
 
@@ -415,7 +463,7 @@ def hf_inspect(model_id: str) -> HFInspectResponse:
         import urllib.request
 
         # 1. Fetch commit revision SHA metadata
-        meta_url = f"https://huggingface.co/api/models/{model_id}"
+        meta_url = _validate_ssrf_target_url(f"https://huggingface.co/api/models/{model_id}")
         meta_req = urllib.request.Request(
             meta_url,
             headers={"User-Agent": "TokenPrint/0.1.0"},
@@ -427,7 +475,7 @@ def hf_inspect(model_id: str) -> HFInspectResponse:
                 revision = meta_json.get("sha") or meta_json.get("revision") or "main"
 
         # 2. Fetch config.json
-        config_url = f"https://huggingface.co/{model_id}/raw/main/config.json"
+        config_url = _validate_ssrf_target_url(f"https://huggingface.co/{model_id}/raw/main/config.json")
         cfg_req = urllib.request.Request(
             config_url,
             headers={"User-Agent": "TokenPrint/0.1.0"},
@@ -468,8 +516,8 @@ def hf_inspect(model_id: str) -> HFInspectResponse:
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error(f"HF inspection error for '{model_id}': {exc}")
-        raise HTTPException(status_code=500, detail=f"Failed to inspect model '{model_id}': {exc}") from exc
+        logger.error(f"HF inspection error for '{_sanitize_log_str(model_id)}': {exc}")
+        raise HTTPException(status_code=500, detail=f"Failed to inspect model '{_sanitize_log_str(model_id)}': {exc}") from exc
 
 
 @app.get("/api/model/capabilities")
