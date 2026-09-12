@@ -312,19 +312,13 @@ TokenPrint was designed and built from the ground up by **[Sudharsan Selvaraj](h
 
 ### Contributors
 
-Everyone below has a merged pull request in TokenPrint — code, docs, bug fixes, or design. This table is regenerated automatically on every merge to `main` by the [Update Contributors](.github/workflows/update-contributors.yml) workflow.
+Everyone below has a merged pull request in TokenPrint.
 
 <!-- CONTRIBUTORS:START -->
-| [![Sudharsanselvaraj](https://github.com/Sudharsanselvaraj.png?size=48)](https://github.com/Sudharsanselvaraj) | [Sudharsanselvaraj](https://github.com/Sudharsanselvaraj) | 145 |
-| [![Sew-a](https://github.com/Sew-a.png?size=48)](https://github.com/Sew-a) | [Sew-a](https://github.com/Sew-a) | 6 |
-| [![Shivamyadav1312](https://github.com/Shivamyadav1312.png?size=48)](https://github.com/Shivamyadav1312) | [Shivamyadav1312](https://github.com/Shivamyadav1312) | 3 |
-| [![ManoShruthiS](https://github.com/ManoShruthiS.png?size=48)](https://github.com/ManoShruthiS) | [ManoShruthiS](https://github.com/ManoShruthiS) | 2 |
-| [![ris422](https://github.com/ris422.png?size=48)](https://github.com/ris422) | [ris422](https://github.com/ris422) | 1 |
-| [![Sriram-Selvaperumal](https://github.com/Sriram-Selvaperumal.png?size=48)](https://github.com/Sriram-Selvaperumal) | [Sriram-Selvaperumal](https://github.com/Sriram-Selvaperumal) | 1 |
-| [![challenge456](https://github.com/challenge456.png?size=48)](https://github.com/challenge456) | [challenge456](https://github.com/challenge456) | 1 |
+
 <!-- CONTRIBUTORS:END -->
 
-Want to be in that table? Grab one of the **26 curated issues** in [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md),
+Want to be in that gallery? Grab one of the **26 curated issues** in [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md),
 read [CONTRIBUTING.md](CONTRIBUTING.md) to get set up, and open a PR. First-time open-source
 contributors are very welcome.
 
