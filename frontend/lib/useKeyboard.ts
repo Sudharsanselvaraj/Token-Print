@@ -13,7 +13,7 @@ import { useStore } from "./store";
  * | F11 | Step to next layer |
  * | J | Previous token |
  * | K | Next token |
- * | B | Toggle breakpoint (placeholder) |
+ * | B | Toggle breakpoint at current op |
  */
 export function useKeyboard() {
   useEffect(() => {
@@ -63,9 +63,8 @@ export function useKeyboard() {
         case "b":
         case "B": {
           e.preventDefault();
-          // Placeholder: in a full debugger this would toggle a breakpoint on
-          // the active layer. For now toggle dev mode.
-          s.toggleDevMode();
+          // Toggle breakpoint at the current execution operation (ENG-16)
+          s.toggleBreakpoint(s.opIndex);
           break;
         }
       }
