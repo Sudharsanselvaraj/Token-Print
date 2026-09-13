@@ -38,7 +38,12 @@ jobs:
         run: |
           curl -s https://api.github.com/repos/${{ github.repository }}/contributors?per_page=100 > public/contributors.json || echo "[]" > public/contributors.json
 
+      # Serve at the domain root (tokenprint.in) instead of /Token-Print.
+      # NEXT_DISABLE_BASEPATH opts out of the basePath derived from
+      # GITHUB_REPOSITORY (which GitHub pre-sets as a read-only override).
       - run: npm run build
+        env:
+          NEXT_DISABLE_BASEPATH: "1"
 
       - name: Skip deploy when Pages is disabled
         if: ${{ github.event.repository.has_pages != true }}

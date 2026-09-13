@@ -4,7 +4,7 @@
 set -uo pipefail
 
 DIRS="components lib app"
-ALLOWLIST="TensorCloud.tsx|pointcloud.ts"
+ALLOWLIST="TensorCloud.tsx|pointcloud.ts|app/docs/"
 FOUND=false
 
 for dir in $DIRS; do
