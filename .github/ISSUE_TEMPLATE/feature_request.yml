@@ -1,0 +1,49 @@
+name: "✨ Feature request"
+description: Suggest an idea backed by the roadmap
+title: "[feat] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, check [ROADMAP.md](https://github.com/Sudharsanselvaraj/Token-Print/blob/main/ROADMAP.md) and `docs/roadmap.spec.yml` — if the idea already exists there, link it instead of duplicating it.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What capability or workflow gap does this close, and for whom?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Sketch the UX and the rough surface it touches (frontend/backend).
+    validations:
+      required: true
+
+  - type: dropdown
+    id: involvement
+    attributes:
+      label: Can you help build it?
+      options:
+        - Yes, I'll take it
+        - I'd like guidance (good first issue)
+        - Just tracking / voting
+    validations:
+      required: true
+
+  - type: input
+    id: roadmap_ref
+    attributes:
+      label: Roadmap reference
+      description: Optional — ROADMAP.md § / wiki milestone / issue number this maps to.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Alternatives considered
+      description: Anything else you tried, or related work already in the repo.

@@ -1,0 +1,339 @@
+# Roadmap → GitHub Issues manifest.
+#
+# Every unschopped / parked / contribution-ready roadmap item lives here once,
+# and `scripts/sync-roadmap.py` (run by .github/workflows/roadmap-sync.yml and
+# locally) turns it into a GitHub issue with the configured labels/milestone.
+# The script is idempotent: it only creates issues whose title does not exist
+# (open or closed), so editing this file never produces duplicates.
+#
+# Fields per item:
+#   id        — stable identifier, also used in the tracker report
+#   title     — must be unique among issues in the repo
+#   body      — Markdown body (put real details here, verbatim roadmap text below)
+#   labels    — GitHub labels to apply (script skips labels that don't exist)
+#   milestone — GitHub milestone title to attach (script creates it if missing)
+#   source    — where the idea lives in the repo docs
+#   roadmap_text — verbatim quote from ROADMAP.md / wiki so the ticket is traceable
+
+tracker:
+  title: "🗺️ Roadmap → Issues sync"
+  created_by: "roadmap-sync"
+
+milestones:
+  - "Phase 5 — Platform & flagship visuals"
+  - "Phase 5 — Platform & flagship visuals (Parked)"
+
+items:
+  - id: PARKED-LLAMACPP
+    title: "PARKED: Real quantized GGUF execution via llama.cpp integration"
+    labels: [enhancement]
+    milestone: "Phase 5 — Platform & flagship visuals (Parked)"
+    source: "ROADMAP.md §5"
+    roadmap_text: |- 
+      Real quantized GGUF execution (llama.cpp integration).
+    body: |
+      ## Deliberately parked — see ROADMAP.md §5
+
+      Run *real* quantized inference against uploaded GGUF files via native
+      [`llama.cpp`](https://github.com/ggml-org/llama.cpp) bindings, instead of
+      the current metadata-only GGUF loading.
+
+      - **Why it's parked**: tough packaging (platform-specific wheels for
+        `llama-cpp-python`), heavy binary payloads in CI, and the WebGPU
+        client-side route (#84) is the more promising long-term direction.
+      - **If you pick this up**: start with `backend/app/gguf_engine.py` and the
+        optional-dependency story in `backend/requirements-gguf.txt`, then add a
+        real dequantized forward path behind the GGUF visualizations.
+
+      **Verification**: load a real Q4_K_M GGUF and see live generated tokens
+      from the file in the Generation view.
+  - id: PARKED-SIDEBYSIDE
+    title: "PARKED: Side-by-side live model comparison (two resident models)"
+    labels: [enhancement]
+    milestone: "Phase 5 — Platform & flagship visuals (Parked)"
+    source: "ROADMAP.md §5"
+    roadmap_text: |-
+      Side-by-side live model comparison (two resident models).
+    body: |
+      ## Deliberately parked — see ROADMAP.md §5
+
+      Load two models in one session and generate the same prompt through both,
+      comparing attention/activations side-by-side.
+
+      - **Why it's parked**: memory cost of a second resident model and full
+        engine-state serialization; the existing single-model engine would need
+        a contexts/instances abstraction first (see ENG-14 ModelAdapter).
+      - **Related but live**: cross-quantization drift analysis (#116) is the
+        lighter-weight version of this.
+
+      **Verification**: launch the dev server, load model A and model B, then
+      run the same sentence through both and diff the attention row for layer N.
+  - id: PARKED-FLAMEGRAPH
+    title: "PARKED: Full memory-byte profiling / flame-graph profiler"
+    labels: [enhancement]
+    milestone: "Phase 5 — Platform & flagship visuals (Parked)"
+    source: "ROADMAP.md §5"
+    roadmap_text: |-
+      Full memory-byte profiling / flame-graph profiler.
+    body: |
+      ## Deliberately parked — see ROADMAP.md §5
+
+      A byte-level memory profiler that records KV-cache + parameter memory per
+      layer over the forward pass and renders it as a flame graph.
+
+      - **Why it's parked**: PyTorch memory instrumentation is fragile across
+        versions, and the user-facing demand is low while `v0.4`-era debugger
+        features remain unpolished.
+      - **Seed already exists**: the KV-cache memory timeline shipped in v2
+        gives us the capture layer to build on.
+
+      **Verification**: run one forward pass and export a flame-graph JSON
+      renderable in the frontend.
+  - id: PARKED-SAE
+    title: "PARKED: SAE / learned-feature browsing and steering"
+    labels: [enhancement]
+    milestone: "Phase 5 — Platform & flagship visuals (Parked)"
+    source: "ROADMAP.md §5"
+    roadmap_text: |-
+      SAE / learned-feature browsing and steering.
+    body: |
+      ## Deliberately parked — see ROADMAP.md §5
+
+      Browse sparse-autoencoder learned features on a hidden layer and steer
+      generation by boosting/suppressing the active features.
+
+      - **Why it's parked**: SAE weights are model-specific and expensive to
+        produce; we explicitly positioned as "no SAE required" for the v0.5
+        interventions milestone.
+      - **Related**: induction-head lab (ROADMAP §7 #6) is a lighter first step.
+
+      **Verification**: attach a pre-trained SAE checkpoint for Qwen2.5-0.5B and
+      steer a top-k feature during greedy generation.
+  - id: PARKED-TUNEDLENS
+    title: "PARKED: Tuned-Lens-grade logit lens by default"
+    labels: [enhancement]
+    milestone: "Phase 5 — Platform & flagship visuals (Parked)"
+    source: "ROADMAP.md §5"
+    roadmap_text: |-
+      Tuned-Lens-grade logit lens by default.
+    body: |
+      ## Deliberately parked — see ROADMAP.md §5
+
+      Replace the raw (unadjusted) logit lens with a [Tuned-Lens](https://github.com/AlignmentResearch/tuned-lens)-style
+      calibrated lens that removes the basis-drift artifact.
+
+      - **Why it's parked**: tuned-lens requires per-model fitted probes for the
+        vocabulary-bias calibration; raw lens is shipped today with the
+        "unadjusted" caveat documented.
+      - **Seed already exists**: the raw lens panel + token evolution timeline
+        shipped already; this swaps the projection matrices.
+
+      **Verification**: logit-lens heatmap no longer shows the pervasive
+      "next-token drift" column; calibrated decoder labels visible.
+  - id: WILDCARD-SONIFICATION
+    title: "Wildcard: Sonification of attention/generation events"
+    labels: [enhancement]
+    milestone: null
+    source: "issue #90 (wildcards)"
+    roadmap_text: |-
+      Wildcards: sonification, VR walkthrough, collab cursors, health-report PDF.
+    body: |
+      ## Split out of #90 (wildcards)
+
+      Map generation events to sound: token-cadence ticks, layer-level pitch for
+      attention intensity, etc. Optional browser Audio API backend.
+
+      **Verification**: toggle "Sonify" in the toolbar and hear event patterns
+      while generating.
+  - id: WILDCARD-VR
+    title: "Wildcard: VR walkthrough of the transformer stack"
+    labels: [enhancement]
+    milestone: "Phase 5 — Platform & flagship visuals (Parked)"
+    source: "issue #90 (wildcards)"
+    roadmap_text: |-
+      Wildcards: sonification, VR walkthrough, collab cursors, health-report PDF.
+    body: |
+      ## Split out of #90 (wildcards)
+
+      WebXR mode to walk through the 3D stack physically — translates the
+      navigation model into a first-person camera rig.
+
+      **Verification**: an OpenXR headset + WebXR-capable browser can traverse
+      the layer stack and focus individual heads.
+  - id: WILDCARD-COLLAB
+    title: "Wildcard: collaborative cursors (multi-user session)"
+    labels: [enhancement]
+    milestone: "Phase 5 — Platform & flagship visuals (Parked)"
+    source: "issue #90 (wildcards)"
+    roadmap_text: |-
+      Wildcards: sonification, VR walkthrough, collab cursors, health-report PDF.
+    body: |
+      ## Split out of #90 (wildcards)
+
+      Multiple viewers describe the same trace simultaneously with presence
+      cursors and shared selection, via the existing WS channel.
+
+      **Verification**: two browser tabs over the same served trace see each
+      other's cursor + selection highlight.
+  - id: WILDCARD-HEALTHPDF
+    title: "Wildcard: health-report PDF export"
+    labels: [enhancement]
+    milestone: null
+    source: "issue #90 (wildcards)"
+    roadmap_text: |-
+      Wildcards: sonification, VR walkthrough, collab cursors, health-report PDF.
+    body: |
+      ## Split out of #90 (wildcards)
+
+      Export the current session's "model health" summary (capabilities,
+      provenance, timings) as a printable PDF.
+
+      **Verification**: /trace-replay session → "Export PDF" produces a
+      readable, self-contained document.
+  - id: ROADMAP-MOE-MLA
+    title: "Roadmap: MoE routing visualization and Multi-Head Latent Attention (MLA) support"
+    labels: [enhancement]
+    milestone: "Phase 5 — Platform & flagship visuals (Parked)"
+    source: "wiki/Roadmap.md → Milestone 1"
+    roadmap_text: |-
+      Milestone 1: MoE and Advanced Architectures — Support for Mixture of Experts (MoE)
+      routing visualization (e.g., DeepSeek, Mixtral). / Support for Multi-Head Latent Attn (MLA).
+    body: |
+      ## Wiki roadmap — Milestone 1
+
+      - **MoE routing**: visualize per-token expert routing weights and load
+        across experts for Mixtral/DeepSeek-style checkpoints (including sparse
+        activation — the nonexpert part of the model).
+      - **MLA**: render the latent-KV compression path for DeepSeek-V2-style
+        attention.
+
+      **Verification**: load a Mixtral-equivalent trace and see per-layer expert
+      routing as a stacked bar + highlighted paths in the 3D scene.
+
+      ## Good-first contribution openings (docs, no code needed)
+  - id: DOC-04
+    title: "DOC-04: Update GGUF setup & optional dependencies page"
+    labels: [documentation, good first issue]
+    milestone: null
+    source: "GOOD_FIRST_ISSUES.md"
+    roadmap_text: |-
+      DOC-04 — Update GGUF Setup & Optional Dependencies.
+    body: |
+      ## Good first issue — Documentation
+
+      - Create `backend/requirements-gguf.txt` (exists, currently corrupt: CRLF
+        junk + a stray null byte at the start — fix it).
+      - Document optional installs in `README.md` and GGUF feature support in
+        `docs/gguf-format.md`.
+
+      **Verification**: `pip install -r backend/requirements-gguf.txt` installs cleanly.
+  - id: DOC-05
+    title: "DOC-05: Document GGUF dequantization limitations"
+    labels: [documentation, good first issue]
+    milestone: null
+    source: "GOOD_FIRST_ISSUES.md"
+    roadmap_text: |-
+      DOC-05 — Document GGUF Dequantization Limitations.
+    body: |
+      ## Good first issue — Documentation
+
+      `frontend/lib/gguf/dequant.ts` reconstructs Q4_K/Q5_K approximately.
+      Add explicit disclaimers in `docs/gguf-format.md` and inline comments.
+
+      **Verification**: `npm run build` passes.
+  - id: DOC-07
+    title: "DOC-07: Clarify attention mass vs causal attribution"
+    labels: [documentation, good first issue]
+    milestone: null
+    source: "GOOD_FIRST_ISSUES.md"
+    roadmap_text: |-
+      DOC-07 — Clarify Attention Mass vs Causal Attribution.
+    body: |
+      ## Good first issue — Documentation
+
+      Add a "Causality Warning" section to `docs/visual-mapping.md` and README:
+      high attention mass ≠ causal necessity (ties into RES-01 ablation work).
+
+      **Verification**: rendered Markdown looks intentional.
+  - id: ENG-16
+    title: "ENG-16: Finish debugger breakpoint (B key) controls"
+    labels: [frontend, good first issue]
+    milestone: null
+    source: "GOOD_FIRST_ISSUES.md"
+    roadmap_text: |-
+      ENG-16 — Finish debugger breakpoint (`B` key) controls.
+    body: |
+      ## Good first issue — UX / store
+
+      `B` toggles dev mode; ensure the debugger breakpoint gutter/pause
+      controls in `frontend/lib/useKeyboard.ts` + store are polished and
+      discoverable (v2 moved the store to modular slices).
+
+      **Verification**: in the debugger, placing a breakpoint pauses the next
+      forward pass at the right layer.
+  - id: ENG-15
+    title: "ENG-15: Separate real timing from proxy timing in the UI"
+    labels: [frontend, good first issue]
+    milestone: null
+    source: "GOOD_FIRST_ISSUES.md"
+    roadmap_text: |-
+      ENG-15 — Separate real timing from proxy timing in UI.
+    body: |
+      ## Good first issue — Visual UX
+
+      Label per-layer timings as *real* (instrumented forward pass) vs *proxy*
+      (estimated), and distinguish them visually in the Timeline panel.
+
+      **Verification**: a trace with mixed timing sources renders distinct
+      badges/legends.
+  - id: ENG-18
+    title: "ENG-18: Audit & prune unused frontend components"
+    labels: [frontend, good first issue]
+    milestone: null
+    source: "GOOD_FIRST_ISSUES.md"
+    roadmap_text: |-
+      ENG-18 — Audit & prune unused frontend components.
+    body: |
+      ## Good first issue — Clean code
+
+      CodeQL flags ~30 `js/unused-local-variable` notes across
+      `frontend/components/scenes/`. Prune genuinely dead React components and
+      unused locals; keep 3D-scene exports referenced by the store/graph.
+
+      ⚠️ Do NOT delete anything referenced by visual-regression specs or by
+      `TransformerOperationGraph` — cross-check before removing.
+
+      **Verification**: `npm run build` green; CodeQL note count for the scenes
+      directory drops.
+  - id: ENG-20
+    title: "ENG-20: Modular GGUF dependency declarations"
+    labels: [backend, good first issue]
+    milestone: null
+    source: "GOOD_FIRST_ISSUES.md"
+    roadmap_text: |-
+      ENG-20 — Modular GGUF dependency declarations.
+    body: |
+      ## Good first issue — Packaging
+
+      Keep base `backend/requirements.txt` free of the llama-cpp stack; move
+      GGUF-optional deps to `requirements-gguf.txt`, document the split, and
+      gate GGUF engine imports behind the optional flag.
+
+      **Verification**: `pip install -r requirements.txt` (without gguf) still
+      lets the app boot and report "GGUF metadata only" cleanly.
+  - id: ENG-08
+    title: "ENG-08: End-to-end FastAPI integration tests"
+    labels: [backend, testing, good first issue]
+    milestone: null
+    source: "GOOD_FIRST_ISSUES.md"
+    roadmap_text: |-
+      ENG-08 — End-to-end FastAPI integration tests.
+    body: |
+      ## Intermediate — Testing
+
+      Drive the full request path (uploads → trace replay → architecture →
+      analyze) against a test double or tiny cached Qwen in CI. Supersedes the
+      nightly-only manual verification for the happy path.
+
+      **Verification**: `pytest tests/test_e2e_integration.py` passes in CI
+      without the 1 GB model.
