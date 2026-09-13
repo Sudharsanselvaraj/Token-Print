@@ -3,6 +3,7 @@
 import React, { useId, useMemo } from "react";
 import { Plus } from "lucide-react";
 import { generateHeroPointCloud, generateAttentionConnections } from "@/lib/landing/visuals";
+import { assetUrl } from "@/lib/assets";
 
 // 1. Large Computational Hero Visual
 export function ComputationalHeroVisual() {
@@ -14,7 +15,7 @@ export function ComputationalHeroVisual() {
     <div className="landing-hero-visual-wrapper" aria-hidden="true">
       {/* High-fidelity 3D Point-Cloud Tensor Background Image from user */}
       <img
-        src="/backgrounds/hero-pointcloud.png"
+        src={assetUrl("/backgrounds/hero-pointcloud.png")}
         alt="TokenPrint computational 3D tensor field"
         className="landing-hero-bg-img"
       />
@@ -224,7 +225,7 @@ export function LargeDataFieldVisual() {
   return (
     <div className="landing-large-data-wrapper" aria-hidden="true">
       <img
-        src="/backgrounds/hero-pointcloud.png"
+        src={assetUrl("/backgrounds/hero-pointcloud.png")}
         alt="Computational tensor pointcloud background"
         className="landing-large-data-bg-img"
       />

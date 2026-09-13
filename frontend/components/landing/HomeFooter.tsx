@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { assetUrl } from "@/lib/assets";
 import {
   Code2,
   Box,
@@ -32,7 +33,7 @@ export function HomeFooter() {
       <div className="home-footer-wave-section">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/backgrounds/vp4ZmztrjAphkATuR4JIP18ALQ.svg"
+          src={assetUrl("/backgrounds/vp4ZmztrjAphkATuR4JIP18ALQ.svg")}
           alt="TokenPrint computational wave visual"
           className="home-footer-wave-img"
         />
@@ -56,7 +57,7 @@ export function HomeFooter() {
             <Link href="/">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/tokenprint-logo.png"
+                src={assetUrl("/tokenprint-logo.png")}
                 alt="TokenPrint"
                 style={{ height: "34px", width: "auto" }}
               />

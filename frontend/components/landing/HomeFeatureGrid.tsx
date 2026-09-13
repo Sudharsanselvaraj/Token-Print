@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { assetUrl } from "@/lib/assets";
 import { Plus, Layers, Play, Map, Bug, ArrowUpRight } from "lucide-react";
 import { Reveal } from "./motion/primitives/Reveal";
 
@@ -19,7 +20,7 @@ const FEATURES: FeatureCard[] = [
     icon: <Layers size={15} style={{ color: "#4C86FF" }} />,
     title: "Architecture",
     copy: "Every layer, head, and tensor — inspect the full model graph, params to precision.",
-    screenshot: "/screenshots/architecture.png",
+    screenshot: assetUrl("/screenshots/architecture.png"),
     link: "/app?mode=explorer",
   },
   {
@@ -27,7 +28,7 @@ const FEATURES: FeatureCard[] = [
     icon: <Play size={15} style={{ color: "#4C86FF" }} />,
     title: "Generation",
     copy: "Watch token-by-token generation unfold in real time, embedding by embedding.",
-    screenshot: "/screenshots/generation.png",
+    screenshot: assetUrl("/screenshots/generation.png"),
     link: "/app?mode=generation",
   },
   {
@@ -35,7 +36,7 @@ const FEATURES: FeatureCard[] = [
     icon: <Map size={15} style={{ color: "#4C86FF" }} />,
     title: "Walkthrough",
     copy: "A guided, chapter-by-chapter tour of the forward pass — from tokens to logits.",
-    screenshot: "/screenshots/walkthrough.png",
+    screenshot: assetUrl("/screenshots/walkthrough.png"),
     link: "/app?mode=walkthrough",
   },
   {
@@ -43,7 +44,7 @@ const FEATURES: FeatureCard[] = [
     icon: <Bug size={15} style={{ color: "#4C86FF" }} />,
     title: "Debugger",
     copy: "Set breakpoints and step through execution at any point in the pipeline.",
-    screenshot: "/screenshots/debugger.png",
+    screenshot: assetUrl("/screenshots/debugger.png"),
     link: "/app?mode=debugger",
   },
 ];

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { assetUrl } from "@/lib/assets";
 import { ArrowRight } from "lucide-react";
 import { GithubIcon } from "./GithubIcon";
 import { Reveal } from "./motion/primitives/Reveal";
@@ -11,7 +12,7 @@ export function HomeHero() {
       {/* Real Background Texture Asset from ~/Downloads/tokenprint assets */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/backgrounds/eNoaAZe2UbngDtDinHWdsSg4GRI.svg"
+        src={assetUrl("/backgrounds/eNoaAZe2UbngDtDinHWdsSg4GRI.svg")}
         alt=""
         aria-hidden="true"
         className="home-hero-bg-asset"

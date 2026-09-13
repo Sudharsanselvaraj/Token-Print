@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { assetUrl } from "@/lib/assets";
 
 interface DocsHeaderProps {
   mobileOpen: boolean;
@@ -42,7 +43,7 @@ export default function DocsHeader({
         {/* Brand / Logo */}
         <Link href="/docs/introduction" className="docs-header-logo">
           <img
-            src="/tokenprint-logo.png"
+            src={assetUrl("/tokenprint-logo.png")}
             alt="TokenPrint"
             className="brand-logo"
             style={{ height: "32px", width: "auto", display: "block" }}

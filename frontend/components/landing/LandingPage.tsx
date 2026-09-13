@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import Link from "next/link";
+import { assetUrl } from "@/lib/assets";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -95,7 +96,7 @@ export function LandingPage() {
           <Link href="/" className="landing-nav-brand">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/tokenprint-logo.png"
+              src={assetUrl("/tokenprint-logo.png")}
               alt="TokenPrint"
               className="brand-logo"
               style={{ height: "36px", width: "auto" }}
@@ -264,7 +265,7 @@ export function LandingPage() {
                       <span className="marshal-plus">+</span>
                     </div>
                     <img
-                      src="/backgrounds/ooO9QydwmDfIDysUFcHDwRzdC8.avif"
+                      src={assetUrl("/backgrounds/ooO9QydwmDfIDysUFcHDwRzdC8.avif")}
                       alt="Attention Decoded"
                       className="marshal-tile-img"
                     />
@@ -337,7 +338,7 @@ export function LandingPage() {
             >
               <div className="marshal-cell-visual-area">
                 <img
-                  src="/backgrounds/col1_arch.png"
+                  src={assetUrl("/backgrounds/col1_arch.png")}
                   alt="Understand the architecture"
                   className="marshal-cell-img arch-img"
                 />
@@ -360,7 +361,7 @@ export function LandingPage() {
             >
               <div className="marshal-cell-visual-area">
                 <img
-                  src="/backgrounds/col2_attn.png"
+                  src={assetUrl("/backgrounds/col2_attn.png")}
                   alt="See attention unfold"
                   className="marshal-cell-img attn-img"
                 />
@@ -383,7 +384,7 @@ export function LandingPage() {
             >
               <div className="marshal-cell-visual-area">
                 <img
-                  src="/backgrounds/col3_gen.png"
+                  src={assetUrl("/backgrounds/col3_gen.png")}
                   alt="Watch generation happen"
                   className="marshal-cell-img gen-img"
                 />
@@ -420,7 +421,7 @@ export function LandingPage() {
         <div className="landing-footer-wave-band">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/backgrounds/6XkvzY5rYbYfuwU8Ov6xZQo9x4.webp"
+            src={assetUrl("/backgrounds/6XkvzY5rYbYfuwU8Ov6xZQo9x4.webp")}
             alt=""
             className="landing-footer-wave-img"
           />
@@ -431,7 +432,7 @@ export function LandingPage() {
             <div className="footer-col-brand">
               <Link href="/">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/tokenprint-logo.png" alt="TokenPrint" style={{ height: "30px", width: "auto" }} />
+                <img src={assetUrl("/tokenprint-logo.png")} alt="TokenPrint" style={{ height: "30px", width: "auto" }} />
               </Link>
               <p>Interactive LLM & Transformer Visual Debugger.</p>
             </div>

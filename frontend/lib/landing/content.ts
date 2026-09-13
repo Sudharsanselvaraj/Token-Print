@@ -1,3 +1,5 @@
+import { assetUrl } from "@/lib/assets";
+
 export interface PinnedStoryStep {
   id: string;
   num: string;
@@ -104,7 +106,7 @@ export const FEATURE_GRID_ITEMS: FeatureGridItem[] = [
     indexStr: "01",
     title: "Architecture Graph & Precision",
     copy: "Inspect every layer, head count, hidden dimension, and tensor memory footprint with exact parameter precision.",
-    screenshot: "/screenshots/architecture.png",
+    screenshot: assetUrl("/screenshots/architecture.png"),
     link: "/app?mode=explorer",
     isLarge: true,
   },
@@ -113,7 +115,7 @@ export const FEATURE_GRID_ITEMS: FeatureGridItem[] = [
     indexStr: "02",
     title: "Autoregressive 3D Generation",
     copy: "Watch token-by-token generation unfold live in 3D, tracing hidden embeddings through each layer block.",
-    screenshot: "/screenshots/generation.png",
+    screenshot: assetUrl("/screenshots/generation.png"),
     link: "/app?mode=generation",
   },
   {
@@ -121,7 +123,7 @@ export const FEATURE_GRID_ITEMS: FeatureGridItem[] = [
     indexStr: "03",
     title: "Forward-Pass Walkthrough",
     copy: "Step chapter-by-chapter through the entire computational pipeline — from discrete tokens to output logits.",
-    screenshot: "/screenshots/walkthrough.png",
+    screenshot: assetUrl("/screenshots/walkthrough.png"),
     link: "/app?mode=walkthrough",
   },
   {
@@ -129,7 +131,7 @@ export const FEATURE_GRID_ITEMS: FeatureGridItem[] = [
     indexStr: "04",
     title: "Breakpoints & Layer Inspection",
     copy: "Pause execution at any transformer layer to probe activation norms, QKV projections, and KV cache states.",
-    screenshot: "/screenshots/debugger.png",
+    screenshot: assetUrl("/screenshots/debugger.png"),
     link: "/app?mode=debugger",
     isLarge: true,
   },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useStore, useUIMode } from "@/lib/store";
+import { assetUrl } from "@/lib/assets";
 import { fmtCount } from "@/lib/format";
 import { useSnapshotUrl } from "@/lib/useSnapshotUrl";
 import type { Mode } from "@/lib/types";
@@ -41,7 +42,7 @@ export default function TopBar() {
     <div className="topbar">
       <div className="brand">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="tokenprint-logo.png" alt="TokenPrint" className="brand-logo" />
+        <img src={assetUrl("/tokenprint-logo.png")} alt="TokenPrint" className="brand-logo" />
       </div>
 
       <div className="mode-tabs">

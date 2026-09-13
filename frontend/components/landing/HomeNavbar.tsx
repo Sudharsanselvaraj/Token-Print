@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { ArrowUpRight } from "lucide-react";
+import { assetUrl } from "@/lib/assets";
 
 export function HomeNavbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -22,7 +23,7 @@ export function HomeNavbar() {
         <Link href="/" className="home-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/tokenprint-logo.png"
+            src={assetUrl("/tokenprint-logo.png")}
             alt="TokenPrint"
             className="brand-logo"
             style={{ height: "32px", width: "auto" }}

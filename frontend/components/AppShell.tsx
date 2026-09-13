@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useStore, restoreFromUrl } from "@/lib/store";
+import { assetUrl } from "@/lib/assets";
 import SceneLoader from "./SceneLoader";
 import PlaybackEngine from "./PlaybackEngine";
 import TopBar from "./ui/TopBar";
@@ -72,7 +73,7 @@ export default function AppShell() {
     if (mode !== "explorer") return; // URL-specified mode means intentional
     demoLoaded.current = true;
     (async () => {
-      const res = await fetch("/demo/hello-world.json");
+      const res = await fetch(assetUrl("/demo/hello-world.json"));
       if (!res.ok) return;
       const trace = await res.json();
       await loadTrace(trace);
