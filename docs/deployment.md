@@ -45,7 +45,7 @@ Notes:
 - First boot downloads `Qwen/Qwen2.5-0.5B-Instruct` (~1GB) from Hugging Face;
   give it a persistent disk/cache or expect a cold-start download.
 - CPU is fine at this model size; no GPU required.
-- `NEUROSCOPE_MODEL` / `NEUROSCOPE_DEVICE` env vars override the model and device.
+- `TOKENPRINT_MODEL` / `TOKENPRINT_DEVICE` env vars override the model and device.
 
 ### 2. CORS
 
