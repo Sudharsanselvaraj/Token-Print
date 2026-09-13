@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fail the build if any component or lib file uses Math.random (fabricated data).
 # Visual-randomness allowlist: TensorCloud (point jitter), pointcloud (layout).
-set -uo pipefail
+set -e
 
 DIRS="components lib app"
 ALLOWLIST="TensorCloud.tsx|pointcloud.ts"
