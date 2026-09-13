@@ -43,11 +43,12 @@ from transformers import (
     DynamicCache,
 )
 
+from .adapters import get_model_adapter
 from .debug import DebugCapture
 from .reduce import explained_variance, project_3d
 
-DEFAULT_MODEL_ID = os.environ.get("NEUROSCOPE_MODEL", "Qwen/Qwen2.5-0.5B-Instruct")
-MAX_TOKENS = int(os.environ.get("NEUROSCOPE_MAX_TOKENS", "40"))
+DEFAULT_MODEL_ID = os.environ.get("TOKENPRINT_MODEL", "Qwen/Qwen2.5-0.5B-Instruct")
+MAX_TOKENS = int(os.environ.get("TOKENPRINT_MAX_TOKENS", "40"))
 
 # Rounding / thresholding for the attention payload.
 _ATTN_DECIMALS = 3
@@ -88,7 +89,7 @@ def _classify_model_type(model_type: str) -> str:
 
 def _pick_device() -> str:
     """Choose the compute device, honoring an explicit override."""
-    override = os.environ.get("NEUROSCOPE_DEVICE")
+    override = os.environ.get("TOKENPRINT_DEVICE")
     if override:
         return override
     if torch.backends.mps.is_available():
@@ -124,6 +125,7 @@ class ModelEngine:
         probe_cfg = AutoConfig.from_pretrained(model_id)
         self.model_type: str = str(getattr(probe_cfg, "model_type", "unknown"))
         self.mode: str = _classify_model_type(self.model_type)
+        self.adapter = get_model_adapter(self.mode)
 
         self.tokenizer: AutoTokenizer | None = None
         self.image_processor = None
@@ -372,8 +374,10 @@ class ModelEngine:
                 "use POST /analyze/image."
             )
         if self.mode == "encoder":
-            return self._analyze_encoder(sentence)
-        return self._analyze_causal_lm(sentence)
+            raw = self._analyze_encoder(sentence)
+        else:
+            raw = self._analyze_causal_lm(sentence)
+        return self.adapter.process_analysis(raw)
 
     def _analyze_causal_lm(self, sentence: str) -> dict:
         """Decoder-only causal LM forward pass (tokens, attention, geometry)."""
