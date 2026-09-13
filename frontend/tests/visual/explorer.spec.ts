@@ -29,7 +29,7 @@ test.describe("Explorer — real backend data", () => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(String(e)));
 
-    await page.goto("/", { waitUntil: "load" });
+    await page.goto("/app", { waitUntil: "load" });
     // Wait for the tensor list to populate (real /architecture call).
     await page.waitForSelector(".tensor-row", { timeout: 60_000 });
     // Model name in the top bar reflects the live backend's metadata.
@@ -50,7 +50,7 @@ test.describe("Explorer — real backend data", () => {
   });
 
   test("GGUF file upload does not crash (tiny fixture)", async ({ page }) => {
-    await page.goto("/", { waitUntil: "load" });
+    await page.goto("/app", { waitUntil: "load" });
     await page.waitForSelector(".tensor-row", { timeout: 60_000 });
 
     const errors: string[] = [];
