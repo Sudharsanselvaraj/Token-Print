@@ -1,0 +1,38 @@
+name: "🗺️ Roadmap → Issues sync"
+
+# Keeps GitHub issues in step with docs/roadmap.spec.yml. Idempotent:
+# only issues whose title does not already exist (open or closed) are created.
+on:
+  schedule:
+    # Weekly: Monday 02:00 UTC.
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+  pull_request:
+    types: [closed]
+    paths:
+      - "docs/roadmap.spec.yml"
+      - "scripts/sync-roadmap.py"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    name: Sync roadmap → issues
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install --quiet pyyaml
+
+      # Uses `gh` (pre-installed on runners) authenticated as GITHUB_TOKEN.
+      - name: Run roadmap sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/sync-roadmap.py --repo ${{ github.repository }}

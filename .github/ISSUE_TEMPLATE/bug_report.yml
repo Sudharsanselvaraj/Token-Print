@@ -1,0 +1,63 @@
+name: "🐛 Bug report"
+description: Report a bug in the app or infrastructure
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Where does this bug live?
+      multiple: true
+      options:
+        - Frontend / 3D viewport
+        - Backend / inference
+        - CI / GitHub Actions
+        - Docs
+        - Security
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What's wrong, and what did you expect instead?
+      placeholder: "e.g. Loading model X then clicking Generate 500s on /trace"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Minimum steps to see it.
+      placeholder: |
+        1. Start the dev server (or CI job...)
+        2. ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots / logs
+      description: Drag images or paste the relevant console / server logs here, including the error's HTTP status code.
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      render: shell
+      value: |
+        Browser & version:
+        Model / GGUF used:
+        Backend mode (local hf / gguf / trace): 
+        OS:
