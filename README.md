@@ -113,6 +113,7 @@ send a PR. First-timers genuinely welcome.
 </tr>
 </table>
 
+<!-- CONTRIBUTORS:START -->
 <div align="center">
 <a href="https://github.com/Sudharsanselvaraj"><img src="https://github.com/Sudharsanselvaraj.png?size=96" width="48" height="48" alt="Sudharsanselvaraj" /></a>
 <a href="https://github.com/ManoShruthiS"><img src="https://github.com/ManoShruthiS.png?size=96" width="48" height="48" alt="ManoShruthiS" /></a>
@@ -122,6 +123,7 @@ send a PR. First-timers genuinely welcome.
 <a href="https://github.com/Sriram-Selvaperumal"><img src="https://github.com/Sriram-Selvaperumal.png?size=96" width="48" height="48" alt="Sriram-Selvaperumal" /></a>
 <a href="https://github.com/challenge456"><img src="https://github.com/challenge456.png?size=96" width="48" height="48" alt="challenge456" /></a>
 </div>
+<!-- CONTRIBUTORS:END -->
 
 ## Everything else
 
