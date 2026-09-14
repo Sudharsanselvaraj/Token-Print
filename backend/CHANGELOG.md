@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-backend-v0.2.0...token-print-backend-v0.3.0) (2026-09-14)
+
+
+### Features
+
+* **backend:** CORS for deployed origins + Oracle ARM bootstrap script ([94b82cd](https://github.com/Sudharsanselvaraj/Token-Print/commit/94b82cd32b33377ee42eeae3ceb01a814fc91983))
+* **generation:** workspace redesign + real sampling decode + custom-domain deploy ([bdaca41](https://github.com/Sudharsanselvaraj/Token-Print/commit/bdaca41085d51fc53f322dc53e2b96f39f294bd8))
+
+
+### Bug Fixes
+
+* **backend:** repair corrupt encoding of requirements-gguf.txt ([#229](https://github.com/Sudharsanselvaraj/Token-Print/issues/229)) ([d0be661](https://github.com/Sudharsanselvaraj/Token-Print/commit/d0be66177c2cf616108a87bab5c87c3fb9fbf796)), closes [#187](https://github.com/Sudharsanselvaraj/Token-Print/issues/187)
+* **backend:** surface GGUF_ENGINE_AVAILABLE flag and metadata-only mode ([#228](https://github.com/Sudharsanselvaraj/Token-Print/issues/228)) ([3454d06](https://github.com/Sudharsanselvaraj/Token-Print/commit/3454d0615b68bc04fa3b810e6bf78a6234c56411)), closes [#193](https://github.com/Sudharsanselvaraj/Token-Print/issues/193)
+* enable README contributor auto-update ([#221](https://github.com/Sudharsanselvaraj/Token-Print/issues/221)) ([237a48e](https://github.com/Sudharsanselvaraj/Token-Print/commit/237a48e7ba952ccf2f40c538436ba268be54766d))
+
 ## [0.2.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-backend-v0.1.0...token-print-backend-v0.2.0) (2026-09-13)
 
 

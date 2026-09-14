@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.3.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-v0.2.0...token-print-v0.3.0) (2026-09-14)
+
+
+### Features
+
+* **backend:** CORS for deployed origins + Oracle ARM bootstrap script ([94b82cd](https://github.com/Sudharsanselvaraj/Token-Print/commit/94b82cd32b33377ee42eeae3ceb01a814fc91983))
+* **camera:** unify 3D camera control bar across Architecture, Generation, Walkthrough, and Debugger modes ([a8b2dc3](https://github.com/Sudharsanselvaraj/Token-Print/commit/a8b2dc34d1f1271b6234ef0fe0e90fc312be8575))
+* **frontend:** separate real timing from proxy timing in UI (ENG-15) ([#227](https://github.com/Sudharsanselvaraj/Token-Print/issues/227)) ([08c24ef](https://github.com/Sudharsanselvaraj/Token-Print/commit/08c24eff53bc41b70407e6637cbc831aec9ce7df))
+* **generation:** workspace redesign + real sampling decode + custom-domain deploy ([bdaca41](https://github.com/Sudharsanselvaraj/Token-Print/commit/bdaca41085d51fc53f322dc53e2b96f39f294bd8))
+* **responsive:** gate TokenPrint 3D interactive workspace behind desktop-only check ([1cf42bf](https://github.com/Sudharsanselvaraj/Token-Print/commit/1cf42bf2150353c9cb45db21fbcc11728b55f200))
+
+
+### Bug Fixes
+
+* **backend:** repair corrupt encoding of requirements-gguf.txt ([#229](https://github.com/Sudharsanselvaraj/Token-Print/issues/229)) ([d0be661](https://github.com/Sudharsanselvaraj/Token-Print/commit/d0be66177c2cf616108a87bab5c87c3fb9fbf796)), closes [#187](https://github.com/Sudharsanselvaraj/Token-Print/issues/187)
+* **backend:** surface GGUF_ENGINE_AVAILABLE flag and metadata-only mode ([#228](https://github.com/Sudharsanselvaraj/Token-Print/issues/228)) ([3454d06](https://github.com/Sudharsanselvaraj/Token-Print/commit/3454d0615b68bc04fa3b810e6bf78a6234c56411)), closes [#193](https://github.com/Sudharsanselvaraj/Token-Print/issues/193)
+* **camera:** bring default Architecture mode camera closer for clear 3D model visibility ([66de42d](https://github.com/Sudharsanselvaraj/Token-Print/commit/66de42d3da69bd08389bcf8477779c7e76f6961b))
+* **docs:** add Research & Theoretical Background documentation page for /docs/research ([d045220](https://github.com/Sudharsanselvaraj/Token-Print/commit/d0452204f8245a8f2d0818446e71448fb9b9c32a))
+* enable README contributor auto-update ([#221](https://github.com/Sudharsanselvaraj/Token-Print/issues/221)) ([237a48e](https://github.com/Sudharsanselvaraj/Token-Print/commit/237a48e7ba952ccf2f40c538436ba268be54766d))
+* **frontend:** basePath-aware asset URLs for logos, backgrounds, screenshots, and demo trace ([#212](https://github.com/Sudharsanselvaraj/Token-Print/issues/212)) ([5000906](https://github.com/Sudharsanselvaraj/Token-Print/commit/50009063f0938e4de7ab6c041e537ebe74f3f431))
+* **gallery:** fix HTTP 404 in Community Trace Gallery and redesign to TokenPrint theme ([de08390](https://github.com/Sudharsanselvaraj/Token-Print/commit/de08390a7285789bbb2cf3edd0a81e4d4df3f23f))
+* **generation:** bounds-based camera framing (60% vertical fill) + unified TokenPrint control bar ([22eb2de](https://github.com/Sudharsanselvaraj/Token-Print/commit/22eb2de05964874f220ebe2309f6e7e67aa0ce09))
+* **generation:** replace Math.random seed with deterministic pulse offset ([76d6460](https://github.com/Sudharsanselvaraj/Token-Print/commit/76d64601f511f8254b21373b313ecb9880fb15f3))
+* improve empty and unsupported panel states ([#215](https://github.com/Sudharsanselvaraj/Token-Print/issues/215)) ([fe1752a](https://github.com/Sudharsanselvaraj/Token-Print/commit/fe1752a19dce9b98f519497ea207dabcb42135dc))
+* **landing:** replace YouTube with Gmail and update community links for X and LinkedIn ([3c91b67](https://github.com/Sudharsanselvaraj/Token-Print/commit/3c91b67b10623b1b7531a9766ef0bb2f753f5e73))
+* **ui:** remove Share and Report buttons from sidebar ([97317bc](https://github.com/Sudharsanselvaraj/Token-Print/commit/97317bcea28fc43d730acd4a3b88e4827e11eaee))
+
 ## [0.2.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-v0.1.0...token-print-v0.2.0) (2026-09-13)
 
 
