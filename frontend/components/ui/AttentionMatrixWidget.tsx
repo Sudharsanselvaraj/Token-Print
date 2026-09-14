@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useStore } from "@/lib/store";
+import PanelState from "./PanelState";
 
 export function AttentionMatrixWidget() {
   const data = useStore((s) => s.data);
@@ -10,22 +11,52 @@ export function AttentionMatrixWidget() {
   const setLayer = useStore((s) => s.setLayer);
   const selectedHead = useStore((s) => s.selectedHead);
   const setHead = useStore((s) => s.setHead);
+  const loading = useStore((s) => s.loading);
+
+  if (loading) {
+    return (
+      <div className="rp-section">
+        <PanelState kind="loading" title="Loading attention" message="Waiting for the model analysis to finish." />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="rp-section">
+        <PanelState kind="empty" title="No attention data" message="Run an analysis to inspect attention weights by layer and head." />
+      </div>
+    );
+  }
+
+  const attentionCapability =
+    data.capabilities && "supports_attention" in data.capabilities
+      ? data.capabilities.supports_attention
+      : null;
+  const attnMatrix = data.attention?.[selectedLayer]?.[selectedHead] || null;
+
+  if (attentionCapability && !attentionCapability.supported) {
+    return (
+      <div className="rp-section">
+        <PanelState kind="unsupported" title="Attention unavailable" message={attentionCapability.reason} />
+      </div>
+    );
+  }
+
+  if (!data.tokens?.length || !attnMatrix?.length) {
+    return (
+      <div className="rp-section">
+        <PanelState kind="empty" title="No attention data" message="This analysis did not return an attention matrix for the selected layer and head." />
+      </div>
+    );
+  }
 
   const m = arch?.metadata;
   const numLayers = m?.num_layers || data?.num_layers || 24;
   const numHeads = m?.num_heads || data?.num_heads || 14;
   const headDim = m?.head_dim || (m?.hidden_size ? Math.floor(m.hidden_size / numHeads) : 64);
 
-  const tokens = data?.tokens || [
-    { index: 0, text: "Name", piece: "Name", id: 2437, is_special: false },
-    { index: 1, text: "one", piece: "one", id: 284, is_special: false },
-    { index: 2, text: "primary", piece: "primary", id: 4331, is_special: false },
-    { index: 3, text: "color", piece: "color", id: 16326, is_special: false },
-    { index: 4, text: ".", piece: ".", id: 2456, is_special: false },
-  ];
-
-  // Extract real softmax attention matrix for layer L and head H
-  const attnMatrix = data?.attention?.[selectedLayer]?.[selectedHead] || null;
+  const tokens = data.tokens;
 
   return (
     <div className="rp-section">
@@ -65,7 +96,7 @@ export function AttentionMatrixWidget() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "2px", background: "#030305", padding: "4px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "6px", aspectRatio: "1 / 1" }}>
             {tokens.map((rowTok, rIdx) =>
               tokens.map((colTok, cIdx) => {
-                const weight = attnMatrix?.[rIdx]?.[cIdx] ?? (cIdx <= rIdx ? (rIdx === cIdx ? 0.6 : 0.2) : 0.0);
+                const weight = attnMatrix[rIdx]?.[cIdx] ?? 0;
                 return (
                   <div
                     key={`${rIdx}-${cIdx}`}

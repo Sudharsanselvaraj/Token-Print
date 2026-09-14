@@ -2,22 +2,55 @@
 
 import React from "react";
 import { useStore } from "@/lib/store";
+import PanelState from "./PanelState";
 
 export function ResidualStreamWidget() {
   const data = useStore((s) => s.data);
   const arch = useStore((s) => s.arch);
   const selectedLayer = useStore((s) => s.selectedLayer);
+  const loading = useStore((s) => s.loading);
+
+  if (loading) {
+    return (
+      <div className="rp-section">
+        <PanelState kind="loading" title="Loading residual stream" message="Waiting for the model analysis to finish." />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="rp-section">
+        <PanelState kind="empty" title="No residual stream data" message="Run an analysis to inspect token representations across layers." />
+      </div>
+    );
+  }
+
+  const hiddenStates = data.hidden_states_3d?.[String(selectedLayer)];
+  const hiddenStateCapability =
+    data.capabilities && "supports_hidden_states" in data.capabilities
+      ? data.capabilities.supports_hidden_states
+      : null;
+
+  if (hiddenStateCapability && !hiddenStateCapability.supported) {
+    return (
+      <div className="rp-section">
+        <PanelState kind="unsupported" title="Residual stream unavailable" message={hiddenStateCapability.reason} />
+      </div>
+    );
+  }
+
+  if (!data.tokens?.length || !hiddenStates?.length) {
+    return (
+      <div className="rp-section">
+        <PanelState kind="empty" title="No residual stream data" message="This analysis did not return hidden-state data for the selected layer." />
+      </div>
+    );
+  }
 
   const m = arch?.metadata;
   const hiddenSize = m?.hidden_size || data?.hidden_size || 896;
-
-  const tokens = data?.tokens || [
-    { index: 0, text: "Name", piece: "Name", id: 2437, is_special: false },
-    { index: 1, text: "one", piece: "one", id: 284, is_special: false },
-    { index: 2, text: "primary", piece: "primary", id: 4331, is_special: false },
-    { index: 3, text: "color", piece: "color", id: 16326, is_special: false },
-    { index: 4, text: ".", piece: ".", id: 2456, is_special: false },
-  ];
+  const tokens = data.tokens;
 
   return (
     <div className="rp-section">
