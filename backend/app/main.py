@@ -251,6 +251,7 @@ def _quant_guess(filename: str) -> str:
 @app.get("/gguf/list")
 async def gguf_list() -> dict:
     """List server-side .gguf files eligible for real quantized generation."""
+    has_execution = GGUFEngine.is_available()
     items = []
     for p in sorted(GGUF_DIR.glob("*.gguf")):
         items.append(
@@ -262,7 +263,11 @@ async def gguf_list() -> dict:
                 "loaded": str(p.resolve()) in _gguf_engines,
             }
         )
-    return {"files": items}
+    return {
+        "files": items,
+        "has_gguf_execution": has_execution,
+        "engine_status": "llama.cpp native" if has_execution else "GGUF metadata only",
+    }
 
 
 @app.post("/gguf/upload")

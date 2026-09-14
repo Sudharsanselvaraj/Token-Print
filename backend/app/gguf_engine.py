@@ -33,6 +33,12 @@ logger = logging.getLogger(__name__)
 
 _LOCK = threading.Lock()
 
+try:
+    import llama_cpp  # noqa: F401
+    HAS_GGUF = True
+except ImportError:
+    HAS_GGUF = False
+
 
 def _decode_id(llm, tid: int) -> str:
     raw = llm.detokenize([int(tid)])
@@ -51,6 +57,11 @@ def _tiny_softmax(logits):
 
 class GGUFEngine:
     """Wrap a llama.cpp model file (server-side path) for honest generation."""
+
+    @classmethod
+    def is_available(cls) -> bool:
+        """Return True if llama-cpp-python is installed and native execution is enabled."""
+        return HAS_GGUF
 
     def __init__(self, path: str, n_ctx: int = 1024) -> None:
         self.path = str(path)
