@@ -21,7 +21,7 @@ test.describe("Walkthrough — mode mounts and chapter nav works", () => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(String(e)));
 
-    await page.goto("/", { waitUntil: "load" });
+    await page.goto("/app", { waitUntil: "load" });
     await page.waitForSelector(".mode-tab", { timeout: 30_000 });
 
     await clickTab(page, "Walkthrough");

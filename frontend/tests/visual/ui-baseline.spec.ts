@@ -47,7 +47,7 @@ test.describe("UI baseline — real backend data percolates to the DOM", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "load" });
+    await page.goto("/app", { waitUntil: "load" });
     await page.waitForSelector(".tensor-row", { timeout: 60_000 });
     await page.waitForSelector(".tstat.name", { timeout: 10_000 });
 

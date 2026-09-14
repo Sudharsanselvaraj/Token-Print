@@ -48,6 +48,7 @@ function NormWaist({
   onPointerEnter,
   onPointerLeave,
   onClick,
+  anchorName,
 }: {
   y: number;
   active: boolean;
@@ -57,6 +58,7 @@ function NormWaist({
   onPointerEnter?: () => void;
   onPointerLeave?: () => void;
   onClick?: () => void;
+  anchorName?: string;
 }) {
   const c = active ? color : GRAY;
   const finalColor = hoverColor(c, hovered, active);
@@ -65,7 +67,7 @@ function NormWaist({
   const H = 0.42;
   const sc = hovered ? 1.12 : 1;
   return (
-    <group position={[0, y, 0]} scale={sc}>
+    <group name={anchorName} position={[0, y, 0]} scale={sc}>
       <mesh
         position={[0, H / 2, 0]}
         onPointerEnter={onPointerEnter}
@@ -117,6 +119,7 @@ function MlpFunnel({
   onPointerEnter,
   onPointerLeave,
   onClick,
+  anchorName,
 }: {
   y: number;
   radius: number;
@@ -127,12 +130,13 @@ function MlpFunnel({
   onPointerEnter?: () => void;
   onPointerLeave?: () => void;
   onClick?: () => void;
+  anchorName?: string;
 }) {
   const c = active ? color : GRAY;
   const finalColor = hoverColor(c, hovered, active);
   const sc = hovered ? 1.12 : 1;
   return (
-    <group position={[0, y, 0]} scale={sc}>
+    <group name={anchorName} position={[0, y, 0]} scale={sc}>
       {/* Gate prong (left) — Swish activation.
           Up prong (right) — linear projection. */}
       <mesh
@@ -324,6 +328,7 @@ export default function TransformerStack({
 
       {/* Token embedding volume (width ∝ log2 vocab, depth ∝ embedding dim). */}
       <mesh
+        name="wt_embedding"
         position={[0, layerY(-1), 0]}
         onPointerEnter={handleEnter(-1, "embedding")}
         onPointerLeave={handleLeave}
@@ -346,8 +351,13 @@ export default function TransformerStack({
         const isHovered = li === hoveredLayer;
         return (
           <group key={li}>
+            {/* Named world-space anchor for the attention station of this layer,
+                used by the walkthrough camera system to frame Self-Attention. */}
+            <group name={`wt_attn_${li}`} position={[0, yAttn(li), 0]} />
+
             <NormWaist
               y={yNorm1(li)}
+              anchorName={`wt_norm_${li}`}
               active={isActive && activeKind === "norm"}
               hovered={isHovered && hoveredKind === "norm"}
               color={opCol}
@@ -394,6 +404,7 @@ export default function TransformerStack({
 
             <MlpFunnel
               y={yMlp(li)}
+              anchorName={`wt_mlp_${li}`}
               radius={funnelRadius}
               active={isActive && activeKind === "mlp"}
               hovered={isHovered && hoveredKind === "mlp"}
@@ -474,15 +485,15 @@ export default function TransformerStack({
 
       {/* GQA label at the active layer's attention station. */}
       {activeLayer != null && activeLayer >= 0 && activeKind === "attn" && (
-        <Billboard position={[3.4, yAttn(activeLayer), 0]}>
-          <Text fontSize={0.36} anchorX="left" color="#9fb4d6" outlineWidth={0.015} outlineColor="#000000">
-            GQA · {dims.numHeads} Q / {dims.kvHeads} KV heads
+        <Billboard position={[3.2, yAttn(activeLayer), 0]}>
+          <Text fontSize={0.24} anchorX="left" color="#7e8ca8" outlineWidth={0.012} outlineColor="#000000">
+            GQA · {dims.numHeads} Q / {dims.kvHeads} KV
           </Text>
         </Billboard>
       )}
 
       {/* Output: converging funnel toward the vocabulary distribution. */}
-      <group position={[0, layerY(nLayers), 0]}>
+      <group name="wt_output" position={[0, layerY(nLayers), 0]}>
         <mesh
           onPointerEnter={handleEnter(nLayers, "output")}
           onPointerLeave={handleLeave}

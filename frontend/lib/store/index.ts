@@ -87,6 +87,13 @@ export const useStore = create<StoreState>()((set, get, store) => ({
     );
   },
 
+  // Stops an in-flight streaming generation (closes the socket, keeps frames).
+  stopGeneration: () => {
+    genSocket?.close();
+    genSocket = null;
+    set({ genStatus: "idle", isPlaying: false, opPlaying: false });
+  },
+
   // File replay changes generation data, trace provenance, and the active UI mode.
   loadTrace: async (file) => {
     set({
@@ -140,10 +147,11 @@ export const useUIMode = () => useStore((state) => state.mode);
 export function restoreFromUrl(): Partial<StoreState> {
   if (typeof window === "undefined") return {};
   const params = new URLSearchParams(window.location.search);
-  if (!params.get("v")) return {};
   const state: Partial<StoreState> = {};
   const mode = params.get("mode") as Mode | null;
   if (mode) state.mode = mode;
+  const v = params.get("v");
+  if (!v) return state;
   const tokenIndex = params.get("token");
   if (tokenIndex) state.playIndex = Number(tokenIndex);
   const opIndex = params.get("op");

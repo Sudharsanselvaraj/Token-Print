@@ -16,7 +16,18 @@ export const createArch3dSlice: StateCreator<StoreState, [], [], Arch3dSlice> = 
   setExpandedBlockId: (expandedBlockId) => set({ expandedBlockId }),
 
   cameraMode: "overview",
-  setCameraMode: (cameraMode) => set({ cameraMode }),
+  setCameraMode: (cameraMode) =>
+    set((state) => {
+      const navMode =
+        cameraMode === "overview"
+          ? "OVERVIEW"
+          : cameraMode === "layer"
+            ? "LAYER_FOCUS"
+            : cameraMode === "operation"
+              ? "OP_FOCUS"
+              : "FOLLOW";
+      return { cameraMode, navMode, userOrbiting: false };
+    }),
   focusMode: false,
   toggleFocusMode: () => set((state) => ({ focusMode: !state.focusMode })),
   expandedLayer: null,
@@ -79,6 +90,7 @@ export const createArch3dSlice: StateCreator<StoreState, [], [], Arch3dSlice> = 
         selectedLayer: next,
         selectedTensor: op?.tensorName ?? state.selectedTensor,
         cameraMode: "layer" as const,
+        navMode: "LAYER_FOCUS" as const,
         userOrbiting: false,
       };
     }),

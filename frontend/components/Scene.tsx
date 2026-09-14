@@ -11,7 +11,7 @@ import { SpatialArchitectureScene } from "./scenes/SpatialArchitectureScene";
 import GenerationScene from "./scenes/GenerationScene";
 import WalkthroughScene from "./scenes/WalkthroughScene";
 import { PostProcessingPipeline } from "./scenes/PostProcessingPipeline";
-import { CinematicCameraController } from "./camera/CinematicCameraController";
+import { GlobalCameraController } from "./camera/GlobalCameraController";
 import { InspectCameraRig } from "./scenes/inspect/InspectCameraRig";
 import {
   cameraOverview,
@@ -198,7 +198,8 @@ export default function Scene({
       <PostProcessingPipeline />
       <DebugExpose />
       <Brightness />
-      <CinematicCameraController controlsRef={controlsRef} />
+      {/* Global camera controller drives smooth camera navigation across all 3D modes */}
+      <GlobalCameraController controlsRef={controlsRef} />
 
       <OrbitControls
         ref={controlsRef}
@@ -207,7 +208,10 @@ export default function Scene({
         dampingFactor={0.07}
         minDistance={2}
         maxDistance={6000}
-        onStart={() => setUserOrbiting(true)}
+        onStart={() => {
+          useStore.getState().setNavMode("MANUAL");
+          setUserOrbiting(true);
+        }}
         onEnd={() => setUserOrbiting(false)}
       />
     </Canvas>

@@ -57,7 +57,7 @@ export default function DebuggerPane() {
       </div>
 
       <div className="dbg-grid">
-        <div className="dbg-card dbg-card-wide">
+        <div className="dbg-card dbg-card-wide" data-dbg-tool="tensor_inspector">
           <div className="dbg-card-title">Tensor Inspector</div>
           <DebugInspector />
         </div>
@@ -67,7 +67,7 @@ export default function DebuggerPane() {
           <BreakpointGutter />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="operation_timeline">
           <div className="dbg-card-title">Flame Graph</div>
           <FlameGraph />
         </div>
@@ -77,7 +77,7 @@ export default function DebuggerPane() {
           <LayerTable />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="attention_analysis">
           <div className="dbg-card-title">Head × Head Grid</div>
           <HeadGrid />
         </div>
@@ -97,7 +97,7 @@ export default function DebuggerPane() {
           <NumberProvenance />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="trace_frames">
           <div className="dbg-card-title">Replay Branching</div>
           <ReplayBranch />
         </div>
@@ -112,12 +112,12 @@ export default function DebuggerPane() {
           <HeadInspector />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="kv_cache">
           <div className="dbg-card-title">Layer Timing</div>
           <TimingReadout />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="activation_analysis">
           <div className="dbg-card-title">Activation Distribution</div>
           <DistributionPanel />
         </div>
@@ -127,7 +127,7 @@ export default function DebuggerPane() {
           <ConsoleRepl />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="quantization_compare">
           <div className="dbg-card-title">Quant Explainer</div>
           <QuantExplainer />
         </div>
@@ -137,42 +137,42 @@ export default function DebuggerPane() {
           <LoraDeltaViz />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="induction_heads">
           <div className="dbg-card-title">Induction-Head Lab</div>
           <InductionHeadLab />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="activation_patching">
           <div className="dbg-card-title">Activation Patching</div>
           <ActivationPatchCompare />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="residual_contributions">
           <div className="dbg-card-title">Residual Contributions</div>
           <ResidualContributions />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="sampling_playground">
           <div className="dbg-card-title">Sampling Playground</div>
           <SamplingPlayground />
         </div>
 
-        <div className="dbg-card dbg-card-wide">
+        <div className="dbg-card dbg-card-wide" data-dbg-tool="logit_lens">
           <div className="dbg-card-title">Why This Token?</div>
           <WhyExplainer />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="token_state">
           <div className="dbg-card-title">Depth Dial</div>
           <DepthDial />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="local_checkpoint">
           <div className="dbg-card-title">Local Checkpoint</div>
           <Gpt2Loader />
         </div>
 
-        <div className="dbg-card">
+        <div className="dbg-card" data-dbg-tool="head_ablation">
           <div className="dbg-card-title">Ablation</div>
           <AblationPanel />
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { TOKENS } from "./primitives";
 
 export interface Contributor {
   login: string;
@@ -27,7 +28,6 @@ export default function ContributorsSection() {
       setError(null);
 
       try {
-        // 1. Attempt static cached list first (to preserve rate limits)
         let data: Contributor[] = [];
         try {
           const staticRes = await fetch("/contributors.json");
@@ -38,7 +38,6 @@ export default function ContributorsSection() {
           /* Fallback to live API if static JSON isn't present */
         }
 
-        // 2. Fetch live data from GitHub API if static data is empty
         if (!data || data.length === 0) {
           const res = await fetch(
             `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contributors?per_page=100`
@@ -46,7 +45,7 @@ export default function ContributorsSection() {
 
           if (!res.ok) {
             if (res.status === 403) {
-              throw new Error("GitHub API rate limit reached. Please try again later.");
+              throw new Error("GitHub API rate limit reached.");
             }
             throw new Error(`GitHub API error: ${res.status}`);
           }
@@ -55,7 +54,6 @@ export default function ContributorsSection() {
         }
 
         if (alive) {
-          // Filter out bots (optional, e.g. Copilot if preferred, or mark them)
           const sorted = data
             .filter((c) => c.type !== "Bot" && c.login !== "Copilot")
             .sort((a, b) => b.contributions - a.contributions);
@@ -79,48 +77,96 @@ export default function ContributorsSection() {
   }, []);
 
   return (
-    <div className="contributors-container">
-      <div className="contributors-header">
-        <div className="contributors-title-group">
-          <div className="contributors-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </div>
-          <div>
-            <h3 className="contributors-heading">Contributors</h3>
-            <p className="contributors-subheading">
-              Thanks to these amazing people for making <span className="highlight-text">TokenPrint</span>!
-            </p>
-          </div>
+    <div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "12px" }}>
+        <div
+          style={{
+            fontSize: "9.5px",
+            fontWeight: 700,
+            letterSpacing: "0.09em",
+            textTransform: "uppercase",
+            color: "#71717a",
+            fontFamily: TOKENS.fontSans,
+          }}
+        >
+          CONTRIBUTORS
+        </div>
+        <div style={{ fontSize: "11.5px", color: "#a1a1aa" }}>
+          People who have helped build, test, document, and improve TokenPrint.
         </div>
       </div>
 
       {loading ? (
-        <div className="contributors-loading">
-          <div className="contributors-spinner" />
-          <span>Fetching contributors from GitHub…</span>
+        <div
+          style={{
+            padding: "16px",
+            border: "1px solid #26262b",
+            borderRadius: 6,
+            background: "rgba(255,255,255,0.015)",
+            fontSize: "11px",
+            color: "#71717a",
+            fontFamily: TOKENS.fontMono,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              border: "2px solid #3c3c42",
+              borderTopColor: "#a1a1aa",
+              animation: "spin 0.7s linear infinite",
+            }}
+          />
+          <span>Fetching contributors from GitHub...</span>
         </div>
       ) : error ? (
-        <div className="contributors-error">
+        <div
+          style={{
+            padding: "14px 16px",
+            border: "1px solid #26262b",
+            borderRadius: 6,
+            background: "rgba(255,255,255,0.015)",
+            fontSize: "11px",
+            color: "#a1a1aa",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
           <span>{error}</span>
           <a
             href={`https://github.com/${REPO_OWNER}/${REPO_NAME}/graphs/contributors`}
             target="_blank"
             rel="noreferrer"
-            className="chip-btn"
+            style={{
+              fontSize: "10.5px",
+              color: "#f4f4f5",
+              textDecoration: "none",
+              border: "1px solid #3c3c42",
+              padding: "4px 8px",
+              borderRadius: 4,
+              fontFamily: TOKENS.fontMono,
+            }}
           >
-            View on GitHub
+            View on GitHub ↗
           </a>
         </div>
       ) : (
-        <div className="contributors-grid">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+            gap: "8px",
+          }}
+        >
           {contributors.map((c) => {
             const isCreator = c.login.toLowerCase() === REPO_OWNER.toLowerCase();
-            const badgeLabel = isCreator ? "Creator" : "Contributor";
+            const role = isCreator ? "Creator" : "Contributor";
 
             return (
               <a
@@ -128,39 +174,63 @@ export default function ContributorsSection() {
                 href={c.html_url}
                 target="_blank"
                 rel="noreferrer"
-                className="contributor-card"
                 title={`${c.login} (${c.contributions} contribution${c.contributions === 1 ? "" : "s"})`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "8px 10px",
+                  background: "rgba(255,255,255,0.015)",
+                  border: "1px solid #26262b",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  transition: "all 0.12s ease",
+                  overflow: "hidden",
+                }}
               >
-                <div className={`avatar-wrapper ${isCreator ? "creator-ring" : "contrib-ring"}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={c.avatar_url} alt={c.login} className="contributor-avatar" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={c.avatar_url}
+                  alt={c.login}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    border: "1px solid #3c3c42",
+                    objectFit: "cover",
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: "#f4f4f5",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {c.login}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      fontFamily: TOKENS.fontMono,
+                      color: "#71717a",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    {role}
+                  </span>
                 </div>
-                <span className="contributor-name">{c.login}</span>
-                <span className={`contributor-badge ${isCreator ? "creator" : "contrib"}`}>
-                  {badgeLabel}
-                </span>
               </a>
             );
           })}
         </div>
       )}
-
-      <div className="contributors-footer">
-        <div className="footer-tag">
-          <span className="tag-icon">★</span>
-          <span>Build together</span>
-        </div>
-        <div className="footer-divider">|</div>
-        <div className="footer-tag">
-          <span className="tag-icon">👥</span>
-          <span>Learn together</span>
-        </div>
-        <div className="footer-divider">|</div>
-        <div className="footer-tag">
-          <span className="tag-icon">🚀</span>
-          <span>Create impact</span>
-        </div>
-      </div>
     </div>
   );
 }

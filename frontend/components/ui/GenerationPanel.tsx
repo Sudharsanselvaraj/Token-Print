@@ -1,50 +1,134 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useStore } from "@/lib/store";
-import { fmtCount } from "@/lib/format";
-import {
-  detectArch,
-  getFormula,
-  roleToOpKey,
-  type OpKey,
-} from "@/lib/formulas";
 import { activeLayerOf, phaseInfo } from "@/lib/playback";
-import Formula from "./Formula";
-import LogitLensPanel from "./LogitLensPanel";
-import PredictionGame from "./PredictionGame";
+import type { TopKCandidate } from "@/lib/types";
+import { Button, TOKENS } from "./primitives";
 
-function WeightPreview({ data }: { data: number[][] }) {
-  if (!data?.length) return null;
-  const flat = data.flat();
-  const max = Math.max(1e-6, ...flat.map((v) => Math.abs(v)));
+const sectStyle = {
+  marginTop: "4px",
+} as const;
+
+const sectHead: CSSProperties = {
+  fontFamily: TOKENS.fontMono,
+  fontSize: "9px",
+  letterSpacing: "0.1em",
+  color: TOKENS.textMuted,
+  borderBottom: `1px solid ${TOKENS.border}`,
+  paddingBottom: "3px",
+  marginBottom: "4px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+};
+
+const rowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "8px",
+  padding: "3px 0",
+  fontFamily: TOKENS.fontMono,
+  fontSize: "10px",
+};
+
+const keyStyle: CSSProperties = { color: TOKENS.textMuted, fontSize: "9px", letterSpacing: "0.08em" };
+const valStyle: CSSProperties = {
+  color: TOKENS.textPrimary,
+  textAlign: "right",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  maxWidth: "150px",
+};
+
+function SectionTitle({ title, right }: { title: string; right?: string }) {
   return (
-    <div className="wp-grid">
-      {data.map((row, i) =>
-        row.map((v, j) => {
-          const t = v / max; // -1..1
-          const col =
-            t >= 0
-              ? `rgba(87,170,255,${0.15 + 0.85 * t})`
-              : `rgba(255,120,140,${0.15 + 0.85 * -t})`;
-          return (
-            <div
-              key={`${i}-${j}`}
-              className="wp-cell"
-              style={{ background: col }}
-              title={v.toFixed(3)}
-            />
-          );
-        }),
-      )}
+    <div style={sectHead}>
+      <span>{title}</span>
+      {right && <span style={{ color: TOKENS.textSecondary, fontFamily: TOKENS.fontMono }}>{right}</span>}
     </div>
   );
 }
 
-// Map an op_key to the formula OpKey (they share the same strings except
-// "attention" which is already a valid OpKey).
-function toFormulaKey(op_key: string): OpKey | null {
-  if (op_key === "attention") return "attention";
-  return roleToOpKey(op_key);
+function Predictions({ topk }: { topk: TopKCandidate[] }) {
+  const maxProb = Math.max(1e-6, ...topk.map((c) => c.prob));
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+      {topk.slice(0, 8).map((c, i) => {
+        const pc = c.prob * 100;
+        return (
+          <div key={c.id} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ ...keyStyle, width: "16px", color: i === 0 ? "#7fd7c8" : TOKENS.textMuted }}>
+              {i + 1}
+            </span>
+            <span
+              style={{
+                fontFamily: TOKENS.fontMono,
+                fontSize: "10px",
+                color: i === 0 ? TOKENS.textPrimary : TOKENS.textSecondary,
+                width: "96px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {c.text.replace(/\n/g, "⏎") || "␣"}
+            </span>
+            <div style={{ flex: 1, height: 4, background: TOKENS.surfaceRaised, borderRadius: 2, overflow: "hidden" }}>
+              <div
+                style={{
+                  height: "100%",
+                  width: `${Math.max(2, (c.prob / maxProb) * 100)}%`,
+                  background: i === 0 ? "#7fd7c8" : TOKENS.borderStrong,
+                }}
+              />
+            </div>
+            <span style={{ fontFamily: TOKENS.fontMono, fontSize: "9.5px", color: TOKENS.textPrimary, minWidth: "52px", textAlign: "right" }}>
+              {pc.toFixed(1)}%
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Logits({ topk }: { topk: TopKCandidate[] }) {
+  if (!topk.length) return null;
+  const max = Math.max(1e-6, ...topk.map((c) => c.logit));
+  const min = Math.min(...topk.map((c) => c.logit));
+  const span = Math.max(1e-6, max - min);
+  const cols = 24;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+      {topk.slice(0, 8).map((c, i) => {
+        const v = (c.logit - min) / span;
+        const cells = Math.max(1, Math.round(v * cols));
+        return (
+          <div key={c.id} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ ...keyStyle, width: "16px", color: i === 0 ? "#7fd7c8" : TOKENS.textMuted }}>{i + 1}</span>
+            <div style={{ flex: 1, display: "flex", gap: 1 }}>
+              {Array.from({ length: cols }, (_, k) => (
+                <div
+                  key={k}
+                  style={{
+                    flex: 1,
+                    height: 5,
+                    background: k < cells ? (i === 0 ? "#7fd7c8" : TOKENS.borderStrong) : TOKENS.surfaceRaised,
+                  }}
+                />
+              ))}
+            </div>
+            <span style={{ fontFamily: TOKENS.fontMono, fontSize: "9.5px", color: TOKENS.textPrimary, minWidth: "52px", textAlign: "right" }}>
+              {c.logit.toFixed(1)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function GenerationPanel() {
@@ -52,173 +136,190 @@ export default function GenerationPanel() {
   const opIndex = useStore((s) => s.opIndex);
   const stepOp = useStore((s) => s.stepOp);
   const status = useStore((s) => s.genStatus);
-  const showEquations = useStore((s) => s.showEquations);
-  const devMode = useStore((s) => s.devMode);
   const frame = useStore((s) => (s.playIndex >= 0 ? s.genFrames[s.playIndex] : null));
 
   const catalog = meta?.op_catalog ?? [];
-  if (catalog.length === 0) {
+  const nLayers = meta?.num_layers ?? 0;
+  const op = catalog.length ? catalog[Math.min(opIndex, catalog.length - 1)] : null;
+  const activeLayer = activeLayerOf(op ?? undefined, nLayers);
+  const phase = phaseInfo(frame, meta?.prompt_len ?? 0, meta?.uses_kv_cache);
+
+  const NA = "UNAVAILABLE";
+
+  if (!frame && (!meta || catalog.length === 0)) {
     return (
       <div className="rightpanel">
         <div className="rp-empty">
           {status === "streaming"
             ? "streaming a real generation…"
-            : "Enter a prompt in the sidebar and press Generate to stream a real forward-pass walkthrough."}
+            : "Ready to run inference. Enter a prompt and press GENERATE."}
         </div>
       </div>
     );
   }
 
-  const op = catalog[Math.min(opIndex, catalog.length - 1)];
-  const family = detectArch(meta?.architecture);
-  const fk = toFormulaKey(op.op_key);
-  const nLayers = meta?.num_layers ?? 0;
-  const activeLayer = activeLayerOf(op, nLayers);
-  const phase = phaseInfo(frame, meta?.prompt_len ?? 0, meta?.uses_kv_cache);
+  const timings = frame?.layer_timings_ms ?? [];
+  const stepMs = timings.length ? timings.reduce((a, b) => a + b, 0) : null;
+  const activeMs =
+    timings.length && activeLayer != null
+      ? timings[Math.max(0, Math.min(activeLayer, timings.length - 1))]
+      : null;
+  const cacheLen = frame?.cache_len ?? phase?.cacheLen ?? null;
+  const nPos = frame?.n_positions ?? phase?.positions ?? null;
+  const dp = meta?.decoding_params ?? {};
+  const tokenText = frame?.chosen.text ?? "";
 
   return (
-    <div className="rightpanel genpanel">
-      <div className="gp-head">
-        <div>
-          <div className="gp-layer">
-            {op.layer != null ? `Layer ${op.layer}` : "Model"}
-          </div>
-          <div className="gp-op">{op.label}</div>
-        </div>
-        <div
-          className="gp-params"
-          title="Cumulative parameters used so far in this forward pass. A synthetic trace would show random jumps; only a real execution of real weights produces counts that sum to the model's exact total."
-        >
-          <span>PARAMETERS USED</span>
-          <b>{fmtCount(op.cumulative_params)}</b>
-        </div>
+    <div className="rightpanel genpanel" style={{ overflowY: "auto" }}>
+      {/* Header: mode + phase */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+        <span style={{ fontFamily: TOKENS.fontSans, fontSize: "11px", letterSpacing: "0.1em", color: TOKENS.textPrimary }}>
+          GENERATION INSPECTOR
+        </span>
+        {phase && (
+          <span
+            style={{
+              fontFamily: TOKENS.fontMono,
+              fontSize: "9px",
+              letterSpacing: "0.08em",
+              padding: "2px 7px",
+              borderRadius: TOKENS.radiusSm,
+              border: `1px solid ${phase.phase === "prefill" ? "#3a3a6a" : "#2a3a4a"}`,
+              color: phase.phase === "prefill" ? "#b8b8ff" : "#9fd0f0",
+              background: "rgba(255,255,255,0.03)",
+            }}
+          >
+            {phase.label.toUpperCase()}
+          </span>
+        )}
       </div>
 
-      {phase && (
+      {/* CURRENT TOKEN */}
+      <div style={sectStyle}>
+        <SectionTitle title="CURRENT TOKEN" />
         <div
-          className={"gp-phase " + phase.phase}
-          title={
-            phase.phase === "prefill"
-              ? "Pre-fill: computing prompt tokens in parallel to build the KV cache. Synthetic demos skip this phase or fake the cache growth — here every cached position is a real token."
-              : "Decode: generating one token at a time, reusing the KV cache built during pre-fill. The growing cache length matches real model execution step-for-step."
-          }
+          style={{
+            fontFamily: TOKENS.fontMono,
+            fontSize: "20px",
+            lineHeight: 1.25,
+            color: "#7fd7c8",
+            padding: "6px 0",
+            wordBreak: "break-word",
+          }}
         >
-          <b>{phase.label}</b> · {phase.detail}
+          {tokenText.replace(/\n/g, "⏎") || "␣"}
         </div>
-      )}
-
-      {showEquations && fk && (
-        <div className="gp-formula">
-          {(getFormula(family, fk)?.latex ?? []).map((l, i) => (
-            <Formula key={i} latex={l} />
-          ))}
-        </div>
-      )}
-
-      <div className="gp-crumb">
-        <div className="gp-crumb-nav">
-          <button className="pb-btn" onClick={() => stepOp(-1)} disabled={opIndex <= 0}>
-            ‹
-          </button>
-          <button
-            className="pb-btn"
-            onClick={() => stepOp(1)}
-            disabled={opIndex >= catalog.length - 1}
-          >
-            ›
-          </button>
-          <span
-            className="gp-crumb-idx"
-            title="Each op is a real matrix operation executed by the loaded model in order. Synthetic traces do not track exact operation boundaries or counts (e.g., op 47/243 = RMSNorm forward)."
-          >
-            op {opIndex + 1} / {catalog.length}
+        <div style={rowStyle}><span style={keyStyle}>TOKEN ID</span><span style={valStyle}>{frame?.chosen.id ?? NA}</span></div>
+        <div style={rowStyle}><span style={keyStyle}>STEP</span><span style={valStyle}>{frame?.step != null ? frame.step + 1 : NA}</span></div>
+        <div style={rowStyle}><span style={keyStyle}>PHASE</span><span style={valStyle}>{phase?.phase ?? NA}</span></div>
+        <div style={rowStyle}><span style={keyStyle}>LOGPROB</span><span style={valStyle}>{frame?.chosen.logprob != null ? frame.chosen.logprob.toFixed(4) : NA}</span></div>
+        <div style={{ ...rowStyle, borderBottom: "none" }}>
+          <span style={keyStyle}>SELECTION</span>
+          <span style={{ ...valStyle, color: "#9fd0f0" }}>
+            {frame?.sampled == null ? "—" : frame.sampled ? "sampled" : "argmax"}
           </span>
         </div>
+        {phase && (
+          <div
+            style={{
+              fontFamily: TOKENS.fontMono,
+              fontSize: "9px",
+              color: TOKENS.textMuted,
+              lineHeight: 1.4,
+              paddingTop: "4px",
+            }}
+          >
+            {phase.detail}
+          </div>
+        )}
+      </div>
 
-        <div className="gp-crumb-title">{op.label}</div>
-        {op.layer != null && <div className="gp-crumb-sub">Layer {op.layer}</div>}
-
-        {op.weight_preview.length > 0 && <WeightPreview data={op.weight_preview} />}
-
-        <div className="gp-dims">
-          {op.in_dim != null && (
-            <div>
-              <span>INPUT DIM</span>
-              <b>{op.in_dim.toLocaleString()}</b>
-            </div>
-          )}
-          {op.out_dim != null && (
-            <div>
-              <span>OUTPUT DIM</span>
-              <b>{op.out_dim.toLocaleString()}</b>
-            </div>
-          )}
-          {op.bias_dim != null && (
-            <div>
-              <span>BIAS DIM</span>
-              <b>{op.bias_dim.toLocaleString()}</b>
-            </div>
-          )}
+      {/* TOP PREDICTIONS */}
+      {frame?.topk?.length ? (
+        <div style={sectStyle}>
+          <SectionTitle title="TOP PREDICTIONS" right={`top ${frame.topk.length}`} />
+          <Predictions topk={frame.topk} />
         </div>
+      ) : (
+        <div style={sectStyle}>
+          <SectionTitle title="TOP PREDICTIONS" />
+          <div style={{ ...keyStyle, padding: "2px 0" }}>{NA}</div>
+        </div>
+      )}
 
-        <div
-          className="gp-nparams"
-          title="The exact parameter count for this specific operation, drawn from the loaded model's real weight tensors. Synthetic tools assign arbitrary or rounded sizes."
-        >
-          <span>NUMBER OF PARAMETERS</span>
-          <b>{op.param_count.toLocaleString()}</b>
+      {/* LOGITS */}
+      {frame?.topk?.length ? (
+        <div style={sectStyle}>
+          <SectionTitle title="LOGITS" right="real" />
+          <Logits topk={frame.topk} />
+        </div>
+      ) : (
+        <div style={sectStyle}>
+          <SectionTitle title="LOGITS" />
+          <div style={{ ...keyStyle, padding: "2px 0" }}>{NA}</div>
+        </div>
+      )}
+
+      {/* KV CACHE */}
+      <div style={sectStyle}>
+        <SectionTitle title="KV CACHE" right={meta?.uses_kv_cache ? "active" : "n/a"} />
+        <div style={rowStyle}><span style={keyStyle}>CACHE LEN</span><span style={valStyle}>{cacheLen != null ? cacheLen : NA}</span></div>
+        <div style={rowStyle}><span style={keyStyle}>POSITIONS</span><span style={valStyle}>{nPos != null ? nPos : NA}</span></div>
+        <div style={rowStyle}><span style={keyStyle}>PROMPT LEN</span><span style={valStyle}>{meta?.prompt_len != null ? meta.prompt_len : NA}</span></div>
+        <div style={{ ...rowStyle, borderBottom: "none" }}>
+          <span style={keyStyle}>CONTEXT</span>
+          <span style={valStyle}>{meta?.prompt_len != null && cacheLen != null ? meta.prompt_len + cacheLen : NA}</span>
         </div>
       </div>
 
-      {devMode && (
-        <div className="gp-dev">
-          <div className="gp-dev-title">Dev · raw sampled values</div>
-          <div className="gp-dev-row">
-            <span>op index</span>
-            <b>
-              {op.index} / {catalog.length - 1}
-            </b>
-          </div>
-          <div className="gp-dev-row">
-            <span>op key</span>
-            <b>{op.op_key}</b>
-          </div>
-          {frame && activeLayer != null && frame.layer_stats?.length > 0 && (
-            <div className="gp-dev-row">
-              <span>mean|act| L{activeLayer}</span>
-              <b>
-                {frame.layer_stats[
-                  Math.max(0, Math.min(activeLayer + 1, frame.layer_stats.length - 1))
-                ]?.toFixed(4)}
-              </b>
+      {/* OPERATION */}
+      <div style={sectStyle}>
+        <SectionTitle title="OPERATION" right={op ? `op ${opIndex + 1} / ${catalog.length}` : undefined} />
+        {op ? (
+          <div>
+            <div style={rowStyle}>
+              <span style={keyStyle}>CURRENT</span>
+              <span style={{ ...valStyle, fontSize: "11px" }}>
+                {op.layer != null && op.layer >= 0 && op.layer < nLayers
+                  ? `L${op.layer} · ${op.op_key}`
+                  : op.op_key}
+              </span>
             </div>
-          )}
-          {frame && (
-            <div className="gp-dev-row">
-              <span>token logprob</span>
-              <b>{frame.chosen.logprob.toFixed(4)}</b>
+            <div style={rowStyle}>{op.label}</div>
+            {activeLayer != null && (
+              <div style={rowStyle}><span style={keyStyle}>LAYER IDX</span><span style={valStyle}>{activeLayer}</span></div>
+            )}
+            <div style={{ ...rowStyle, borderBottom: "none", justifyContent: "flex-end", gap: "4px" }}>
+              <Button onClick={() => stepOp(-1)} disabled={opIndex <= 0} style={{ height: "20px", padding: "0 8px", fontSize: "10px" }}>‹ Prev</Button>
+              <Button onClick={() => stepOp(1)} disabled={opIndex >= catalog.length - 1} style={{ height: "20px", padding: "0 8px", fontSize: "10px" }}>Next ›</Button>
             </div>
-          )}
-          {op.weight_preview.length > 0 && (
-            <>
-              <div className="gp-dev-sub">
-                weight[0, :8] · tensor sample (real values)
-              </div>
-              <div className="gp-dev-vals">
-                {op.weight_preview[0].map((v, i) => (
-                  <span key={i}>{v.toFixed(3)}</span>
-                ))}
-              </div>
-            </>
-          )}
-          <div className="gp-dev-note">
-            Sampled slices (8×8 weight preview, per-layer stat) — not the full
-            tensors. Real numbers from the loaded model / recorded trace.
           </div>
-        </div>
-      )}
-      <LogitLensPanel />
-      <PredictionGame docked />
+        ) : (
+          <div style={{ ...keyStyle, padding: "2px 0" }}>{NA} — no op catalog (e.g. llama.cpp)</div>
+        )}
+      </div>
+
+      {/* TIMING */}
+      <div style={sectStyle}>
+        <SectionTitle title="TIMING" />
+        <div style={rowStyle}><span style={keyStyle}>STEP TOTAL</span><span style={valStyle}>{stepMs != null ? `${stepMs.toFixed(1)} ms` : NA}</span></div>
+        {activeLayer != null && (
+          <div style={rowStyle}>
+            <span style={keyStyle}>ACTIVE LAYER</span>
+            <span style={valStyle}>{activeMs != null ? `${activeMs.toFixed(2)} ms` : NA}</span>
+          </div>
+        )}
+      </div>
+
+      {/* DECODE PARAMS — real parameters this run used. */}
+      <div style={{ ...sectStyle, borderTop: `1px solid ${TOKENS.border}`, marginTop: "10px", paddingTop: "6px" }}>
+        <SectionTitle title="DECODE PARAMS" />
+        <div style={rowStyle}><span style={keyStyle}>MODE</span><span style={valStyle}>{meta?.decoding ?? NA}</span></div>
+        <div style={rowStyle}><span style={keyStyle}>TEMPERATURE</span><span style={valStyle}>{dp.temperature != null ? dp.temperature.toFixed(2) : NA}</span></div>
+        <div style={rowStyle}><span style={keyStyle}>TOP-K</span><span style={valStyle}>{dp.top_k ?? meta?.top_k ?? NA}</span></div>
+        <div style={rowStyle}><span style={keyStyle}>TOP-P</span><span style={valStyle}>{dp.top_p != null ? dp.top_p.toFixed(2) : NA}</span></div>
+        <div style={rowStyle}><span style={keyStyle}>MAX TOKENS</span><span style={valStyle}>{meta?.max_new_tokens ?? NA}</span></div>
+      </div>
     </div>
   );
 }

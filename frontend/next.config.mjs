@@ -12,6 +12,11 @@ const nextConfig = {
   trailingSlash: true,
   images: { unoptimized: true },
   ...(repo ? { basePath: `/${repo}`, assetPrefix: `/${repo}` } : {}),
+  env: {
+    // Mirrors the basePath decision so UI asset refs resolve under /Token-Print
+    // (github.io) and at the root (local dev / custom domain) alike.
+    NEXT_PUBLIC_ASSET_BASE: repo ? `/${repo}` : "",
+  },
   transpilePackages: ["three", "three-stdlib", "@react-three/fiber", "@react-three/drei"],
   webpack: (config) => {
     // Prevent server-side bundling of WebGL / three.js internals

@@ -21,8 +21,8 @@ export function TransformerControlBar3D() {
   const setArch3dSpeed   = useStore((s) => s.setArch3dSpeed);
 
   // ── camera / focus ────────────────────────────────────────────────────────
-  const cameraMode      = useStore((s) => s.cameraMode);
-  const setCameraMode   = useStore((s) => s.setCameraMode);
+  const navMode         = useStore((s) => s.navMode);
+  const setNavMode      = useStore((s) => s.setNavMode);
   const focusMode       = useStore((s) => s.focusMode);
   const toggleFocusMode = useStore((s) => s.toggleFocusMode);
   const setUserOrbiting = useStore((s) => s.setUserOrbiting);
@@ -52,13 +52,13 @@ export function TransformerControlBar3D() {
   // Op label — use arch3d kindLabel in explorer mode, else generation op
   const opLabel = isExplorer ? kindLabel(arch3dOpKind as Parameters<typeof kindLabel>[0]) : "—";
 
-  const handleReset = () => { setUserOrbiting(false); setCameraMode("overview"); };
+  const handleReset = () => { setNavMode("OVERVIEW"); };
 
   const camModes = [
-    { id: "overview",     label: "⊞ All" },
-    { id: "layer",        label: "◈ Layer" },
-    { id: "operation",    label: "⬡ Op" },
-    { id: "token_follow", label: "⟳ Follow" },
+    { id: "OVERVIEW",     label: "⊞ All" },
+    { id: "LAYER_FOCUS",  label: "◈ Layer" },
+    { id: "OP_FOCUS",     label: "⬡ Op" },
+    { id: "FOLLOW",       label: "⟳ Follow" },
   ] as const;
 
   return (
@@ -159,9 +159,9 @@ export function TransformerControlBar3D() {
           {camModes.map(({ id, label }) => (
             <button
               key={id}
-              className={`tf3-cam ${cameraMode === id ? "on" : ""}`}
-              onClick={() => setCameraMode(id)}
-              title={`Camera: ${id.replace("_", " ")}`}
+              className={`tf3-cam ${navMode === id ? "on" : ""}`}
+              onClick={() => setNavMode(id)}
+              title={`Camera: ${id}`}
             >
               {label}
             </button>

@@ -2,11 +2,11 @@
 
 import React from "react";
 import { useStore } from "@/lib/store";
+import { CHAPTERS } from "@/lib/walkthrough";
 import { phaseInfo } from "@/lib/playback";
 import { opById } from "@/components/scenes/TransformerOperationGraph";
 import { Button, IconButton, Badge, TOKENS } from "./primitives";
-
-const SPEEDS = [0.5, 1, 2, 4];
+import { CameraControlGroup } from "./CameraControlGroup";
 
 function disp(t: string): string {
   const s = t.replace(/\n/g, "\u23CE");
@@ -104,27 +104,7 @@ function ArchBottomBar() {
       </Button>
 
       {/* CAMERA MODE SELECTOR */}
-      <div
-        style={{
-          display: "flex",
-          gap: "2px",
-          background: TOKENS.surfaceFlat,
-          padding: "2px",
-          borderRadius: TOKENS.radiusSm,
-          border: `1px solid ${TOKENS.border}`,
-        }}
-      >
-        {(["overview", "layer", "operation", "token_follow"] as const).map((m) => (
-          <Button
-            key={m}
-            variant={cameraMode === m ? "primary" : "ghost"}
-            onClick={() => setCameraMode(m)}
-            style={{ height: "22px", padding: "0 6px", fontSize: "10px" }}
-          >
-            {m === "token_follow" ? "follow" : m === "operation" ? "op" : m}
-          </Button>
-        ))}
-      </div>
+      <CameraControlGroup />
 
       {/* ACTIVE OP BADGE */}
       {op && (
@@ -159,8 +139,8 @@ function GenBottomBar() {
   const playIndex = useStore((s) => s.playIndex);
   const opPlaying = useStore((s) => s.opPlaying);
   const toggleOpPlay = useStore((s) => s.toggleOpPlay);
-  const skipToNextLayer = useStore((s) => s.skipToNextLayer);
-  const skipToNextToken = useStore((s) => s.skipToNextToken);
+  const stepPlay = useStore((s) => s.stepPlay);
+  const replay = useStore((s) => s.replay);
   const playSpeed = useStore((s) => s.playSpeed);
   const setPlaySpeed = useStore((s) => s.setPlaySpeed);
   const followMode = useStore((s) => s.followMode);
@@ -177,6 +157,7 @@ function GenBottomBar() {
   const usesCache = meta?.uses_kv_cache;
   const phase = phaseInfo(frame, promptLen, usesCache);
 
+  const SPEEDS = [1, 2, 4];
   const cycleSpeed = () => {
     const i = SPEEDS.indexOf(playSpeed);
     setPlaySpeed(SPEEDS[(i + 1) % SPEEDS.length] ?? 1);
@@ -208,32 +189,21 @@ function GenBottomBar() {
     >
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <IconButton icon={opPlaying ? "⏸" : "▶"} onClick={toggleOpPlay} title="Play / pause" />
-        <Button onClick={skipToNextLayer} title="Skip to next layer">⏭ Layer</Button>
-        <Button onClick={skipToNextToken} title="Skip to next token">Next Token ⏩</Button>
+        <Button onClick={() => stepPlay(-1)} disabled={playIndex <= 0} title="Previous token">◀ Token</Button>
+        <Button onClick={() => stepPlay(1)} disabled={playIndex >= frames.length - 1} title="Next token">Token ▶</Button>
+        <Button onClick={replay} title="Reset to the first token">Reset</Button>
         <Button onClick={cycleSpeed}>{playSpeed}× Speed</Button>
 
-        {phase && <Badge>{phase.label}</Badge>}
-
+        {phase && <Badge>{phase.label.toUpperCase()}</Badge>}
         {frames.length > 0 && (
-          <span style={{ fontSize: "11px", color: TOKENS.textMuted }}>
-            {playIndex + 1} / {frames.length} ops
+          <span style={{ fontSize: "11px", color: TOKENS.textMuted, fontFamily: TOKENS.fontMono }}>
+            TOKEN {String(playIndex + 1).padStart(2, "0")} / {String(frames.length).padStart(2, "0")}
           </span>
         )}
 
         <div style={{ flex: 1 }} />
 
-        <Button variant={followMode ? "primary" : "secondary"} onClick={toggleFollow}>
-          Follow {followMode ? "On" : "Off"}
-        </Button>
-        <Button variant={view2D ? "primary" : "secondary"} onClick={toggleView2D}>
-          {view2D ? "3D" : "2D"}
-        </Button>
-
-        {genStatus === "done" && traceSource === "live" && (
-          <Button onClick={downloadTrace} title="Download .tokenprint.json">
-            ↓ Trace
-          </Button>
-        )}
+        <CameraControlGroup />
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", overflow: "hidden" }}>
@@ -267,6 +237,50 @@ function WtBottomBar() {
   const wtPlaying = useStore((s) => s.wtPlaying);
   const toggleWtPlay = useStore((s) => s.toggleWtPlay);
   const chapterIdx = useStore((s) => s.wtChapter);
+  const playSpeed = useStore((s) => s.playSpeed);
+  const setPlaySpeed = useStore((s) => s.setPlaySpeed);
+  const data = useStore((s) => s.data);
+  const arch = useStore((s) => s.arch);
+
+  const idx = Math.min(chapterIdx, CHAPTERS.length - 1);
+  const ch = CHAPTERS[idx];
+  const m = arch?.metadata;
+  const meta = m
+    ? {
+        hidden_size: m.hidden_size,
+        num_heads: m.num_heads,
+        num_kv_heads: m.num_kv_heads,
+        head_dim: m.head_dim,
+        ffn_size: m.ffn_size ?? 0,
+        vocab_size: m.vocab_size,
+        num_layers: m.num_layers,
+      }
+    : null;
+
+  const op = ch.operation(data, meta);
+  const mid = Math.floor((m?.num_layers ?? 24) / 2);
+  const layerLabel =
+    ch.scene === "embedding" || ch.scene === "tokenizer"
+      ? "emb"
+      : ch.scene === "overview"
+        ? "full"
+        : ch.scene === "softmax"
+          ? `L${m?.num_layers ?? 24} → O`
+          : `L${mid}`;
+  const tokenCount = data?.tokens.length ?? null;
+
+  const barReadout = {
+    height: "16px",
+    minWidth: 0,
+    fontFamily: TOKENS.fontMono,
+    fontSize: "9.5px",
+    color: TOKENS.textMuted,
+    whiteSpace: "nowrap" as const,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    display: "inline-flex",
+    alignItems: "center",
+  };
 
   return (
     <div
@@ -286,10 +300,111 @@ function WtBottomBar() {
         fontFamily: TOKENS.fontSans,
       }}
     >
-      <IconButton icon={wtPlaying ? "⏸" : "▶"} onClick={toggleWtPlay} title="Play / pause walkthrough" />
-      <Button onClick={prev}>◄ Prev</Button>
-      <Button onClick={next}>Next ►</Button>
-      <Badge>Chapter {chapterIdx + 1}</Badge>
+      {/* Playback transport */}
+      <button
+        onClick={prev}
+        disabled={idx <= 0}
+        style={{
+          height: "24px",
+          width: "26px",
+          padding: 0,
+          fontSize: "11px",
+          borderRadius: TOKENS.radiusSm,
+          border: `1px solid ${TOKENS.border}`,
+          background: "transparent",
+          color: idx <= 0 ? TOKENS.textDisabled : TOKENS.textSecondary,
+          cursor: idx <= 0 ? "not-allowed" : "pointer",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        title="Previous chapter (←)"
+      >
+        ‹
+      </button>
+      <button
+        onClick={toggleWtPlay}
+        disabled={!data || (idx >= CHAPTERS.length - 1 && !wtPlaying)}
+        style={{
+          height: "24px",
+          width: "26px",
+          padding: 0,
+          fontSize: "10px",
+          borderRadius: TOKENS.radiusSm,
+          border: `1px solid ${TOKENS.borderStrong}`,
+          background: TOKENS.surfaceHover,
+          color: !data || (idx >= CHAPTERS.length - 1 && !wtPlaying) ? TOKENS.textDisabled : TOKENS.textPrimary,
+          cursor: !data || (idx >= CHAPTERS.length - 1 && !wtPlaying) ? "not-allowed" : "pointer",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        title="Play / Pause (Space)"
+      >
+        {wtPlaying ? "⏸" : "▶"}
+      </button>
+      <button
+        onClick={next}
+        disabled={idx >= CHAPTERS.length - 1}
+        style={{
+          height: "24px",
+          width: "26px",
+          padding: 0,
+          fontSize: "11px",
+          borderRadius: TOKENS.radiusSm,
+          border: `1px solid ${TOKENS.border}`,
+          background: "transparent",
+          color: idx >= CHAPTERS.length - 1 ? TOKENS.textDisabled : TOKENS.textSecondary,
+          cursor: idx >= CHAPTERS.length - 1 ? "not-allowed" : "pointer",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        title="Next chapter (→)"
+      >
+        ›
+      </button>
+
+      {/* Speed */}
+      <button
+        onClick={() => setPlaySpeed(playSpeed >= 4 ? 0.5 : playSpeed * 2)}
+        style={{
+          height: "24px",
+          padding: "0 8px",
+          fontSize: "9px",
+          fontFamily: TOKENS.fontMono,
+          borderRadius: TOKENS.radiusSm,
+          border: `1px solid ${TOKENS.border}`,
+          background: "transparent",
+          color: TOKENS.textMuted,
+          cursor: "pointer",
+        }}
+        title="Playback speed"
+      >
+        {playSpeed}×
+      </button>
+
+      <div style={{ width: 1, height: "18px", background: TOKENS.border }} />
+
+      <CameraControlGroup />
+
+      <div style={{ width: 1, height: "18px", background: TOKENS.border }} />
+
+      {/* Chapter + op readout */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, flex: 1 }}>
+        <span style={{ ...barReadout, color: TOKENS.textSecondary, fontWeight: 600 }}>
+          CHAPTER {String(idx + 1).padStart(2, "0")}/{String(CHAPTERS.length).padStart(2, "0")}
+        </span>
+        <span style={{ ...barReadout, maxWidth: 260 }}>{op}</span>
+      </div>
+
+      <div style={{ width: 1, height: "18px", background: TOKENS.border }} />
+
+      {/* Layer + token readout */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <span style={barReadout}>LAYER {layerLabel}</span>
+        {tokenCount != null && <span style={barReadout}>TOKENS {tokenCount}</span>}
+      </div>
     </div>
   );
 }

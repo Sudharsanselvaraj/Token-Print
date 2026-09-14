@@ -32,7 +32,7 @@ test.describe("Generation mode — trace replay drives the UI", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "load" });
+    await page.goto("/app", { waitUntil: "load" });
     await page.waitForSelector(".tensor-row", { timeout: 60_000 });
 
     // Upload a recorded forward pass through ModelLoader's trace input.

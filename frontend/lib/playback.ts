@@ -81,17 +81,38 @@ export function phaseInfo(
 
   return phase === "prefill"
     ? {
-        phase,
-        positions,
-        cacheLen,
-        label: "Pre-fill",
-        detail: `building KV cache · ${positions} prompt tokens computed`,
-      }
+      phase,
+      positions,
+      cacheLen,
+      label: "Pre-fill",
+      detail: `building KV cache · ${positions} prompt tokens computed`,
+    }
     : {
-        phase,
-        positions,
-        cacheLen,
-        label: "Decode",
-        detail: `reusing cache · ${positions} new token, ${cacheLen} cached`,
-      };
+      phase,
+      positions,
+      cacheLen,
+      label: "Decode",
+      detail: `reusing cache · ${positions} new token, ${cacheLen} cached`,
+    };
 }
+
+export function getOpFromCatalogOrIndex(
+  catalog: OpCatalogEntry[] | undefined,
+  opIndex: number,
+  nLayers: number,
+): { layer: number | null; label?: string; op_key?: string } {
+  if (catalog && catalog[opIndex]) {
+    const op = catalog[opIndex];
+    return {
+      ...op,
+      layer: activeLayerOf(op, nLayers),
+    };
+  }
+  const fallbackLayer =
+    opIndex < 0 ? -1 : opIndex >= nLayers ? nLayers : opIndex;
+  return {
+    layer: fallbackLayer,
+    label: `Layer ${fallbackLayer}`,
+  };
+}
+

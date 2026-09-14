@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Billboard, Text, Line } from "@react-three/drei";
-import { Color, Vector3, QuadraticBezierCurve3 } from "three";
+import { Color, Group, PerspectiveCamera, Vector3, QuadraticBezierCurve3 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { useStore } from "@/lib/store";
@@ -12,10 +12,14 @@ import TransformerStack, { type StackDims } from "./TransformerStack";
 import KvCacheVolume from "./KvCacheVolume";
 import { opColorOf, opKindOf, type OpKind } from "@/lib/sceneColors";
 
-const GAP = 3.4;
+// Tighter slab spacing than the walkthrough keeps the generation workspace's
+// column denser and more readable at a glance while leaving the exact same
+// 3D components (they all key off `gap`).
+const GAP = 2.6;
 const KV_CAP = 40;
 
 const tmp = new Vector3();
+const tmp2 = new Vector3();
 
 export default function GenerationScene() {
   const meta = useStore((s) => s.genMeta);
@@ -26,6 +30,7 @@ export default function GenerationScene() {
   const followMode = useStore((s) => s.followMode);
   const view2D = useStore((s) => s.view2D);
   const playIndex = useStore((s) => s.playIndex);
+  const frameCount = useStore((s) => s.genFrames.length);
   const frame = useStore((s) => (s.playIndex >= 0 ? s.genFrames[s.playIndex] : null));
   const [hoveredLayer, setHoveredLayer] = useState<number | null>(null);
   const [hoveredKind, setHoveredKind] = useState<OpKind | null>(null);
@@ -90,17 +95,37 @@ export default function GenerationScene() {
     };
   }, [controls, setUserOrbiting]);
 
+
+
   const opCol: [number, number, number] = op
     ? opColorOf(op.op_key, activeKind ?? "norm")
     : [0.5, 0.6, 0.8];
 
-  useFrame(() => {
-    if (followMode && !userOrbiting && activeLayer != null && controls) {
-      const y = -(activeLayer + 1) * GAP;
-      const dest = view2D ? tmp.set(0, y, 11) : tmp.set(7, y + 1.2, 9);
-      camera.position.lerp(dest, 0.07);
-      controls.target.lerp(tmp.set(0, y, 0), 0.12);
-      controls.update();
+  const stackH = (nLayers + 2) * GAP + 3;
+  const homeY = -stackH / 2;
+
+  // The generation workspace's token "packet" — a thin glowing tracer that
+  // travels from the top of the stack (input/embeddings) down through the
+  // active layer to the output as the real op catalog executes.
+  const packetRef = useRef<Group | null>(null);
+  const packetY = useRef(0);
+  const packetPulse = useRef(0);
+
+  useFrame((_, delta) => {
+    // Packet follows the active op's layer; a new forward pass restarts it at
+    // the top (input/embeddings) when the op cursor wraps or a layer begins.
+    if (packetRef.current) {
+      const tgtY =
+        frameCount === 0
+          ? -GAP
+          : activeLayer != null
+            ? -(activeLayer + 1) * GAP + 0.6
+            : -(nLayers + 1) * GAP;
+      packetY.current += (tgtY - packetY.current) * Math.min(delta * 2.4, 1);
+      packetRef.current.position.y = packetY.current;
+      packetPulse.current += delta * 3;
+      const s = 1 + 0.14 * Math.sin(packetPulse.current);
+      packetRef.current.scale.set(s, s, s);
     }
   });
 
@@ -135,6 +160,24 @@ export default function GenerationScene() {
 
   return (
     <group>
+      {/* Idle backdrop — a faint translucent volume behind the column so the
+          workspace reads as a structured window rather than an empty void.
+          Hidden during replay so close-up follow views stay clean. */}
+      {frameCount === 0 && (
+        <mesh position={[0, homeY, 0]}>
+          <boxGeometry args={[17, stackH + 3, 6]} />
+          <meshBasicMaterial color="#262a33" transparent opacity={0.38} depthWrite={false} />
+        </mesh>
+      )}
+
+      {/* Active-op emphasis band — follows the active layer down the column. */}
+      {activeLayer != null && (
+        <mesh position={[0, activeY, 0]}>
+          <boxGeometry args={[11, GAP, 3.2]} />
+          <meshBasicMaterial color={new Color(...opCol)} transparent opacity={0.22} depthWrite={false} />
+        </mesh>
+      )}
+
       <TransformerStack
         nLayers={nLayers}
         dims={dims}
@@ -175,6 +218,26 @@ export default function GenerationScene() {
           </Text>
         </Billboard>
       )}
+
+      {/* Token packet — the activation tracer travelling through the stack. */}
+      <group position={[2.2, 0, 0]}>
+        <group ref={packetRef}>
+          <mesh>
+            <sphereGeometry args={[0.16, 16, 16]} />
+            <meshBasicMaterial color="#7fd7c8" transparent opacity={0.9} />
+          </mesh>
+          <Line
+            points={[
+              new Vector3(0, -2.6, 0),
+              new Vector3(0, 0, 0),
+            ]}
+            color="#7fd7c8"
+            lineWidth={1}
+            transparent
+            opacity={0.28}
+          />
+        </group>
+      </group>
 
       {/* KV-cache as a spatial volume: per-layer grid of cached positions.
           Pre-fill = warm wide band; decode = dim stale + bright new cell. */}

@@ -34,6 +34,7 @@ os.environ.setdefault("USE_TF", "0")
 os.environ.setdefault("USE_FLAX", "0")
 os.environ.setdefault("TRANSFORMERS_NO_ADVISORY_WARNINGS", "1")
 
+import numpy as np
 import torch
 from transformers import (
     AutoConfig,
@@ -43,11 +44,12 @@ from transformers import (
     DynamicCache,
 )
 
+from .adapters import get_model_adapter
 from .debug import DebugCapture
 from .reduce import explained_variance, project_3d
 
-DEFAULT_MODEL_ID = os.environ.get("NEUROSCOPE_MODEL", "Qwen/Qwen2.5-0.5B-Instruct")
-MAX_TOKENS = int(os.environ.get("NEUROSCOPE_MAX_TOKENS", "40"))
+DEFAULT_MODEL_ID = os.environ.get("TOKENPRINT_MODEL", "Qwen/Qwen2.5-0.5B-Instruct")
+MAX_TOKENS = int(os.environ.get("TOKENPRINT_MAX_TOKENS", "40"))
 
 # Rounding / thresholding for the attention payload.
 _ATTN_DECIMALS = 3
@@ -88,7 +90,7 @@ def _classify_model_type(model_type: str) -> str:
 
 def _pick_device() -> str:
     """Choose the compute device, honoring an explicit override."""
-    override = os.environ.get("NEUROSCOPE_DEVICE")
+    override = os.environ.get("TOKENPRINT_DEVICE")
     if override:
         return override
     if torch.backends.mps.is_available():
@@ -106,6 +108,70 @@ class TokenizedTooLong(ValueError):
             f"Input is {n_tokens} tokens; the cap is {cap}. "
             "Send a shorter sentence."
         )
+class AttentionEngine:
+    """Sub-engine for processing, thresholding, and formatting multi-head attention weight tensors."""
+
+    def __init__(self, decimals: int = _ATTN_DECIMALS, zero_below: float = _ATTN_ZERO_BELOW):
+        self.decimals = decimals
+        self.zero_below = zero_below
+
+    def process(self, attentions: tuple[torch.Tensor, ...] | list[torch.Tensor]) -> list[list[list[list[float]]]]:
+        """Convert a tuple/list of per-layer attention tensors [1, num_heads, seq, seq] to rounded nested lists."""
+        attn = torch.stack(attentions).squeeze(1).to("cpu").float()
+        attn = torch.round(attn * (10**self.decimals)) / (10**self.decimals)
+        attn[attn < self.zero_below] = 0.0
+        return attn.tolist()
+
+
+class ActivationEngine:
+    """Sub-engine for layer timing hooks, activation collection, and forward hook management."""
+
+    def register_timing_hooks(
+        self, layers: list, layer_elapsed: dict[int, float], lock: threading.Lock
+    ) -> list:
+        """Register pre/post hooks on transformer layers to measure per-layer execution time in ms."""
+        handles = []
+        if layers is None:
+            return handles
+
+        for i, layer in enumerate(layers):
+            marks = {"pre": None}
+
+            def pre_hook(_mod, _in, _i=i, _marks=marks):
+                _marks["pre"] = time.perf_counter()
+
+            def post_hook(_mod, _in, _out, _i=i, _marks=marks):
+                pre = _marks["pre"]
+                if pre is not None:
+                    elapsed_ms = (time.perf_counter() - pre) * 1000.0
+                    with lock:
+                        layer_elapsed[_i] = elapsed_ms
+
+            handles.append(layer.register_forward_pre_hook(pre_hook))
+            handles.append(layer.register_forward_hook(post_hook))
+
+        return handles
+
+    def snapshot_timings(
+        self, num_layers: int, layer_elapsed: dict[int, float], lock: threading.Lock
+    ) -> list[float]:
+        """Snapshot and clear per-layer ms timings."""
+        with lock:
+            timings = [round(layer_elapsed.get(i, 0.0), 4) for i in range(num_layers)]
+            layer_elapsed.clear()
+        return timings
+
+
+class ReductionEngine:
+    """Sub-engine for 3D dimensionality reduction and explained variance calculation."""
+
+    def project_hidden_states(self, hidden_states: list[np.ndarray]) -> dict[str, list[list[float]]]:
+        """Project each layer's hidden state array [seq, hidden] to 3D."""
+        return {str(i): project_3d(h) for i, h in enumerate(hidden_states)}
+
+    def calculate_explained_variance(self, hidden_layer: np.ndarray) -> dict[str, float]:
+        """Calculate PCA explained variance for a hidden layer matrix."""
+        return explained_variance(hidden_layer)
 
 
 class ModelEngine:
@@ -118,12 +184,18 @@ class ModelEngine:
         # A single model is not safe for concurrent forward passes; serialize them.
         self._lock = threading.Lock()
 
+        # Modular sub-engines (issue #112)
+        self.attn_engine = AttentionEngine()
+        self.activation_engine = ActivationEngine()
+        self.reduction_engine = ReductionEngine()
+
         # Detect the model family up front (issue #87): decoder-only causal
         # LMs, encoder-only embedding models, and vision transformers load
         # through the appropriate Auto class and run through matching pipelines.
         probe_cfg = AutoConfig.from_pretrained(model_id)
         self.model_type: str = str(getattr(probe_cfg, "model_type", "unknown"))
         self.mode: str = _classify_model_type(self.model_type)
+        self.adapter = get_model_adapter(self.mode)
 
         self.tokenizer: AutoTokenizer | None = None
         self.image_processor = None
@@ -185,35 +257,15 @@ class ModelEngine:
 
     def _register_layer_timing_hooks(self) -> None:
         """Register pre/post hooks on each transformer layer writing ms timings."""
-        layers = self._layer_list()
-        if layers is None:
-            return
-
-        for i, layer in enumerate(layers):
-            marks = {"pre": None}
-
-            def pre_hook(_mod, _in, _i=i, _marks=marks):
-                _marks["pre"] = time.perf_counter()
-
-            def post_hook(_mod, _in, _out, _i=i, _marks=marks):
-                pre = _marks["pre"]
-                if pre is not None:
-                    elapsed_ms = (time.perf_counter() - pre) * 1000.0
-                    with self._layer_timing_lock:
-                        self._layer_elapsed[_i] = elapsed_ms
-
-            self._timing_handles.append(layer.register_forward_pre_hook(pre_hook))
-            self._timing_handles.append(layer.register_forward_hook(post_hook))
+        self._timing_handles = self.activation_engine.register_timing_hooks(
+            self._layer_list(), self._layer_elapsed, self._layer_timing_lock
+        )
 
     def _last_layer_timings_ms(self) -> list[float]:
         """Snapshot and clear the per-layer ms timings from the last forward pass."""
-        with self._layer_timing_lock:
-            timings = [
-                round(self._layer_elapsed.get(i, 0.0), 4)
-                for i in range(self.num_layers)
-            ]
-            self._layer_elapsed.clear()
-        return timings
+        return self.activation_engine.snapshot_timings(
+            self.num_layers, self._layer_elapsed, self._layer_timing_lock
+        )
 
     def release_timing_hooks(self) -> None:
         for h in self._timing_handles:
@@ -372,8 +424,10 @@ class ModelEngine:
                 "use POST /analyze/image."
             )
         if self.mode == "encoder":
-            return self._analyze_encoder(sentence)
-        return self._analyze_causal_lm(sentence)
+            raw = self._analyze_encoder(sentence)
+        else:
+            raw = self._analyze_causal_lm(sentence)
+        return self.adapter.process_analysis(raw)
 
     def _analyze_causal_lm(self, sentence: str) -> dict:
         """Decoder-only causal LM forward pass (tokens, attention, geometry)."""
@@ -387,12 +441,7 @@ class ModelEngine:
                 )
 
             # --- Phase 1: attention ----------------------------------------
-            # tuple(len=num_layers) of [1, num_heads, seq, seq] -> [L, H, seq, seq]
-            attn = torch.stack(out.attentions).squeeze(1).to("cpu").float()
-            # Round to a few decimals and zero-out near-zero weights to shrink payload.
-            attn = torch.round(attn * (10**_ATTN_DECIMALS)) / (10**_ATTN_DECIMALS)
-            attn[attn < _ATTN_ZERO_BELOW] = 0.0
-            attention = attn.tolist()  # [layer][head][from][to]
+            attention = self.attn_engine.process(out.attentions)
 
             # --- Phase 2: per-token geometry from real hidden states -------
             # out.hidden_states: tuple(len = num_layers + 1) of [1, seq, hidden].
@@ -401,7 +450,7 @@ class ModelEngine:
                 h.squeeze(0).to("cpu").float().numpy() for h in out.hidden_states
             ]
             # PCA-project each layer's residual stream to 3D (see reduce.py).
-            hidden_states_3d = {str(i): project_3d(h) for i, h in enumerate(hidden)}
+            hidden_states_3d = self.reduction_engine.project_hidden_states(hidden)
             embeddings_3d = hidden_states_3d["0"]  # layer 0 = token embeddings
             # Per-token embedding norm (L2), for optional node sizing.
             emb_norms = [round(float(v), 4) for v in (hidden[0] ** 2).sum(1) ** 0.5]
@@ -481,13 +530,10 @@ class ModelEngine:
                 out = self.model(
                     **enc, output_attentions=True, output_hidden_states=True
                 )
-            attn = torch.stack(out.attentions).squeeze(1).to("cpu").float()
-            attn = torch.round(attn * (10**_ATTN_DECIMALS)) / (10**_ATTN_DECIMALS)
-            attn[attn < _ATTN_ZERO_BELOW] = 0.0
-            attention = attn.tolist()
+            attention = self.attn_engine.process(out.attentions)
 
             hidden = [h.squeeze(0).to("cpu").float().numpy() for h in out.hidden_states]
-            hidden_states_3d = {str(i): project_3d(h) for i, h in enumerate(hidden)}
+            hidden_states_3d = self.reduction_engine.project_hidden_states(hidden)
             embeddings_3d = hidden_states_3d["0"]
             emb_norms = [round(float(v), 4) for v in (hidden[0] ** 2).sum(1) ** 0.5]
 
@@ -941,6 +987,11 @@ class ModelEngine:
 
         Decoding modes (issue #86):
           * ``greedy`` — classic one-token-per-step argmax.
+          * ``sampling`` — real temperature / top-k / top-p sampling from the
+            model's own logits (``torch.multinomial`` on the filtered
+            distribution). `temperature`, `top_k` and `top_p` genuinely shape
+            which token is drawn; the top-k rows streamed to the UI are still
+            the raw, untouched probabilities.
           * ``sliding_window`` — the KV cache is trimmed to the last
             ``window_size`` positions each decode step, so the model genuinely
             recomputes with a reduced visual context (real, not fake).
@@ -957,7 +1008,7 @@ class ModelEngine:
         top_k = max(1, min(int(top_k), 20))
         window_size = max(16, min(int(window_size), 4096))
         draft_gamma = max(1, min(int(draft_gamma), 8))
-        decoding_mode = decoding_mode if decoding_mode in ("greedy", "sliding_window", "speculative") else "greedy"
+        decoding_mode = decoding_mode if decoding_mode in ("greedy", "sampling", "sliding_window", "speculative") else "greedy"
         if self.mode != "causal_lm":
             raise ValueError(
                 f"{self.mode} models do not generate text — decoding is only "
@@ -1002,6 +1053,9 @@ class ModelEngine:
                     "window_size": window_size,
                     "draft_gamma": draft_gamma,
                     "needle": needle or None,
+                    "temperature": round(float(temperature), 3),
+                    "top_k": top_k,
+                    "top_p": round(float(top_p), 3),
                 },
                 # This decode loop genuinely uses a KV cache (use_cache=True with
                 # past_key_values threaded step to step), so the frontend may show
@@ -1182,11 +1236,22 @@ class ModelEngine:
                     if seed is not None:
                         torch.manual_seed(seed)
 
-                    if temperature <= 0.001:
+                    # Greedy decode is argmax regardless of temperature; only the
+                    # explicit "sampling" mode draws from the true distribution.
+                    if decoding_mode == "greedy" or temperature <= 0.001:
                         chosen_id = int(probs.argmax().item())
                     else:
                         scaled_logits = logits / max(temperature, 1e-4)
-                        # Top-P (nucleus) filtering if requested
+                        # Top-K: keep only the top_k logits (real, affects which
+                        # tokens can be drawn at all).
+                        if top_k < scaled_logits.shape[-1]:
+                            kth = torch.topk(scaled_logits, top_k, dim=-1).values[..., -1:]
+                            scaled_logits = torch.where(
+                                scaled_logits < kth,
+                                torch.full_like(scaled_logits, float("-inf")),
+                                scaled_logits,
+                            )
+                        # Top-P (nucleus) filtering if requested.
                         if top_p < 0.999:
                             sorted_logits, sorted_indices = torch.sort(scaled_logits, descending=True)
                             cumulative_probs = torch.cumsum(sorted_logits.softmax(-1), dim=-1)
@@ -1201,7 +1266,8 @@ class ModelEngine:
 
                     generated_ids.append(chosen_id)
                     yield emit_frame(step, chosen_id, probs, logits, out.hidden_states,
-                                     phase, n_positions, cache_len_in)
+                                     phase, n_positions, cache_len_in,
+                                     {"sampled": decoding_mode == "sampling"})
                     step += 1
                     if chosen_id in eos_ids:
                         break

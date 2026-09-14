@@ -2,12 +2,15 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useStore, restoreFromUrl } from "@/lib/store";
+import { useSearchParams } from "next/navigation";
+import type { Mode } from "@/lib/types";
+import { assetUrl } from "@/lib/assets";
 import SceneLoader from "./SceneLoader";
 import PlaybackEngine from "./PlaybackEngine";
-import TopBar from "./ui/TopBar";
-import LeftSidebar from "./ui/LeftSidebar";
+import ModeSidebar from "./ui/ModeSidebar";
 import RightPanel from "./ui/RightPanel";
 import BottomBar from "./ui/BottomBar";
+import GenerationWorkspaceOverlay from "./ui/GenerationWorkspaceOverlay";
 import PredictionTimeline from "./ui/PredictionTimeline";
 import DebugInspector from "./ui/DebugInspector";
 import HeadInspector from "./ui/HeadInspector";
@@ -19,13 +22,12 @@ import DistributionPanel from "./ui/DistributionPanel";
 import TileView from "./ui/TileView";
 import DebuggerPane from "./ui/DebuggerPane";
 import TraceGallery from "./ui/TraceGallery";
-import PluginManager from "./ui/PluginManager";
+import { HFModelPicker } from "./ui/HFModelPicker";
 import { ContextualExplanationOverlay } from "./ui/ContextualExplanationOverlay";
 import { TransformerControlBar3D } from "./ui/TransformerControlBar3D";
 import { ModelMiniMap } from "./ui/ModelMiniMap";
 import { DevDiagnosticsHUD } from "./ui/DevDiagnosticsHUD";
 import { InspectControls } from "./scenes/inspect/InspectControls";
-import "@/lib/plugins/demoPlugin";
 import { fmtShape } from "@/lib/format";
 import { roleLabel } from "@/lib/tensorName";
 import { useKeyboard } from "@/lib/useKeyboard";
@@ -41,7 +43,8 @@ export default function AppShell() {
   const focusMode = useStore((s) => s.focusMode);
   const toggleFocusMode = useStore((s) => s.toggleFocusMode);
   const [mouse, setMouse] = useState({ x: 0, y: 0, inside: false });
-  const [pluginManagerOpen, setPluginManagerOpen] = useState(false);
+  const hfExplorerOpen = useStore((s) => s.hfExplorerOpen);
+  const setHfExplorerOpen = useStore((s) => s.setHfExplorerOpen);
 
   // Responsive sidebar collapse state
   const [leftCollapsed, setLeftCollapsed] = useState(false);
@@ -61,6 +64,16 @@ export default function AppShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keep the store mode in sync with the URL while already mounted
+  // (e.g. switching modes from the global header while on /app).
+  const searchParams = useSearchParams();
+  const urlMode = searchParams?.get("mode");
+  useEffect(() => {
+    if (urlMode && urlMode !== mode) {
+      useStore.getState().setMode(urlMode as Mode);
+    }
+  }, [urlMode]);
+
   // Auto-load demo trace on first load when no backend is available.
   const demoLoaded = useRef(false);
   const archLoading = useStore((s) => s.archLoading);
@@ -72,7 +85,7 @@ export default function AppShell() {
     if (mode !== "explorer") return; // URL-specified mode means intentional
     demoLoaded.current = true;
     (async () => {
-      const res = await fetch("/demo/hello-world.json");
+      const res = await fetch(assetUrl("/demo/hello-world.json"));
       if (!res.ok) return;
       const trace = await res.json();
       await loadTrace(trace);
@@ -88,11 +101,13 @@ export default function AppShell() {
   // 3D canvas overlays (control bar, mini-map) shown in non-debugger 3D modes
   const showCanvas3DOverlays = mode !== "debugger" && !tileView;
 
-  // Dynamic grid template columns based on sidebar collapse states
+  // Dynamic grid template columns based on sidebar collapse states.
+  // Debugger drops the right inspector — the dashboard owns the full width.
+  const rightCol = mode === "debugger" ? "0px" : rightCollapsed ? "36px" : "360px";
   const gridStyle = {
     gridTemplateColumns: embedMode
       ? "0px 1fr 0px"
-      : `${leftCollapsed ? "36px" : "300px"} 1fr ${rightCollapsed ? "36px" : "360px"}`,
+      : `${leftCollapsed ? "36px" : "300px"} 1fr ${rightCol}`,
   };
 
   return (
@@ -101,9 +116,8 @@ export default function AppShell() {
       style={gridStyle}
     >
       <PlaybackEngine />
-      {showSidebars && <TopBar />}
       {showSidebars && (
-        <LeftSidebar
+        <ModeSidebar
           collapsed={leftCollapsed}
           onToggleCollapse={() => setLeftCollapsed(!leftCollapsed)}
         />
@@ -123,6 +137,7 @@ export default function AppShell() {
         ) : (
           <>
             <SceneLoader />
+            {mode === "generation" && <GenerationWorkspaceOverlay />}
             {mode === "explorer" && <ContextualExplanationOverlay />}
           </>
         )}
@@ -184,9 +199,16 @@ export default function AppShell() {
         )}
       </div>
       <TraceGallery />
-      <PluginManager open={pluginManagerOpen} onClose={() => setPluginManagerOpen(false)} />
+      <HFModelPicker
+        isOpen={hfExplorerOpen}
+        onClose={() => setHfExplorerOpen(false)}
+        onSelectModel={(modelId) => {
+          useStore.getState().loadArchitecture();
+          setHfExplorerOpen(false);
+        }}
+      />
       <BottomBar />
-      {showSidebars && (
+      {showSidebars && mode !== "debugger" && (
         <RightPanel
           collapsed={rightCollapsed}
           onToggleCollapse={() => setRightCollapsed(!rightCollapsed)}

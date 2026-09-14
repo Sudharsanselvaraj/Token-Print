@@ -12,7 +12,7 @@ import { useStore } from "./store";
  * | Key           | Action                                              |
  * |---------------|-----------------------------------------------------|
  * | Space         | Play/Pause (arch3d in explorer, opPlay in gen/wt)   |
- * | ← / →        | Prev/Next operation step                            |
+ * | ← / →         | Prev/Next operation step                            |
  * | Shift+← / →  | Prev/Next layer                                     |
  * | F / R         | Fit model (reset camera to overview)                |
  * | T             | Switch to token-follow camera mode                  |
@@ -20,7 +20,7 @@ import { useStore } from "./store";
  * | J / K         | Prev/Next token frame (generation mode)             |
  * | F10           | Step one op forward (legacy)                        |
  * | F11           | Skip to next layer (legacy)                         |
- * | B             | Toggle dev mode                                     |
+ * | B             | Toggle breakpoint at current operation               |
  */
 export function useKeyboard() {
   useEffect(() => {
@@ -29,7 +29,8 @@ export function useKeyboard() {
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
         e.target instanceof HTMLSelectElement
-      ) return;
+      )
+        return;
 
       const s = useStore.getState();
       const isExplorer = s.mode === "explorer";
@@ -56,10 +57,12 @@ export function useKeyboard() {
             else s.setLayer(Math.max(0, s.selectedLayer - 1));
           } else {
             if (isExplorer) s.stepArch3dOp(-1);
+            else if (s.mode === "walkthrough") s.prevChapter();
             else s.stepOp(-1);
           }
           break;
         }
+
         case "ArrowRight": {
           e.preventDefault();
           if (e.shiftKey) {
@@ -70,6 +73,7 @@ export function useKeyboard() {
             }
           } else {
             if (isExplorer) s.stepArch3dOp(1);
+            else if (s.mode === "walkthrough") s.nextChapter();
             else s.stepOp(1);
           }
           break;
@@ -83,6 +87,7 @@ export function useKeyboard() {
           s.setCameraMode("overview");
           break;
         }
+
         case "r":
         case "R": {
           e.preventDefault();
@@ -90,6 +95,7 @@ export function useKeyboard() {
           s.setCameraMode("overview");
           break;
         }
+
         case "t":
         case "T": {
           e.preventDefault();
@@ -105,33 +111,48 @@ export function useKeyboard() {
           break;
         }
 
+        // ── Walkthrough camera debug ──────────────────────────────────────
+        case "d":
+        case "D": {
+          if (s.mode === "walkthrough") {
+            e.preventDefault();
+            s.toggleWtCamDebug();
+          }
+          break;
+        }
+
         // ── Legacy keys ──────────────────────────────────────────────────────
         case "F10": {
           e.preventDefault();
           s.stepOp(1);
           break;
         }
+
         case "F11": {
           e.preventDefault();
           s.skipToNextLayer();
           break;
         }
+
         case "j":
         case "J": {
           e.preventDefault();
           s.stepPlay(-1);
           break;
         }
+
         case "k":
         case "K": {
           e.preventDefault();
           s.stepPlay(1);
           break;
         }
+
         case "b":
         case "B": {
           e.preventDefault();
-          s.toggleDevMode();
+          // Toggle breakpoint at the current operation.
+          s.toggleBreakpoint(s.opIndex);
           break;
         }
       }

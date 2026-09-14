@@ -247,6 +247,9 @@ export interface GenMeta {
     window_size?: number;
     draft_gamma?: number;
     needle?: string | null;
+    temperature?: number;
+    top_k?: number;
+    top_p?: number;
   };
   uses_kv_cache?: boolean;
   op_catalog?: OpCatalogEntry[];
@@ -293,6 +296,9 @@ export interface TokenFrame {
   cache_len?: number; // cached positions reused this step
   // Issue #85 — set on frames produced by the quantized llama.cpp backend.
   source?: "llama.cpp";
+  // True when the token was drawn from the real sampling distribution
+  // (decoding=sampling) rather than argmax. Honest provenance for the UI.
+  sampled?: boolean;
 }
 
 export type GenStatus = "idle" | "streaming" | "done" | "error";

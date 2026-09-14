@@ -145,14 +145,52 @@ export function cameraOverview(numLayers = 24): {
   position: [number, number, number];
   target: [number, number, number];
 } {
-  const topY = LAYOUT.EMBED_Y + 2;
-  const botY = -((numLayers - 1) * LAYOUT.LAYER_HEIGHT) - LAYOUT.LM_HEAD_Y_OFFSET - 4;
-  const midY = (topY + botY) / 2;
-  const height = topY - botY;
-  // Push camera back enough to see the full model height with ~45° FOV
-  const dist = Math.max(height * 0.9, 55);
-  return {
-    position: [6, midY + height * 0.08, dist],
-    target:   [0, midY,                  0],
-  };
+  return cameraOverviewForMode("explorer", numLayers);
+}
+
+/**
+ * Bounds-based overview camera for any mode, ensuring the transformer stack
+ * fills 50–70% (target 60%) of the usable vertical viewport.
+ */
+export function cameraOverviewForMode(
+  mode: string,
+  numLayers = 24,
+  fovDeg = 48
+): {
+  position: [number, number, number];
+  target: [number, number, number];
+} {
+  if (mode === "generation") {
+    const gap = 2.6;
+    const topY = 4.0;
+    const botY = -(numLayers + 1.5) * gap;
+    const height = topY - botY;
+    const midY = (topY + botY) / 2;
+    const fovRad = (fovDeg * Math.PI) / 180;
+    const distance = Math.max(35, (height / (2 * 0.60)) / Math.tan(fovRad / 2));
+    return {
+      position: [distance * 0.08, midY + height * 0.04, distance],
+      target: [0, midY, 0],
+    };
+  } else if (mode === "walkthrough") {
+    const gap = 3.4;
+    const topY = 5.0;
+    const botY = -(numLayers + 1) * gap;
+    const height = topY - botY;
+    const midY = (topY + botY) / 2;
+    const fovRad = (fovDeg * Math.PI) / 180;
+    const distance = Math.max(35, (height / (2 * 0.60)) / Math.tan(fovRad / 2));
+    return {
+      position: [distance * 0.08, midY + height * 0.04, distance],
+      target: [0, midY, 0],
+    };
+  } else {
+    // Explorer mode: bring camera much closer (Z = 62, target Y = -32) so the
+    // 3D model, components, labels, and connections are immediately readable
+    // without the user having to search deep into the void.
+    return {
+      position: [14, -20, 62],
+      target: [0, -32, 0],
+    };
+  }
 }

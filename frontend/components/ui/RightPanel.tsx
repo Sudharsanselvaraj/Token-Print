@@ -9,6 +9,8 @@ import { ResidualStreamWidget } from "./ResidualStreamWidget";
 import { LogitLensWidget } from "./LogitLensWidget";
 import DataProvenanceBadge from "./DataProvenanceBadge";
 import ComponentInspectorPanel from "./ComponentInspectorPanel";
+import WalkthroughInspector from "./WalkthroughInspector";
+import DebuggerInspector from "./DebuggerInspector";
 
 function valueNote(dtype: string): string {
   return /^(F32|F16|BF16|float)/i.test(dtype)
@@ -30,6 +32,7 @@ export default function RightPanel({ collapsed, onToggleCollapse }: RightPanelPr
   const expandedBlockId = useStore((s) => s.expandedBlockId);
   const selectedLayer = useStore((s) => s.selectedLayer);
   const inspectingComponentId = useStore((s) => s.inspectingComponentId);
+  const arch3dOpId = useStore((s) => s.arch3dOpId);
 
   if (collapsed) {
     return (
@@ -45,9 +48,14 @@ export default function RightPanel({ collapsed, onToggleCollapse }: RightPanelPr
     );
   }
 
-  const arch3dOpId = useStore((s) => s.arch3dOpId);
-  const activeComponentId = inspectingComponentId || arch3dOpId;
+  // Mode-specific inspectors — dispatch on mode FIRST so architecture-only
+  // state never leaks into Generation / Walkthrough / Debugger.
+  if (mode === "generation") return <GenerationPanel />;
+  if (mode === "walkthrough") return <WalkthroughInspector />;
+  if (mode === "debugger") return <DebuggerInspector />;
 
+  // Explorer: 3D component selection opens the full component inspector.
+  const activeComponentId = inspectingComponentId || arch3dOpId;
   if (activeComponentId) {
     return (
       <aside className="rightpanel rp-inspector">
@@ -55,8 +63,6 @@ export default function RightPanel({ collapsed, onToggleCollapse }: RightPanelPr
       </aside>
     );
   }
-
-  if (mode === "generation") return <GenerationPanel />;
 
   const targetName = selName || hovName;
   const t = targetName ? arch?.tensors.find((x) => x.name === targetName) : null;

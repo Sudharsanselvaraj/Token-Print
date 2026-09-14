@@ -142,16 +142,22 @@ class GGUFEngine:
         prompt: str,
         max_new_tokens: int = 40,
         top_k: int = 10,
+        temperature: float = 0.0,
+        top_p: float = 1.0,
+        decoding_mode: str = "greedy",
     ) -> Iterator[dict]:
         """Stream frames shaped like `generate_steps` (meta / token / done).
 
-        Only greedy decoding is offered here: llama.cpp's KV cache is a single
-        context, not the multi-mode mechanism of the PyTorch engine, so
-        sliding-window and speculative modes remain PyTorch-only and the meta
-        frame says so plainly.
+        ``greedy`` is llama.cpp argmax; ``sampling`` draws from its real sampler
+        with temperature / top-k / top-p. Sliding-window and speculative remain
+        PyTorch-only and the meta frame says so plainly.
         """
         llm = self._ensure_loaded()
         meta = self.metadata()
+
+        sampling = decoding_mode == "sampling"
+        if not sampling:
+            decoding_mode = "greedy"
 
         yield {
             "type": "meta",
@@ -165,8 +171,12 @@ class GGUFEngine:
             "prompt_len": len(self.prompt_tokens(prompt)),
             "max_new_tokens": int(max_new_tokens),
             "top_k": int(top_k),
-            "decoding": "greedy",
-            "decoding_params": {},
+            "decoding": decoding_mode,
+            "decoding_params": {
+                "temperature": round(float(temperature), 3),
+                "top_k": int(top_k),
+                "top_p": round(float(top_p), 3),
+            },
             "uses_kv_cache": True,
             "source": "llama.cpp (GGUF quantized)",
             "honesty_notes": [
@@ -179,8 +189,8 @@ class GGUFEngine:
                     "by llama.cpp — layer_stats/timings are omitted, never simulated"
                 ),
                 (
-                    "this backend runs greedy sampling; sliding-window and "
-                    "speculative decode are PyTorch-only"
+                    "sliding-window and speculative decode are PyTorch-only; this "
+                    f"backend runs {decoding_mode} decode"
                 ),
             ],
         }
@@ -201,7 +211,17 @@ class GGUFEngine:
                 probs = _tiny_softmax(logits)
                 k = max(1, min(int(top_k), int(llm.n_vocab())))
                 top_idx = np.argsort(-logits)[:k]
-                chosen = int(llm.sample(temp=0.0, top_k=40, top_p=1.0, min_p=0.0, repeat_penalty=1.0, penalize_nl=False))
+                # Real sampling through llama.cpp's own sampler; greedy does not
+                # read temperature at all (argmax).
+                if sampling:
+                    chosen = int(llm.sample(
+                        temp=max(float(temperature), 0.01),
+                        top_k=k,
+                        top_p=min(max(float(top_p), 0.05), 1.0),
+                        min_p=0.0, repeat_penalty=1.0, penalize_nl=False,
+                    ))
+                else:
+                    chosen = int(llm.sample(temp=0.0, top_k=1, top_p=1.0, min_p=0.0, repeat_penalty=1.0, penalize_nl=False))
                 chosen_text = _decode_id(llm, chosen)
                 eos = chosen_text == eos_text or chosen == int(llm.token_eos())
                 # KV-cache accounting: after prefill the next token reuses the
@@ -232,6 +252,7 @@ class GGUFEngine:
                     "phase": "prefill" if step == 0 else "decode",
                     "n_positions": n_positions,
                     "cache_len": cache_len,
+                    "sampled": sampling,
                     "source": "llama.cpp",
                 }
                 yield frame
@@ -245,7 +266,7 @@ class GGUFEngine:
             "type": "done",
             "generated_text": "".join(emitted_text),
             "total_steps": step,
-            "decoding_mode": "greedy",
+            "decoding_mode": decoding_mode,
             "source": "llama.cpp",
             "quant": meta["quant"],
         }

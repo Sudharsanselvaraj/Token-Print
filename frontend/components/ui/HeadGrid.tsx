@@ -5,7 +5,8 @@ import { useStore } from "@/lib/store";
 
 export default function HeadGrid() {
   const data = useStore((s) => s.data);
-  const nLayers = data?.num_layers ?? 0;
+  const arch = useStore((s) => s.arch);
+  const nLayers = data?.num_layers ?? arch?.metadata?.num_layers ?? 24;
   const setLayer = useStore((s) => s.setLayer);
   const setHead = useStore((s) => s.setHead);
   const [viewLayer, setViewLayer] = useState(0);
@@ -43,7 +44,28 @@ export default function HeadGrid() {
     return sim;
   }, [data, viewLayer]);
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="head-grid">
+        <div className="hg-title">Head × Head Similarity</div>
+        <div className="hg-layer-select">
+          <span>Layer:</span>
+          <select value={viewLayer} onChange={(e) => setViewLayer(Number(e.target.value))}>
+            {Array.from({ length: nLayers }, (_, i) => (
+              <option key={i} value={i}>L{i}</option>
+            ))}
+          </select>
+        </div>
+        <div className="hg-empty">
+          Load attention data to populate the head × head heatmap. Run a forward pass
+          or replay a trace.
+        </div>
+        <div className="hg-legend">
+          <span>−1</span><div className="legend-bar hg-lb" /><span>+1</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="head-grid">

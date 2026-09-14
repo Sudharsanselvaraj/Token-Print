@@ -137,9 +137,13 @@ export interface TraceSlice {
   updateAnnotation: (id: string, text: string) => void;
 }
 
+export type NavMode = "MANUAL" | "OVERVIEW" | "LAYER_FOCUS" | "OP_FOCUS" | "FOLLOW";
+
 export interface UISlice {
   mode: Mode;
   setMode: (m: Mode) => void;
+  navMode: NavMode;
+  setNavMode: (m: NavMode) => void;
   quality: "cinematic" | "performance";
   toggleQuality: () => void;
   muted: boolean;
@@ -158,10 +162,21 @@ export interface UISlice {
   prevChapter: () => void;
   setWtModel: (id: string) => void;
   toggleWtPlay: () => void;
+  /** Authoritative walkthrough camera mode: CINEMATIC owns the camera during
+   *  guided playback; MANUAL hands control to the user after they orbit. */
+  wtCamMode: "MANUAL" | "CINEMATIC";
+  setWtCamMode: (m: "MANUAL" | "CINEMATIC") => void;
+  /** Internal debug readout of camera state (toggle with D in walkthrough). */
+  wtCamDebug: boolean;
+  toggleWtCamDebug: () => void;
+  debuggerTool: string;
+  setDebuggerTool: (id: string) => void;
   embedMode: boolean;
   setEmbedMode: (b: boolean) => void;
   traceGalleryOpen: boolean;
   setTraceGalleryOpen: (b: boolean) => void;
+  hfExplorerOpen: boolean;
+  setHfExplorerOpen: (b: boolean) => void;
   sonificationEnabled: boolean;
   toggleSonification: () => void;
   classroomMode: boolean;
@@ -206,6 +221,7 @@ export interface Arch3dSlice {
 export interface OrchestratorActions {
   loadGgufFile: (file: File) => Promise<void>;
   startGeneration: (prompt: string, opts?: GenOptions) => void;
+  stopGeneration: () => void;
   loadTrace: (file: File) => Promise<void>;
   classroomStep: () => void;
 }

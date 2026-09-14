@@ -14,7 +14,7 @@ export interface GenOptions {
   seed?: number;
   trace?: boolean;
   recordTrace?: boolean;
-  decodingMode?: "greedy" | "sliding_window" | "speculative";
+  decodingMode?: "greedy" | "sampling" | "sliding_window" | "speculative";
   windowSize?: number;
   draftGamma?: number;
   needle?: string;

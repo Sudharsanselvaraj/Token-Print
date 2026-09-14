@@ -1,0 +1,107 @@
+language: "en-US"
+
+reviews:
+  profile: "quiet"
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  review_details: false
+  enable_prompt_for_ai_agents: true
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    base_branches:
+      - "main"
+  path_filters:
+    - "!frontend/out/**"
+    - "!frontend/.next/**"
+    - "!frontend/playwright-report/**"
+    - "!frontend/test-results/**"
+    - "!**/node_modules/**"
+    - "!**/.cache/**"
+    - "!**/.temp/**"
+    - "!**/dist/**"
+  tools:
+    eslint:
+      enabled: true
+    ruff:
+      enabled: true
+    semgrep:
+      enabled: true
+    opengrep:
+      enabled: true
+    gitleaks:
+      enabled: true
+    trufflehog:
+      enabled: true
+    github-checks:
+      enabled: true
+    actionlint:
+      enabled: true
+    zizmor:
+      enabled: true
+    yamllint:
+      enabled: true
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        Review TokenPrint as an LLM visualization, inspection, and runtime project, not as a generic web app.
+
+        Prioritize findings by engineering impact:
+        - Critical: command injection, SSRF, path traversal, arbitrary code execution, exposed secrets, unsafe model loading, dangerous GitHub Actions permissions, severe data corruption, severe inference/model correctness failures, and WebGL/GPU resource leaks likely to accumulate during normal use.
+        - High: tensor shape or dimension errors, incorrect model metadata, KV-cache bugs, prefill/decode state bugs, React state/race conditions, stale closures, async lifecycle bugs, Three.js lifecycle/resource leaks, camera/OrbitControls ownership bugs, frontend/backend API contract mismatches, production build/deployment regressions, and severe performance regressions.
+        - Medium: missing meaningful tests, maintainability problems, incorrect edge cases, relevant accessibility issues, and unnecessary duplication or complexity.
+        - Low: comment on style only when it has meaningful maintainability, consistency, or correctness impact.
+
+        Avoid noise about personal style preferences, trivial naming choices, harmless refactors, formatting already handled by tooling, or speculative micro-optimizations.
+        For security findings, explain the actual attack/data flow. For performance findings, explain what is expensive, why it happens, when it happens, and the practical impact.
+
+    - path: "frontend/**/*.{ts,tsx,js,jsx,cjs,mjs}"
+      instructions: |
+        Focus on React, Next.js, browser, WebSocket, and 3D runtime correctness.
+        Check React lifecycle, useEffect cleanup, dependency arrays, stale closures, event listeners, timers, requestAnimationFrame loops, WebSocket lifecycle, async race conditions, duplicated API calls, and production/static-export routing behavior.
+        For Three.js/WebGL code, check geometry/material/texture disposal, R3F object lifetime, duplicate Canvas or scene mounts, duplicate WebGL contexts, unnecessary allocations every frame, excessive React rerenders around animation state, camera ownership, OrbitControls conflicts, camera-follow state, HTML/3D overlay stacking, and portal/modal isolation.
+        Do not suggest theoretical rendering optimizations unless there is a concrete repeated allocation, rerender, lifecycle leak, or measurable user impact.
+
+    - path: "frontend/components/scenes/**/*"
+      instructions: |
+        Treat scene changes as high-risk. Verify object lifetime, memoization, animation loops, effect cleanup, material/geometry reuse, frame-by-frame allocations, camera coordination, controls ownership, and accurate mapping from model/runtime data to visual state.
+        Flag visualizations that imply real model measurements when they are demo, static, estimated, or heuristic values.
+
+    - path: "frontend/lib/**/*"
+      instructions: |
+        Review store slices, API clients, websocket utilities, GGUF parsing/dequantization, execution graph logic, timing, and model metadata transformations for state consistency and scientific correctness.
+        Check tensor dimensions, Q/K/V projections, GQA semantics, RoPE, RMSNorm, SwiGLU, residual stream behavior, LM head/logits mapping, token ID mappings, KV-cache behavior, prefill/decode transitions, and layer indexing.
+        When a constant appears model-specific, verify whether it should be derived from backend metadata or model configuration instead.
+
+    - path: "backend/**/*.{py,yml,yaml}"
+      instructions: |
+        Review FastAPI lifecycle, request validation, async correctness, resource cleanup, concurrency, memory growth, model loading, Hugging Face model IDs, GGUF uploads, external URLs, path handling, temporary files, CORS, subprocess calls, and shell invocation.
+        Prioritize SSRF, path traversal, unsafe file extraction/loading, arbitrary code execution through model artifacts, secrets exposure, and dependency changes.
+        For model/runtime code, verify API contracts, tensor shapes, layer indexing, KV-cache consistency, prefill/decode state, logits/token mapping, and adapter-specific metadata.
+
+    - path: "backend/app/inference/**/*"
+      instructions: |
+        Treat inference adapters and backends as high-risk. Check that model-specific behavior is isolated in the correct adapter, dimensions come from configuration or metadata, and generic fallbacks do not silently fabricate unsupported model behavior.
+        Flag mismatches between adapter contracts, backend runtime output, API schemas, and frontend expectations.
+
+    - path: "backend/tests/**/*"
+      instructions: |
+        Check tests for meaningful coverage of security guards, API contracts, model adapter behavior, GGUF handling, SSRF prevention, and failure paths.
+        Avoid test-style nits unless they obscure correctness or make regressions likely.
+
+    - path: ".github/workflows/**/*.{yml,yaml}"
+      instructions: |
+        Review GitHub Actions for least-privilege permissions, safe pull_request versus pull_request_target usage, untrusted input handling, secret exposure, pinned or trusted actions, shell injection, unsafe checkout/ref handling, and deployment safety.
+        Keep deterministic CI, CodeQL, Dependabot, Playwright visual regression, and the existing Gemini review workflow distinct from CodeRabbit's role as the primary PR reviewer.
+
+    - path: "docs/**/*.md"
+      instructions: |
+        Review technical and scientific claims for accuracy. Distinguish real runtime data, static/demo data, and derived or estimated values.
+        Flag unsupported claims, fabricated measurements, stale API behavior, misleading model statements, or documentation that presents illustrative data as live inference.
+
+    - path: "fixtures/**/*"
+      instructions: |
+        Verify fixtures are clearly treated as static/demo data and are not mistaken for live runtime measurements.
+        Do not request exclusion of fixtures unless they are generated build artifacts; they are part of TokenPrint's test and scientific-integrity surface.

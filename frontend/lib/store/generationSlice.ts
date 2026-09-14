@@ -49,7 +49,15 @@ export const createGenerationSlice: StateCreator<StoreState, [], [], GenerationS
     const rewind = !state.opPlaying && atLastOp && atLastToken;
     return { opPlaying: !state.opPlaying, opIndex: rewind ? 0 : state.opIndex, playIndex: rewind ? 0 : state.playIndex };
   }),
-  toggleFollow: () => set((state) => ({ followMode: !state.followMode })),
+  toggleFollow: () =>
+    set((state) => {
+      const nextFollow = !state.followMode;
+      return {
+        followMode: nextFollow,
+        navMode: nextFollow ? "FOLLOW" : "MANUAL",
+        userOrbiting: false,
+      };
+    }),
   toggleView2D: () => set((state) => ({ view2D: !state.view2D })),
   setPlaySpeed: (playSpeed) => set({ playSpeed: Math.max(0.25, Math.min(playSpeed, 4)) }),
   setAutoStarted: (autoStarted) => set({ autoStarted }),
