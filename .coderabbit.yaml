@@ -12,6 +12,24 @@ tone_instructions: |-
 chat:
   art: false # Chat Art: OFF
 
+# ── Code Generation (section 11) ───────────────────────────────────────────────
+# Unit-test generation guidance. This is the correct namespace — placing it under
+# reviews.path_instructions only affects reviews, not generated tests.
+code_generation:
+  unit_tests:
+    path_instructions:
+      - path: "backend/**"
+        instructions: |-
+          Prefer testing externally observable behavior, validation, edge cases, error handling, tensor shapes/dimensions, model adapter behavior, security-sensitive inputs, and deterministic transformations.
+          Do not generate tests that merely assert implementation details.
+          Do not fabricate expected tensor values or runtime measurements.
+          Reuse existing fixtures and test conventions. Keep tests small, deterministic, and maintainable.
+      - path: "frontend/**/{lib,utils,store,hooks}/**"
+        instructions: |-
+          Focus on reusable frontend logic: state transitions, parsing, data transformations, and deterministic utilities.
+          Avoid snapshot-heavy or implementation-detail tests.
+          Do not generate tests that require WebGL unless the repository already has an established deterministic test strategy for that code.
+
 reviews:
   # ── General / Review Profile ─────────────────────────────────────────────────
   profile: "chill" # balanced review without excessive nitpicking
@@ -64,7 +82,7 @@ reviews:
   # ── Review / Walkthrough settings ───────────────────────────────────────────
   review_status: true
   review_progress: true
-  review_details: false
+  review_details: true # maintainer visibility: ignored files, context used, suppressed comments
   collapse_walkthrough: true
   changed_files_summary: true
   sequence_diagrams: true # useful for frontend -> API -> runtime -> model flows
@@ -184,14 +202,52 @@ reviews:
       instructions: |
         Review TokenPrint as an LLM visualization, inspection, and runtime project, not as a generic web app.
 
-        Prioritize findings by engineering impact:
-        - Critical: command injection, SSRF, path traversal, arbitrary code execution, exposed secrets, unsafe model loading, dangerous GitHub Actions permissions, severe data corruption, severe inference/model correctness failures, and WebGL/GPU resource leaks likely to accumulate during normal use.
-        - High: tensor shape or dimension errors, incorrect model metadata, KV-cache bugs, prefill/decode state bugs, React state/race conditions, stale closures, async lifecycle bugs, Three.js lifecycle/resource leaks, camera/OrbitControls ownership bugs, frontend/backend API contract mismatches, production build/deployment regressions, and severe performance regressions.
-        - Medium: missing meaningful tests, maintainability problems, incorrect edge cases, relevant accessibility issues, and unnecessary duplication or complexity.
-        - Low: comment on style only when it has meaningful maintainability, consistency, or correctness impact.
+        Review the system, not just individual files. Evaluate changes in the context of the complete pipeline: frontend UI → state/store → 3D scene → camera/controls → API/WebSocket → backend runtime → model adapter → trace/generation data. Flag regressions caused by state synchronization, stale data, lifecycle mismatches, incorrect model assumptions, or mismatched frontend/backend contracts.
 
-        Avoid noise about personal style preferences, trivial naming choices, harmless refactors, formatting already handled by tooling, or speculative micro-optimizations.
+        Classify findings by practical severity:
+        - Blocker: exploitable security issue, data corruption, broken core functionality, or severe runtime failure.
+        - Major: likely production/user-facing bug, incorrect model behavior, serious performance/resource issue, WebGL/GPU lifecycle leak, or important regression.
+        - Minor: localized correctness or maintainability issue with limited impact.
+        - Suggestion: improvement that is not required for correctness.
+        Do not inflate severity and do not report stylistic preferences as defects.
+
+        For every substantive finding (especially Major/Blocker), explain:
+        1. What is wrong
+        2. Where it occurs
+        3. Why it matters
+        4. The concrete impact or failure mode
+        5. The evidence from the changed code
+        6. A practical recommended fix
+        7. Whether a test should be added or updated
+        Do not make claims without evidence from the repository. Distinguish confirmed defects from risks, suggestions, and questions.
+
+        For Major/Blocker findings, use this structure:
+        ### Finding
+        <one-line problem>
+        **Why it matters** <actual consequence>
+        **Evidence** <what in the diff/code supports this>
+        **Recommended fix** <concrete solution>
+        **Testing** <existing coverage or suggested regression test>
+
+        When evidence is insufficient for a definitive finding, do not guess. Add a concise "Maintainer check" note describing what assumption needs verification, what evidence is missing, and what test or manual check would resolve it. Use this only for meaningful uncertainty, not trivial questions.
+
+        When a PR references an issue, compare the implementation against the issue requirements: identify requirements satisfied, partially satisfied, not addressed, and behavior added beyond scope. Do not reject a PR merely because it improves something adjacent unless it creates meaningful scope or maintenance risk.
+
+        For substantial PRs, include a brief architectural assessment covering state ownership, lifecycle ownership, API boundaries, component responsibilities, duplicated logic, coupling, future extensibility, and compatibility with existing model adapters and visualization modes. Only report architectural concerns with practical maintenance or correctness impact.
+
+        For each meaningful behavior change, inspect existing tests before recommending new ones. Report tests that already cover the changed behavior, missing coverage that creates realistic regression risk, and the smallest useful test to add. Do not request tests merely to increase coverage numbers.
+
+        Optimize for maintainer signal, not comment count. Do not comment on formatting already enforced by tooling, trivial naming preferences, subjective refactoring, obvious cleanup with no practical impact, or issues already correctly handled by existing CI/tooling. Prefer fewer, higher-confidence findings over many speculative comments.
+
         For security findings, explain the actual attack/data flow. For performance findings, explain what is expensive, why it happens, when it happens, and the practical impact.
+
+        Per-PR checklist (apply the relevant items):
+        CORRECTNESS: does the changed behavior match the intended feature/issue; are edge cases handled; are existing contracts preserved.
+        LLM / SCIENCE: tensor dimensions; layer/head/token indices; Q/K/V, GQA, RoPE, RMSNorm, SwiGLU, residual stream, logits, and KV-cache semantics; is model-specific behavior derived from metadata; are real measurements distinguished from fixtures, estimates, or demo values.
+        WEBGL / 3D: geometry/material/texture disposal; duplicated WebGL contexts or canvases; animation-frame/timer/listener cleanup; stale camera/OrbitControls state; unnecessary per-frame allocations or rerenders.
+        BACKEND / SECURITY: untrusted input validation; file/URL/subprocess/model-ID/path safety; SSRF, path traversal, injection risks; async/resource lifecycles.
+        INTEGRATION: do frontend and backend contracts still match; could this break another visualization mode; could this affect deployment, CI, or static builds.
+        TESTING: is the changed behavior covered; are regression tests needed; are visual changes covered by Playwright where appropriate.
 
     - path: "frontend/**/*.{ts,tsx,js,jsx,cjs,mjs}"
       instructions: |
@@ -242,20 +298,6 @@ reviews:
         Verify fixtures are clearly treated as static/demo data and are not mistaken for live runtime measurements.
         Do not request exclusion of fixtures unless they are generated build artifacts; they are part of TokenPrint's test and scientific-integrity surface.
 
-    # ── Unit test generation targets (section 11) ─────────────────────────────
-    - path: "frontend/**/{lib,utils,store,hooks}/**"
-      instructions: |
-        When generating unit tests, focus on reusable frontend logic: state transitions, parsing, data transformations, and deterministic utilities.
-        Avoid snapshot-heavy or implementation-detail tests.
-        Do not generate tests that require WebGL unless the repository already has an established deterministic test strategy for that code.
-
-    - path: "backend/**"
-      instructions: |
-        When generating unit tests, prefer testing externally observable behavior, validation, edge cases, error handling, tensor shapes/dimensions, model adapter behavior, security-sensitive inputs, and deterministic transformations.
-        Do not generate tests that merely assert implementation details.
-        Do not fabricate expected tensor values or runtime measurements.
-        Reuse existing fixtures and test conventions. Keep tests small, deterministic, and maintainable.
-
   # ── Anti-Slop (section 15) ──────────────────────────────────────────────────
   slop_detection:
     enabled: true
@@ -267,7 +309,7 @@ reviews:
     docstrings:
       enabled: false # on-demand only; avoid misleading generated docstrings
     unit_tests:
-      enabled: true # selective; per-path guidance in path_instructions above
+      enabled: true # selective; per-path guidance lives in code_generation.unit_tests.path_instructions
 
   # ── Pre-Merge Checks (section 10) ───────────────────────────────────────────
   pre_merge_checks:
