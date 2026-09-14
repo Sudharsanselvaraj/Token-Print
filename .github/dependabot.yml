@@ -1,46 +1,40 @@
+# Dependabot configuration for TokenPrint (SEC-02)
+# Automatically checks for security alerts and dependency updates weekly.
+
 version: 2
 updates:
-  # ── npm (frontend) ──────────────────────────────────────────────────────────
+  # 1. Frontend npm dependencies
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
       interval: "weekly"
-      day: "monday"
     open-pull-requests-limit: 5
-    # Group minor and patch bumps into a single PR to reduce noise.
-    groups:
-      minor-and-patch:
-        update-types:
-          - "minor"
-          - "patch"
+    target-branch: "main"
     labels:
       - "dependencies"
       - "frontend"
-    commit-message:
-      prefix: "chore(deps)"
+      - "security"
 
-  # ── pip (backend) ────────────────────────────────────────────────────────────
+  # 2. Backend Python pip dependencies
   - package-ecosystem: "pip"
     directory: "/backend"
     schedule:
       interval: "weekly"
-      day: "monday"
     open-pull-requests-limit: 5
+    target-branch: "main"
     labels:
       - "dependencies"
       - "backend"
-    commit-message:
-      prefix: "chore(deps)"
+      - "security"
 
-  # ── GitHub Actions ────────────────────────────────────────────────────────────
+  # 3. GitHub Actions workflow actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
     open-pull-requests-limit: 5
+    target-branch: "main"
     labels:
       - "dependencies"
       - "ci"
-    commit-message:
-      prefix: "chore(actions)"
+      - "security"

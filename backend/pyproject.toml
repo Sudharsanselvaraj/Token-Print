@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "token-print-backend"
+version = "0.2.0"
+description = "TokenPrint LLM Execution Visual Debugger FastAPI Backend"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "Sudharsan Selvaraj", email = "sudharsanselvaraj@gmail.com" }
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+  "fastapi>=0.100.0",
+  "uvicorn[standard]>=0.20.0",
+  "websockets>=12.0",
+  "numpy>=1.24.0",
+  "python-multipart>=0.0.9",
+  "torch>=2.0.0",
+  "transformers>=4.40.0",
+  "scikit-learn>=1.3.0",
+  "requests>=2.31.0",
+  "pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+gguf = [
+  "llama-cpp-python>=0.2.75",
+  "gguf>=0.10.0",
+]
+dev = [
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.23.0",
+  "httpx>=0.27.0",
+  "starlette>=0.36.0",
+  "ruff>=0.3.0",
+]
+all = [
+  "token-print-backend[gguf,dev]",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = []
