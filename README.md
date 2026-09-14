@@ -118,9 +118,10 @@ send a PR. First-timers genuinely welcome.
 <a href="https://github.com/Sudharsanselvaraj"><img src="https://github.com/Sudharsanselvaraj.png?size=96" alt="Sudharsanselvaraj" title="Sudharsanselvaraj" width="48" height="48" align="top" /></a>
 <a href="https://github.com/ManoShruthiS"><img src="https://github.com/ManoShruthiS.png?size=96" alt="ManoShruthiS" title="ManoShruthiS" width="48" height="48" align="top" /></a>
 <a href="https://github.com/Sew-a"><img src="https://github.com/Sew-a.png?size=96" alt="Sew-a" title="Sew-a" width="48" height="48" align="top" /></a>
-<a href="https://github.com/Shivamyadav1312"><img src="https://github.com/Shivamyadav1312.png?size=96" alt="Shivamyadav1312" title="Shivamyadav1312" width="48" height="48" align="top" /></a>
 <a href="https://github.com/Kesavaraja67"><img src="https://github.com/Kesavaraja67.png?size=96" alt="Kesavaraja67" title="Kesavaraja67" width="48" height="48" align="top" /></a>
+<a href="https://github.com/Shivamyadav1312"><img src="https://github.com/Shivamyadav1312.png?size=96" alt="Shivamyadav1312" title="Shivamyadav1312" width="48" height="48" align="top" /></a>
 <a href="https://github.com/Deepashaa24"><img src="https://github.com/Deepashaa24.png?size=96" alt="Deepashaa24" title="Deepashaa24" width="48" height="48" align="top" /></a>
+<a href="https://github.com/jk-pvt"><img src="https://github.com/jk-pvt.png?size=96" alt="jk-pvt" title="jk-pvt" width="48" height="48" align="top" /></a>
 <a href="https://github.com/ris422"><img src="https://github.com/ris422.png?size=96" alt="ris422" title="ris422" width="48" height="48" align="top" /></a>
 <a href="https://github.com/Sarvatha02"><img src="https://github.com/Sarvatha02.png?size=96" alt="Sarvatha02" title="Sarvatha02" width="48" height="48" align="top" /></a>
 <a href="https://github.com/Sriram-Selvaperumal"><img src="https://github.com/Sriram-Selvaperumal.png?size=96" alt="Sriram-Selvaperumal" title="Sriram-Selvaperumal" width="48" height="48" align="top" /></a>
