@@ -24,7 +24,7 @@ for _mod in _HEAVY_MODS:
     if _mod not in sys.modules:
         sys.modules[_mod] = mock.MagicMock()
 
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # noqa: E402
 
 # Mock ModelEngine before importing app.main so engine is populated
 mock_engine = mock.MagicMock()

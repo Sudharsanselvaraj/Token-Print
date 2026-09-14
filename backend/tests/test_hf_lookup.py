@@ -15,8 +15,8 @@ for _mod in _HEAVY_MODS:
     if _mod not in sys.modules:
         sys.modules[_mod] = mock.MagicMock()
 
-import pytest
-from app.model import ModelEngine
+import pytest  # noqa: E402
+from app.model import ModelEngine  # noqa: E402
 
 
 def test_validate_model_id_valid():

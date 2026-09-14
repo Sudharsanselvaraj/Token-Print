@@ -36,6 +36,13 @@ from fastapi.responses import Response
 
 from .ablation import Ablation
 from .gguf_engine import GGUFEngine
+from .inference.adapters import select_model_adapter
+from .inference.capabilities import (
+    BackendCapabilities,
+    RuntimeCapabilities,
+    calculate_effective_capabilities,
+)
+from .inference.registry import registry as backend_registry
 from .model import ModelEngine, TokenizedTooLong
 from .reduce import chunk_attribution, query_self_attribution, ungrounded_flags
 from .schemas import (
@@ -43,6 +50,9 @@ from .schemas import (
     AnalyzeImageRequest,
     AnalyzeRequest,
     AnalyzeResponse,
+    HFInspectResponse,
+    HFModelMeta,
+    HFSearchResponse,
     ModelInfo,
     PatchRequest,
     RagAnalyzeRequest,
@@ -316,15 +326,6 @@ async def gguf_open(payload: dict = ...) -> dict:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {"ok": True, **meta}
 
-
-from app.inference.adapters import select_model_adapter
-from app.inference.capabilities import (
-    BackendCapabilities,
-    RuntimeCapabilities,
-    calculate_effective_capabilities,
-)
-from app.inference.registry import registry as backend_registry
-from app.schemas import HFInspectResponse, HFModelMeta, HFSearchResponse
 
 # Simple in-memory cache for HF API responses with timestamp
 _hf_search_cache: dict[str, tuple[float, HFSearchResponse]] = {}

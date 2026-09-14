@@ -1,4 +1,4 @@
-﻿"""Tests for GGUF upload size-limit enforcement and temp-file cleanup (ENG-09).
+"""Tests for GGUF upload size-limit enforcement and temp-file cleanup (ENG-09).
 
 These tests mock heavy native dependencies (torch, sklearn, llama_cpp) so they
 run without a GPU or PyTorch install.  The model lifespan is also stubbed so no
@@ -29,10 +29,10 @@ for _mod in _HEAVY_MODS:
 # Add backend directory to sys.path (matches existing test pattern).
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import app.main as main_module
-import pytest
-from app.main import GGUF_DIR, app
-from starlette.testclient import TestClient
+import app.main as main_module  # noqa: E402
+import pytest  # noqa: E402
+from app.main import GGUF_DIR, app  # noqa: E402
+from starlette.testclient import TestClient  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers

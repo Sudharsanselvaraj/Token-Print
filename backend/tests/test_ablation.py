@@ -21,7 +21,7 @@ for _mod in _HEAVY_MODS:
     if _mod not in sys.modules:
         sys.modules[_mod] = mock.MagicMock()
 
-from app.ablation import Ablation
+from app.ablation import Ablation  # noqa: E402
 
 
 class DummySubLayer(mock.MagicMock):
