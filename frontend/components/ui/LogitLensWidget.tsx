@@ -2,36 +2,59 @@
 
 import React from "react";
 import { useStore } from "@/lib/store";
+import PanelState from "./PanelState";
 
 export function LogitLensWidget() {
   const data = useStore((s) => s.data);
   const selectedLayer = useStore((s) => s.selectedLayer);
   const selectedTokenIndex = useStore((s) => s.selectedTokenIndex);
+  const loading = useStore((s) => s.loading);
 
-  const tokens = data?.tokens || [
-    { index: 0, text: "Name", piece: "Name", id: 2437, is_special: false },
-    { index: 1, text: "one", piece: "one", id: 284, is_special: false },
-    { index: 2, text: "primary", piece: "primary", id: 4331, is_special: false },
-    { index: 3, text: "color", piece: "color", id: 16326, is_special: false },
-    { index: 4, text: ".", piece: ".", id: 2456, is_special: false },
-  ];
+  if (loading) {
+    return (
+      <div className="rp-section" style={{ borderBottom: "none" }}>
+        <PanelState kind="loading" title="Loading predictions" message="Waiting for the model analysis to finish." />
+      </div>
+    );
+  }
 
-  // Extract real logit lens data for selected layer & token if available
-  const rawLogitLens = data?.logit_lens?.[selectedLayer]?.[selectedTokenIndex];
+  if (!data) {
+    return (
+      <div className="rp-section" style={{ borderBottom: "none" }}>
+        <PanelState kind="empty" title="No logit lens data" message="Run an analysis to inspect the model's top predictions at each layer." />
+      </div>
+    );
+  }
 
-  const topPredictions = rawLogitLens
-    ? rawLogitLens.map((item: any) => ({
-        token: item.text,
-        logit: item.prob ? (item.prob * 10).toFixed(2) : "6.50",
-        prob: item.prob ?? 0.2,
-      }))
-    : [
-        { token: "color", logit: "8.42", prob: 0.45 },
-        { token: "colour", logit: "6.11", prob: 0.22 },
-        { token: "Color", logit: "5.78", prob: 0.15 },
-        { token: "colors", logit: "5.21", prob: 0.10 },
-        { token: "background", logit: "4.12", prob: 0.05 },
-      ];
+  const logitLensCapability =
+    data.capabilities && "supports_logit_lens" in data.capabilities
+      ? data.capabilities.supports_logit_lens
+      : null;
+  const rawLogitLens = data.logit_lens?.[selectedLayer]?.[selectedTokenIndex];
+
+  if (logitLensCapability && !logitLensCapability.supported) {
+    return (
+      <div className="rp-section" style={{ borderBottom: "none" }}>
+        <PanelState kind="unsupported" title="Logit lens unavailable" message={logitLensCapability.reason} />
+      </div>
+    );
+  }
+
+  if (!data.tokens?.length || !rawLogitLens?.length) {
+    return (
+      <div className="rp-section" style={{ borderBottom: "none" }}>
+        <PanelState kind="empty" title="No prediction data" message="This analysis did not return logit lens predictions for the selected layer and token." />
+      </div>
+    );
+  }
+
+  const tokens = data.tokens;
+
+  const topPredictions = rawLogitLens.map((item) => ({
+    token: item.text,
+    logit: item.prob ? (item.prob * 10).toFixed(2) : "0.00",
+    prob: item.prob ?? 0,
+  }));
 
   return (
     <div className="rp-section" style={{ borderBottom: "none" }}>
