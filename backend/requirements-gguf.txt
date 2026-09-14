@@ -1,2 +1,2 @@
 # Optional dependencies for native local GGUF model execution
-llama-cpp-python>=0.2.0
+llama-cpp-python>=0.3.35
