@@ -34,7 +34,10 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1500, height: 920 },
+      },
     },
     {
       // Pure-logic unit tests in tests/unit/ — no browser, backend or dev
