@@ -35,7 +35,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from .ablation import Ablation
-from .gguf_engine import GGUFEngine
+from .gguf_engine import GGUF_ENGINE_AVAILABLE, GGUFEngine
 from .model import ModelEngine, TokenizedTooLong
 from .reduce import chunk_attribution, query_self_attribution, ungrounded_flags
 from .schemas import (
@@ -103,6 +103,14 @@ async def lifespan(app: FastAPI):
         engine.num_heads,
         engine.hidden_size,
     )
+    if GGUF_ENGINE_AVAILABLE:
+        logger.info("GGUF quantized generation: available (llama-cpp-python installed)")
+    else:
+        logger.info(
+            "GGUF quantized generation: GGUF metadata only "
+            "(llama-cpp-python not installed — "
+            "pip install -r requirements-gguf.txt for real quantized generation)"
+        )
     yield
     engine = None
 
@@ -209,6 +217,7 @@ async def health() -> dict:
         "model_loaded": engine is not None,
         "mode": engine.mode if engine is not None else None,
         "model_type": engine.model_type if engine is not None else None,
+        "gguf_engine_available": GGUF_ENGINE_AVAILABLE,
     }
 
 
@@ -262,7 +271,7 @@ async def gguf_list() -> dict:
                 "loaded": str(p.resolve()) in _gguf_engines,
             }
         )
-    return {"files": items}
+    return {"files": items, "engine_available": GGUF_ENGINE_AVAILABLE}
 
 
 @app.post("/gguf/upload")

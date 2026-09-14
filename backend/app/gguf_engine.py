@@ -20,6 +20,7 @@ What is *not* available (and is never simulated):
 """
 from __future__ import annotations
 
+import importlib.util
 import logging
 import math
 import os
@@ -30,6 +31,10 @@ from pathlib import Path
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+# True when llama-cpp-python is importable; checked once at module load via
+# find_spec so we never trigger a real import just to test availability.
+GGUF_ENGINE_AVAILABLE: bool = importlib.util.find_spec("llama_cpp") is not None
 
 _LOCK = threading.Lock()
 
@@ -76,12 +81,19 @@ class GGUFEngine:
         with self._load_lock:
             if self._llm is not None:
                 return self._llm
+            if not GGUF_ENGINE_AVAILABLE:
+                raise RuntimeError(
+                    "The app is running in GGUF metadata-only mode — "
+                    "llama-cpp-python is not installed. "
+                    "Run: pip install -r backend/requirements-gguf.txt"
+                )
             try:
-                from llama_cpp import Llama
+                from llama_cpp import Llama  # type: ignore[import-untyped]
             except ImportError as exc:  # pragma: no cover - optional dependency
                 raise RuntimeError(
-                    "llama-cpp-python is not installed — install it to run "
-                    "quantized GGUF generation."
+                    "The app is running in GGUF metadata-only mode — "
+                    "llama-cpp-python is not installed. "
+                    "Run: pip install -r backend/requirements-gguf.txt"
                 ) from exc
             if not Path(self.path).is_file():
                 raise FileNotFoundError(f"GGUF file not found: {self.path}")

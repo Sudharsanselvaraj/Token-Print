@@ -98,6 +98,8 @@ To enable native local GGUF backend execution via `llama.cpp`:
 pip install -r backend/requirements-gguf.txt
 ```
 
+Without `llama-cpp-python` the backend still boots normally in **GGUF metadata-only mode**: `/health` and `/gguf/list` report `gguf_engine_available: false`, and `/gguf/open` returns a clean `400` with an actionable message instead of crashing. No capability is silently hidden — the flag is surfaced explicitly in the startup log and in every relevant API response.
+
 ### Capability Matrix: Client Parser vs Backend Engine
 
 | Feature / Capability | Client-Side Browser Parser (`lib/gguf/`) | Server-Side `GGUFEngine` (`llama.cpp`) |
