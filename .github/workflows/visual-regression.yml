@@ -41,7 +41,7 @@ jobs:
       - name: Install backend requirements
         run: |
           pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
-          pip install fastapi uvicorn websockets numpy transformers==4.51.3 scikit-learn==1.5.1 python-multipart
+          pip install fastapi uvicorn websockets numpy transformers==4.51.3 scikit-learn==1.5.1 python-multipart pyyaml
 
       - name: Start backend
         working-directory: backend

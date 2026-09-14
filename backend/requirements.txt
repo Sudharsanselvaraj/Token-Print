@@ -8,6 +8,8 @@ uvicorn[standard]
 websockets
 numpy
 python-multipart
+pyyaml
+httpx
 
 # ML stack (pinned to the locally-verified versions)
 torch==2.11.0

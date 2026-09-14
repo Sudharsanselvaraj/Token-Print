@@ -65,7 +65,7 @@ jobs:
         run: |
           # Install torch CPU-only to avoid the CUDA-only 2 GB wheel.
           pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
-          pip install fastapi uvicorn websockets numpy transformers==4.51.3 scikit-learn==1.5.1
+          pip install fastapi uvicorn websockets numpy transformers==4.51.3 scikit-learn==1.5.1 python-multipart pyyaml httpx pytest pytest-asyncio
 
       # Each script exits 0 on PASS, 1 on FAIL (verified by reading the scripts).
       - name: verify_real_data.py
@@ -126,8 +126,7 @@ jobs:
         id: api_smoke
         working-directory: backend
         run: |
-          python -m pip install --quiet pytest
-          python -m pytest tests/test_api_smoke.py tests/test_hf_guard.py -q
+          python -m pytest tests/test_api_smoke.py tests/test_hf_guard.py tests/test_api_hf.py -q
         continue-on-error: true
 
       # Collect failures and open a GitHub issue if any step failed.

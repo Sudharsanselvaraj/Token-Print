@@ -16,13 +16,16 @@ from unittest import mock
 # Add backend directory to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# Pre-mock heavy native deps before importing app.main
+# Pre-mock heavy native deps only if they are not installed
 _HEAVY_MODS = [
     "torch", "torch.nn", "torch.nn.functional", "transformers", "sklearn", "sklearn.decomposition", "llama_cpp"
 ]
 for _mod in _HEAVY_MODS:
-    if _mod not in sys.modules:
-        sys.modules[_mod] = mock.MagicMock()
+    try:
+        __import__(_mod)
+    except (ImportError, ModuleNotFoundError):
+        if _mod not in sys.modules:
+            sys.modules[_mod] = mock.MagicMock()
 
 from fastapi.testclient import TestClient
 
@@ -35,6 +38,7 @@ mock_engine.device = "cpu"
 mock_engine.num_layers = 24
 mock_engine.num_heads = 14
 mock_engine.hidden_size = 896
+mock_engine.revision = "local_weights"
 
 mock_engine.info.return_value = {
     "model": "Qwen/Qwen2.5-0.5B-Instruct",

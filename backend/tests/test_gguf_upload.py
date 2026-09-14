@@ -1,4 +1,4 @@
-﻿"""Tests for GGUF upload size-limit enforcement and temp-file cleanup (ENG-09).
+"""Tests for GGUF upload size-limit enforcement and temp-file cleanup (ENG-09).
 
 These tests mock heavy native dependencies (torch, sklearn, llama_cpp) so they
 run without a GPU or PyTorch install.  The model lifespan is also stubbed so no
@@ -13,8 +13,7 @@ from pathlib import Path
 from unittest import mock
 
 # ---------------------------------------------------------------------------
-# Pre-mock all native deps BEFORE importing anything from app.*
-# (same technique as test_rag_patching.py which adds backend to sys.path)
+# Pre-mock native deps ONLY IF not already installed
 # ---------------------------------------------------------------------------
 _HEAVY_MODS = [
     "torch", "torch.nn", "torch.nn.functional",
@@ -24,7 +23,10 @@ _HEAVY_MODS = [
     "sklearn", "sklearn.decomposition",
 ]
 for _mod in _HEAVY_MODS:
-    sys.modules.setdefault(_mod, mock.MagicMock())
+    try:
+        __import__(_mod)
+    except (ImportError, ModuleNotFoundError):
+        sys.modules.setdefault(_mod, mock.MagicMock())
 
 # Add backend directory to sys.path (matches existing test pattern).
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))

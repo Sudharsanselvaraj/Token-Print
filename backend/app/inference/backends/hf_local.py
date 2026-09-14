@@ -54,12 +54,14 @@ class HFLocalBackend(InferenceBackend):
 
         # Attach explicit Phase 0 ProvenanceInfo if not already populated
         if resp.provenance is None:
+            rev = getattr(eng, "revision", None)
+            model_rev = rev if isinstance(rev, str) else "local_weights"
             resp.provenance = ProvenanceInfo(
                 source_type="REAL",
                 backend="hf_local",
                 device=resp.device or "cpu",
                 model_id=resp.model,
-                model_revision=getattr(eng, "revision", None) or "local_weights",
+                model_revision=model_rev,
                 notes="Executed on local PyTorch instrumentation engine.",
             )
 

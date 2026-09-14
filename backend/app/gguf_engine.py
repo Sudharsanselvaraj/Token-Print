@@ -24,6 +24,7 @@ import importlib.util
 import logging
 import math
 import os
+import sys
 import threading
 from collections.abc import Iterator
 from pathlib import Path
@@ -32,9 +33,17 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
+def _check_llama_cpp_available() -> bool:
+    try:
+        return importlib.util.find_spec("llama_cpp") is not None
+    except (ValueError, AttributeError):
+        return "llama_cpp" in sys.modules
+
+
 # True when llama-cpp-python is importable; checked once at module load via
 # find_spec so we never trigger a real import just to test availability.
-GGUF_ENGINE_AVAILABLE: bool = importlib.util.find_spec("llama_cpp") is not None
+GGUF_ENGINE_AVAILABLE: bool = _check_llama_cpp_available()
 
 _LOCK = threading.Lock()
 
