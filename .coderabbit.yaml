@@ -1,48 +1,184 @@
+# TokenPrint — CodeRabbit configuration (master reference).
+# Review TokenPrint like an LLM scientific visualization and runtime system,
+# not a generic web app: scientific correctness + WebGL/GPU lifecycle +
+# security + inference correctness + performance before cosmetic concerns.
+
 language: "en-US"
 
+# ── Tone (Reviews + Chat) ──────────────────────────────────────────────────────
+tone_instructions: |-
+  Professional, concise, technically precise. Prioritize actionable findings and explain why they matter. Be respectful and factual. Avoid marketing language, jokes, emojis, and nitpicking. Distinguish verified behavior from assumptions.
+
+chat:
+  art: false # Chat Art: OFF
+
 reviews:
-  profile: "quiet"
-  request_changes_workflow: false
+  # ── General / Review Profile ─────────────────────────────────────────────────
+  profile: "chill" # balanced review without excessive nitpicking
+  request_changes_workflow: false # CodeRabbit is not the merge authority
   high_level_summary: true
+
+  # ── High Level Summary ──────────────────────────────────────────────────────
+  high_level_summary_in_walkthrough: true
+  high_level_summary_instructions: |-
+    Create a concise, technical summary for the TokenPrint pull request.
+
+    Use this structure:
+
+    ## What changed
+    Summarize the main changes and their purpose.
+
+    ## Technical impact
+    Explain affected frontend, backend, model/runtime, 3D/WebGL, security, CI/CD, or documentation behavior when relevant.
+
+    ## Validation
+    List meaningful tests, builds, linting, type checks, security checks, and visual regression checks that were actually run or reported by the PR.
+
+    ## Risk
+    Mention meaningful regression, compatibility, performance, or security risks when present.
+
+    Keep the summary factual and concise.
+    Do not praise the contributor or use marketing language.
+    Do not invent test results, measurements, runtime behavior, or implementation details.
+    Do not repeat trivial formatting or mechanical changes.
+    Do not claim a feature works unless the PR/tests provide evidence.
+    For model/scientific changes, distinguish real measurements from estimates, examples, and static/demo data.
+
+  # ── Auto Title (kept OFF; instructions preserved for later) ────────────────
+  auto_title_instructions: |-
+    Generate concise, descriptive PR titles based on the actual changes.
+
+    Use Conventional Commit style where appropriate:
+    feat:
+    fix:
+    docs:
+    refactor:
+    perf:
+    test:
+    ci:
+    chore:
+
+    Keep titles under 72 characters.
+    Do not invent scope, behavior, or issue references.
+
+  # ── Review / Walkthrough settings ───────────────────────────────────────────
   review_status: true
+  review_progress: true
   review_details: false
-  enable_prompt_for_ai_agents: true
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: true # useful for frontend -> API -> runtime -> model flows
+  estimate_code_review_effort: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  auto_apply_labels: false
+  suggested_reviewers: true
+  auto_assign_reviewers: false
+  enable_prompt_for_ai_agents: true # Codex/AI coding agents are used heavily
+
+  # ── Fun (all OFF; senior reviewer, not a chatbot mascot) ────────────────────
+  in_progress_fortune: false
+  poem: false
+
+  # ── Labeling instructions ───────────────────────────────────────────────────
+  # These are SUGGESTION rules (section 4). They are deliberately NOT added to
+  # auto_review.labels, which must stay empty so normal PRs targeting `main`
+  # are reviewed regardless of labels.
+  labeling_instructions:
+    - label: "frontend"
+      instructions: >
+        Suggest this label when a PR primarily changes the Next.js, React,
+        TypeScript, UI, routing, state management, browser-side behavior, or
+        frontend components.
+    - label: "backend"
+      instructions: >
+        Suggest this label when a PR primarily changes Python, FastAPI, API
+        routes, runtime services, model execution, or backend infrastructure.
+    - label: "3d"
+      instructions: >
+        Suggest this label when a PR changes the 3D visualization, Three.js,
+        React Three Fiber, scene graph, transformer visualization, camera
+        system, controls, 3D labels, or visualization geometry.
+    - label: "webgl"
+      instructions: >
+        Suggest this label when a PR changes WebGL rendering, GPU resources,
+        shaders, rendering lifecycle, WebGL contexts, or graphics performance.
+    - label: "models"
+      instructions: >
+        Suggest this label when a PR changes model loading, model adapters,
+        Hugging Face integration, GGUF support, model metadata, architecture
+        detection, tokenizer handling, or model configuration.
+    - label: "inference"
+      instructions: >
+        Suggest this label when a PR changes inference execution, generation,
+        sampling, prefill, decode, logits, token prediction, KV cache, or
+        runtime generation state.
+    - label: "security"
+      instructions: >
+        Suggest this label when a PR changes authentication, authorization,
+        file uploads, remote URLs, SSRF-sensitive code, path handling,
+        subprocess execution, secrets, CORS, dependency security, or GitHub
+        Actions security.
+    - label: "performance"
+      instructions: >
+        Suggest this label when a PR materially affects runtime performance,
+        memory usage, GPU usage, rendering performance, bundle size, API
+        efficiency, model loading performance, or resource lifecycle.
+    - label: "research"
+      instructions: >
+        Suggest this label when a PR changes model-analysis methods,
+        mechanistic interpretability, attention analysis, activation analysis,
+        ablation, attribution, scientific algorithms, equations, or
+        research-oriented functionality.
+    - label: "docs"
+      instructions: >
+        Suggest this label when a PR primarily changes documentation, guides,
+        README content, technical explanations, examples, or research
+        references.
+    - label: "testing"
+      instructions: >
+        Suggest this label when a PR primarily adds or changes unit tests,
+        integration tests, API tests, Playwright tests, visual regression
+        tests, fixtures, or test infrastructure.
+    - label: "ci"
+      instructions: >
+        Suggest this label when a PR changes GitHub Actions, CI/CD workflows,
+        deployment automation, release automation, repository automation, or
+        build pipelines.
+    - label: "bug"
+      instructions: >
+        Suggest this label when the PR fixes an existing defect, regression,
+        crash, incorrect behavior, broken workflow, or reproducible issue.
+    - label: "feature"
+      instructions: >
+        Suggest this label when the PR introduces meaningful new user-facing
+        or developer-facing functionality.
+    - label: "breaking-change"
+      instructions: >
+        Suggest this label only when the PR intentionally changes a public
+        API, data format, configuration contract, CLI behavior, runtime
+        contract, or user workflow in a way that can break existing consumers.
+
+  # ── Automatic Review ────────────────────────────────────────────────────────
   auto_review:
     enabled: true
     drafts: false
     auto_incremental_review: true
     base_branches:
       - "main"
+    # labels: EMPTY — suggestion labels are NOT review-trigger labels.
+
+  # ── Path Filters (section 5: ignore generated artifacts only) ───────────────
   path_filters:
     - "!frontend/out/**"
     - "!frontend/.next/**"
     - "!frontend/playwright-report/**"
     - "!frontend/test-results/**"
     - "!**/node_modules/**"
-    - "!**/.cache/**"
-    - "!**/.temp/**"
-    - "!**/dist/**"
-  tools:
-    eslint:
-      enabled: true
-    ruff:
-      enabled: true
-    semgrep:
-      enabled: true
-    opengrep:
-      enabled: true
-    gitleaks:
-      enabled: true
-    trufflehog:
-      enabled: true
-    github-checks:
-      enabled: true
-    actionlint:
-      enabled: true
-    zizmor:
-      enabled: true
-    yamllint:
-      enabled: true
+
+  # ── Path Instructions (section 6) ───────────────────────────────────────────
   path_instructions:
     - path: "**/*"
       instructions: |
@@ -105,3 +241,87 @@ reviews:
       instructions: |
         Verify fixtures are clearly treated as static/demo data and are not mistaken for live runtime measurements.
         Do not request exclusion of fixtures unless they are generated build artifacts; they are part of TokenPrint's test and scientific-integrity surface.
+
+    # ── Unit test generation targets (section 11) ─────────────────────────────
+    - path: "frontend/**/{lib,utils,store,hooks}/**"
+      instructions: |
+        When generating unit tests, focus on reusable frontend logic: state transitions, parsing, data transformations, and deterministic utilities.
+        Avoid snapshot-heavy or implementation-detail tests.
+        Do not generate tests that require WebGL unless the repository already has an established deterministic test strategy for that code.
+
+    - path: "backend/**"
+      instructions: |
+        When generating unit tests, prefer testing externally observable behavior, validation, edge cases, error handling, tensor shapes/dimensions, model adapter behavior, security-sensitive inputs, and deterministic transformations.
+        Do not generate tests that merely assert implementation details.
+        Do not fabricate expected tensor values or runtime measurements.
+        Reuse existing fixtures and test conventions. Keep tests small, deterministic, and maintainable.
+
+  # ── Anti-Slop (section 15) ──────────────────────────────────────────────────
+  slop_detection:
+    enabled: true
+    include_all_authors: true
+    label: "needs-review"
+
+  # ── Finishing Touches (section 11) ──────────────────────────────────────────
+  finishing_touches:
+    docstrings:
+      enabled: false # on-demand only; avoid misleading generated docstrings
+    unit_tests:
+      enabled: true # selective; per-path guidance in path_instructions above
+
+  # ── Pre-Merge Checks (section 10) ───────────────────────────────────────────
+  pre_merge_checks:
+    docstrings:
+      mode: warning # not a hard error
+      threshold: 60
+    title:
+      mode: error
+      requirements: |-
+        PR title must be concise, descriptive, and explain the primary change.
+
+        Prefer the repository's existing conventional commit style where applicable, for example:
+
+        feat: add attention visualization
+        fix: repair camera follow state
+        docs: update GGUF documentation
+        chore: update CI workflow
+
+        Avoid vague titles such as:
+        "Update"
+        "Changes"
+        "Fix stuff"
+        "New things"
+
+        Keep titles ideally under 72 characters.
+    description:
+      mode: warning
+    issue_assessment:
+      mode: warning
+    # Custom pre-merge checks: NONE — CI, CodeQL, and Playwright already cover this.
+    custom_checks: []
+
+  # ── Post-Merge Actions (section 12): NONE ──────────────────────────────────
+  # TokenPrint already has deploy/release/contributor/wiki/roadmap automation.
+
+  # ── Tools (additional review context) ───────────────────────────────────────
+  tools:
+    eslint:
+      enabled: true
+    ruff:
+      enabled: true
+    semgrep:
+      enabled: true
+    opengrep:
+      enabled: true
+    gitleaks:
+      enabled: true
+    trufflehog:
+      enabled: true
+    github-checks:
+      enabled: true
+    actionlint:
+      enabled: true
+    zizmor:
+      enabled: true
+    yamllint:
+      enabled: true
