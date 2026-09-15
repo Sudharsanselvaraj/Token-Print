@@ -12,11 +12,7 @@ import GenerationScene from "./scenes/GenerationScene";
 import WalkthroughScene from "./scenes/WalkthroughScene";
 import { PostProcessingPipeline } from "./scenes/PostProcessingPipeline";
 import { GlobalCameraController } from "./camera/GlobalCameraController";
-import {
-  cameraOverview,
-  cameraForLayer,
-  cameraForOp,
-} from "./scenes/ArchitectureLayout";
+import { cameraOverview } from "./scenes/ArchitectureLayout";
 
 const N_LAYERS = 24;
 
