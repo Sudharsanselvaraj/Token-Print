@@ -31,8 +31,9 @@ for _mod in _HEAVY_MODS:
 # Add backend directory to sys.path (matches existing test pattern).
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import app.main as _main_module
 import pytest
-from app.main import GGUF_DIR, app, main_module
+from app.main import GGUF_DIR, app
 from starlette.testclient import TestClient
 
 # ---------------------------------------------------------------------------
@@ -63,7 +64,7 @@ def client():
     mock_engine.mode = "text"
     mock_engine.model_type = "gpt2"
 
-    with mock.patch.object(main_module, "ModelEngine", return_value=mock_engine), TestClient(app) as c:
+    with mock.patch.object(_main_module, "ModelEngine", return_value=mock_engine), TestClient(app) as c:
         yield c
 
 
@@ -86,7 +87,7 @@ class TestGgufUploadSizeLimit:
 
     def test_oversized_upload_rejected_with_413(self, client: TestClient):
         """Uploading a file larger than MAX_GGUF_BYTES returns HTTP 413."""
-        with mock.patch.object(main_module, "MAX_GGUF_BYTES", 10):
+        with mock.patch.object(_main_module, "MAX_GGUF_BYTES", 10):
             payload = b"X" * 20  # 20 bytes > 10-byte limit
             resp = _upload_bytes(client, payload)
 
@@ -102,7 +103,7 @@ class TestGgufUploadSizeLimit:
 
         assert not dest.exists(), "Pre-condition: file must not exist before upload"
 
-        with mock.patch.object(main_module, "MAX_GGUF_BYTES", 10):
+        with mock.patch.object(_main_module, "MAX_GGUF_BYTES", 10):
             payload = b"X" * 20
             resp = _upload_bytes(client, payload, filename=filename)
 
