@@ -32,9 +32,8 @@ for _mod in _HEAVY_MODS:
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pytest
-from starlette.testclient import TestClient
-
 from app.main import GGUF_DIR, app, main_module
+from starlette.testclient import TestClient
 
 # ---------------------------------------------------------------------------
 # Helpers
