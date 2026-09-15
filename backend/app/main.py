@@ -718,23 +718,43 @@ async def ws_generate(ws: WebSocket) -> None:
         await ws.close()
         return
 
-    max_new_tokens = req.get("max_new_tokens", 40)
-    top_k = req.get("top_k", 10)
-    temperature = float(req.get("temperature", 1.0))
-    top_p = float(req.get("top_p", 1.0))
+    # --- Safe numeric coercions: guard against null/None from JSON (#280) ---
+    def _to_float(val, default: float) -> float:
+        try:
+            return float(val) if val is not None else default
+        except (TypeError, ValueError):
+            return default
+
+    def _to_int(val, default: int) -> int:
+        try:
+            return int(val) if val is not None else default
+        except (TypeError, ValueError):
+            return default
+
+    max_new_tokens = _to_int(req.get("max_new_tokens"), 40)
+    top_k = _to_int(req.get("top_k"), 10)
+    temperature = _to_float(req.get("temperature"), 1.0)
+    top_p = _to_float(req.get("top_p"), 1.0)
+    draft_gamma = _to_int(req.get("draft_gamma"), 4)
+    window_size = _to_int(req.get("window_size"), 512)
     seed = req.get("seed") or None
     use_chat_template = bool(req.get("use_chat_template", True))
     include_catalog = bool(req.get("trace", False))
     record_trace = bool(req.get("record_trace", False))
     decoding_mode = req.get("decoding_mode", "greedy")
-    window_size = req.get("window_size", 512)
-    draft_gamma = req.get("draft_gamma", 4)
     needle = req.get("needle") or None
     # Issue #85: when `gguf` names a server-side .gguf, generation runs on the
     # real quantized weights through llama.cpp instead of full-precision PyTorch.
     gguf_path: str | None = req.get("gguf") or None
     if gguf_path:
-        _gguf_engine_for(gguf_path)  # open early so errors surface as a frame
+        # Open early so errors surface as an error frame instead of raising
+        # HTTPException after accept (which leaves the socket in a broken state).
+        try:
+            _gguf_engine_for(gguf_path)
+        except HTTPException as exc:
+            await ws.send_json({"type": "error", "message": exc.detail})
+            await ws.close()
+            return
 
     loop = asyncio.get_running_loop()
     queue: asyncio.Queue = asyncio.Queue(maxsize=32)
