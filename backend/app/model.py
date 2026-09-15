@@ -708,10 +708,17 @@ class ModelEngine:
         if image.startswith(("http://", "https://")):
             import urllib.request
 
+            from app.hf_guard import (
+                _NoRedirect,  # prevents SSRF via redirect chains (#271)
+            )
+
+            _MAX_IMAGE_BYTES = 20 * 1024 * 1024  # 20 MB cap — prevents OOM from giant responses
             ModelEngine._validate_url_ssrf(image)
             try:
-                with urllib.request.urlopen(image, timeout=30) as resp:
-                    return resp.read()
+                opener = urllib.request.build_opener(_NoRedirect)
+                req = urllib.request.Request(image, headers={"User-Agent": "TokenPrint/0.1.0"})
+                with opener.open(req, timeout=30) as resp:
+                    return resp.read(_MAX_IMAGE_BYTES)
             except Exception as exc:
                 raise ValueError(f"Could not fetch image URL: {exc}") from exc
         raise ValueError(
