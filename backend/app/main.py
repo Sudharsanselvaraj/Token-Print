@@ -739,6 +739,7 @@ async def ws_generate(ws: WebSocket) -> None:
     loop = asyncio.get_running_loop()
     queue: asyncio.Queue = asyncio.Queue(maxsize=32)
     SENTINEL = object()
+    stop_event = asyncio.Event()
 
     # Trace recorder — captures frames when record_trace is requested.
     recorder: TraceRecorder | None = None
@@ -759,6 +760,8 @@ async def ws_generate(ws: WebSocket) -> None:
                     temperature, top_p, seed,
                 )
             for frame in frames:
+                if stop_event.is_set():
+                    return
                 # Tee to the recorder for trace capture.
                 if recorder is not None:
                     if frame.get("type") == "meta":
@@ -768,11 +771,14 @@ async def ws_generate(ws: WebSocket) -> None:
                     elif frame.get("type") == "done":
                         recorder.finalize(frame)
                 # .result() blocks this thread until the queue has room -> backpressure.
+                if stop_event.is_set():
+                    return
                 asyncio.run_coroutine_threadsafe(queue.put(frame), loop).result()
         except Exception as exc:  # noqa: BLE001 — surface generation errors to the client
-            asyncio.run_coroutine_threadsafe(
-                queue.put({"type": "error", "message": str(exc)}), loop
-            ).result()
+            if not stop_event.is_set():
+                asyncio.run_coroutine_threadsafe(
+                    queue.put({"type": "error", "message": str(exc)}), loop
+                ).result()
         finally:
             asyncio.run_coroutine_threadsafe(queue.put(SENTINEL), loop)
 
@@ -790,6 +796,9 @@ async def ws_generate(ws: WebSocket) -> None:
     except WebSocketDisconnect:
         logger.info("WebSocket connection closed by client.")
     finally:
+        stop_event.set()
+        worker_task.cancel()
+        await asyncio.gather(worker_task, return_exceptions=True)
         # Store the completed trace so it can be downloaded later.
         if recorder is not None and recorder._done is not None:
             _last_trace = recorder.build()
@@ -799,7 +808,6 @@ async def ws_generate(ws: WebSocket) -> None:
                 len(recorder._frames),
                 safe_prompt,
             )
-        await asyncio.gather(worker_task)
         try:
             await ws.close()  # graceful close frame after the stream ends
         except RuntimeError:
