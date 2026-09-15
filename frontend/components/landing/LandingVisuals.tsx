@@ -340,4 +340,24 @@ export function MicroLightningIcon() {
   );
 }
 
+export function MicroTensorIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#71717a" strokeWidth="1.5">
+      <rect x="4" y="4" width="16" height="16" />
+      <line x1="12" y1="4" x2="12" y2="20" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+    </svg>
+  );
+}
+
+export function MicroAttentionIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#71717a" strokeWidth="1.5">
+      <line x1="4" y1="18" x2="4" y2="6" />
+      <line x1="12" y1="18" x2="12" y2="3" />
+      <line x1="20" y1="18" x2="20" y2="8" />
+    </svg>
+  );
+}
+
 

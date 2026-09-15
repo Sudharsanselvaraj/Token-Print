@@ -3,15 +3,65 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { assetUrl } from "@/lib/assets";
-import { ArrowRight, Code2, GitBranch, Layers, Play } from "lucide-react";
+import { Code2, GitBranch, Layers, Play } from "lucide-react";
 
 import { ComputationalHeroVisual, MicroDotGridVisual, MicroTargetIcon, MicroLightningIcon } from "./LandingVisuals";
 import { Reveal } from "./LandingMotion";
+import { InspectFlowSection } from "./InspectFlowSection";
 import { GithubIcon } from "./GithubIcon";
 import { ECOSYSTEM_STACK } from "./EcosystemLogos";
 
+const SHOWCASE_CELLS = [
+  {
+    img: "/backgrounds/col1_arch.png",
+    alt: "Understand the architecture",
+    imgClass: "arch-img",
+    icon: <Layers size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />,
+    title: "Understand the architecture",
+    desc: "Inspect layers, tensors, residual streams, and model topology.",
+    infoTitle: "Understand the architecture",
+    infoPara:
+      "See how the model is organized from embeddings through transformer layers, residual streams, and the final prediction.",
+    meta: ["LAYERS", "HIDDEN STATE", "MODEL TOPOLOGY"],
+  },
+  {
+    img: "/backgrounds/col2_attn.png",
+    alt: "See attention unfold",
+    imgClass: "attn-img",
+    icon: <GitBranch size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />,
+    title: "See attention unfold",
+    desc: "Follow Q, K, V, attention scores, RoPE, and weighted values.",
+    infoTitle: "See attention unfold",
+    infoPara:
+      "Follow Q, K, and V through attention, from projections and positional encoding to scores, masking, and weighted values.",
+    meta: ["Q / K / V", "ROPE", "ATTENTION WEIGHTS"],
+  },
+  {
+    img: "/backgrounds/col3_gen.png",
+    alt: "Watch generation happen",
+    imgClass: "gen-img",
+    icon: <Play size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />,
+    title: "Watch generation happen",
+    desc: "Trace prefill, KV cache, decoding, logits, and next-token prediction.",
+    infoTitle: "Watch generation happen",
+    infoPara:
+      "Follow the transition from prefill to decode as hidden states become logits, KV cache state, and the next generated token.",
+    meta: ["PREFILL", "KV CACHE", "NEXT TOKEN"],
+  },
+];
+
 export function LandingPage() {
   const [showcaseTab, setShowcaseTab] = useState<number>(0);
+  const [showcaseOpen, setShowcaseOpen] = useState<boolean>(false);
+
+  const handleShowcaseSelect = (i: number) => {
+    if (showcaseTab === i && showcaseOpen) {
+      setShowcaseOpen(false);
+    } else {
+      setShowcaseTab(i);
+      setShowcaseOpen(true);
+    }
+  };
 
   return (
     <div className="landing-root">
@@ -67,11 +117,21 @@ export function LandingPage() {
       <section className="landing-split-section">
         <div className="landing-container">
           <div className="landing-split-grid">
-            {/* Left Column: Brand & Tagline */}
+            {/* Left Column: Brand, Tagline & System Snapshot */}
             <div className="landing-split-left">
               <Reveal delay={0.05} className="landing-split-left-top">
+                <p className="landing-eyebrow">Model Inspection</p>
                 <h2 className="marshal-brand-title">TokenPrint</h2>
                 <p className="marshal-brand-sub">Built for the moments that matter most.</p>
+              </Reveal>
+
+              <Reveal delay={0.08} className="landing-split-left-middle">
+                <p className="landing-lead-copy">
+                  Go beyond the output and inspect the computation behind it. TokenPrint lets you
+                  follow tokens, hidden states, attention, residual streams, and logits through a
+                  real transformer forward pass — making the model easier to understand, debug, and
+                  explore.
+                </p>
               </Reveal>
 
               <Reveal delay={0.1} className="landing-split-left-bottom">
@@ -166,6 +226,9 @@ export function LandingPage() {
 
 
 
+      {/* 4.5. Inspect what moves through the model — editorial split */}
+      <InspectFlowSection />
+
       {/* 5. Editorial Feature Showcase Section — Exact Marshal Rhythm & Proportions */}
       <section className="marshal-showcase-section" id="showcase">
         <div className="marshal-showcase-container">
@@ -186,21 +249,21 @@ export function LandingPage() {
                 <button
                   type="button"
                   className={`marshal-tab-rail-item ${showcaseTab === 0 ? "active" : ""}`}
-                  onClick={() => setShowcaseTab(0)}
+                  onClick={() => handleShowcaseSelect(0)}
                 >
                   <span className="tab-num">01</span> — Architecture
                 </button>
                 <button
                   type="button"
                   className={`marshal-tab-rail-item ${showcaseTab === 1 ? "active" : ""}`}
-                  onClick={() => setShowcaseTab(1)}
+                  onClick={() => handleShowcaseSelect(1)}
                 >
                   <span className="tab-num">02</span> — Attention
                 </button>
                 <button
                   type="button"
                   className={`marshal-tab-rail-item ${showcaseTab === 2 ? "active" : ""}`}
-                  onClick={() => setShowcaseTab(2)}
+                  onClick={() => handleShowcaseSelect(2)}
                 >
                   <span className="tab-num">03</span> — Generation
                 </button>
@@ -210,74 +273,40 @@ export function LandingPage() {
 
           {/* ONE GIANT UNIFIED 3-COLUMN BORDERED COMPOSITION */}
           <div className="marshal-unified-grid">
-            {/* Column 1: Architecture */}
-            <div
-              className={`marshal-grid-cell ${showcaseTab === 0 ? "active-cell" : ""}`}
-              onClick={() => setShowcaseTab(0)}
-            >
-              <div className="marshal-cell-visual-area">
-                <img
-                  src={assetUrl("/backgrounds/col1_arch.png")}
-                  alt="Understand the architecture"
-                  className="marshal-cell-img arch-img"
-                />
-              </div>
-              <div className="marshal-cell-text-area">
-                <div className="marshal-cell-icon-box">
-                  <Layers size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />
+            {SHOWCASE_CELLS.map((c, i) => {
+              const isRevealed = showcaseTab === i && showcaseOpen;
+              return (
+                <div
+                  key={c.title}
+                  className={`marshal-grid-cell ${isRevealed ? "active-cell" : ""}`}
+                  onClick={() => handleShowcaseSelect(i)}
+                >
+                  <div className={`marshal-cell-visual-area ${isRevealed ? "revealed" : ""}`}>
+                    <img
+                      src={assetUrl(c.img)}
+                      alt={c.alt}
+                      className={`marshal-cell-img ${c.imgClass}`}
+                    />
+                    <div className="marshal-cell-info">
+                      <h4 className="marshal-cell-info-title">{c.infoTitle}</h4>
+                      <p className="marshal-cell-info-p">{c.infoPara}</p>
+                      <div className="marshal-cell-info-meta">
+                        {c.meta.map((m, j) => (
+                          <span key={j} className="marshal-cell-meta-item">
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="marshal-cell-text-area">
+                    <div className="marshal-cell-icon-box">{c.icon}</div>
+                    <h3 className="marshal-cell-title">{c.title}</h3>
+                    <p className="marshal-cell-desc">{c.desc}</p>
+                  </div>
                 </div>
-                <h3 className="marshal-cell-title">Understand the architecture</h3>
-                <p className="marshal-cell-desc">
-                  Inspect layers, tensors, residual streams, and model topology.
-                </p>
-              </div>
-            </div>
-
-            {/* Column 2: Attention */}
-            <div
-              className={`marshal-grid-cell ${showcaseTab === 1 ? "active-cell" : ""}`}
-              onClick={() => setShowcaseTab(1)}
-            >
-              <div className="marshal-cell-visual-area">
-                <img
-                  src={assetUrl("/backgrounds/col2_attn.png")}
-                  alt="See attention unfold"
-                  className="marshal-cell-img attn-img"
-                />
-              </div>
-              <div className="marshal-cell-text-area">
-                <div className="marshal-cell-icon-box">
-                  <GitBranch size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />
-                </div>
-                <h3 className="marshal-cell-title">See attention unfold</h3>
-                <p className="marshal-cell-desc">
-                  Follow Q, K, V, attention scores, RoPE, and weighted values.
-                </p>
-              </div>
-            </div>
-
-            {/* Column 3: Generation */}
-            <div
-              className={`marshal-grid-cell ${showcaseTab === 2 ? "active-cell" : ""}`}
-              onClick={() => setShowcaseTab(2)}
-            >
-              <div className="marshal-cell-visual-area">
-                <img
-                  src={assetUrl("/backgrounds/col3_gen.png")}
-                  alt="Watch generation happen"
-                  className="marshal-cell-img gen-img"
-                />
-              </div>
-              <div className="marshal-cell-text-area">
-                <div className="marshal-cell-icon-box">
-                  <Play size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />
-                </div>
-                <h3 className="marshal-cell-title">Watch generation happen</h3>
-                <p className="marshal-cell-desc">
-                  Trace prefill, KV cache, decoding, logits, and next-token prediction.
-                </p>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -286,11 +315,20 @@ export function LandingPage() {
       <section className="landing-closing-section">
         <div className="landing-closing-content">
           <h2 className="landing-closing-title">From token to prediction.</h2>
-          <p className="landing-closing-subtitle">Every layer. Every tensor. Every step.</p>
-          <Link href="/app" className="landing-closing-cta">
-            <span>Open the Debugger</span>
-            <ArrowRight size={14} />
-          </Link>
+          <p className="landing-closing-subtitle">See what happens in between.</p>
+          <p className="landing-closing-support">
+            Every layer. Every tensor. Every step — open for inspection.
+          </p>
+          <a
+            href="https://github.com/Sudharsanselvaraj/Token-Print"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="landing-closing-cta"
+          >
+            <GithubIcon size={15} />
+            <span>Contribute on GitHub</span>
+            <span className="closing-cta-arrow">→</span>
+          </a>
         </div>
       </section>
 
