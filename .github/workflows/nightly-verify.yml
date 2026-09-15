@@ -32,7 +32,7 @@ jobs:
       - name: Run verify_trace.py
         # verify_trace.py tests the trace serialisation layer only — it does NOT
         # load the model. Exit code 0 = all tests pass.
-        run: python scripts/verify_trace.py
+        run: PYTHONPATH=. python scripts/verify_trace.py
 
   # ── Job 2: Deep model verification (downloads ~1 GB Qwen model) ─────────────
   deep-verify:
@@ -71,19 +71,19 @@ jobs:
       - name: verify_real_data.py
         id: real_data
         working-directory: backend
-        run: python scripts/verify_real_data.py
+        run: PYTHONPATH=. python scripts/verify_real_data.py
         continue-on-error: true
 
       - name: verify_geometry.py
         id: geometry
         working-directory: backend
-        run: python scripts/verify_geometry.py
+        run: PYTHONPATH=. python scripts/verify_geometry.py
         continue-on-error: true
 
       - name: verify_generation.py
         id: generation
         working-directory: backend
-        run: python scripts/verify_generation.py
+        run: PYTHONPATH=. python scripts/verify_generation.py
         continue-on-error: true
 
       # Generate a live trace to compare against the checked-in baseline.
