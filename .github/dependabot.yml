@@ -18,6 +18,15 @@ updates:
       - "frontend"
     commit-message:
       prefix: "chore(deps)"
+    # react/react-dom are pinned at 19.2.x: @react-three/fiber@^9 peers require
+    # react ">=19 <19.3" (npm ERESOLVE on 19.3.0). Remove once R3F allows 19.3.
+    ignore:
+      - dependency-name: "react"
+        versions:
+          - ">=19.3"
+      - dependency-name: "react-dom"
+        versions:
+          - ">=19.3"
 
   # ── pip (backend) ────────────────────────────────────────────────────────────
   - package-ecosystem: "pip"
