@@ -1177,7 +1177,7 @@ class ModelEngine:
 
                 if decoding_mode == "sliding_window" and state.past_key_values is not None and state.positions_done > window_size:
                     state.trim_cache(window_size)
-                    cache_len_in = state.positions_done - window_size
+                    cache_len_in = window_size  # after trim, the model is fed exactly window_size entries
 
                 out = self.model(
                     input_ids=cur,
