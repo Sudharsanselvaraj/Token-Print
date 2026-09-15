@@ -40,3 +40,29 @@ def test_ssrf_blocks_aws_metadata_ip():
 def test_ssrf_blocks_localhost_domain():
     with pytest.raises(ValueError, match="forbidden"):
         ModelEngine._load_image_bytes("http://localhost:8000/admin")
+
+
+# --- Regression tests for #278: CGNAT and carrier/test-grade nets ---
+
+def test_ssrf_blocks_cgnat_100_64():
+    """CGNAT 100.64.0.0/10 was not blocked by is_* flags alone (fixes #278)."""
+    with pytest.raises(ValueError, match="forbidden"), mock.patch(
+        "socket.getaddrinfo", return_value=[(None, None, None, None, ("100.64.1.1", 0))]
+    ):
+        ModelEngine._validate_url_ssrf("http://example-cgnat.internal/")
+
+
+def test_ssrf_blocks_carrier_grade_198_18():
+    """198.18.0.0/15 benchmark-test net must be blocked (fixes #278)."""
+    with pytest.raises(ValueError, match="forbidden"), mock.patch(
+        "socket.getaddrinfo", return_value=[(None, None, None, None, ("198.18.0.1", 0))]
+    ):
+        ModelEngine._validate_url_ssrf("http://example-carrier.internal/")
+
+
+def test_ssrf_blocks_iana_192_0_0():
+    """192.0.0.0/24 IANA special-use net must be blocked (fixes #278)."""
+    with pytest.raises(ValueError, match="forbidden"), mock.patch(
+        "socket.getaddrinfo", return_value=[(None, None, None, None, ("192.0.0.1", 0))]
+    ):
+        ModelEngine._validate_url_ssrf("http://example-special.internal/")

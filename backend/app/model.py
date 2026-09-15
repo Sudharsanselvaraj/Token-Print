@@ -658,11 +658,16 @@ class ModelEngine:
     def _validate_url_ssrf(url: str) -> None:
         """Validate an image URL to prevent Server-Side Request Forgery (SSRF).
 
-        Rejects loopback, private RFC1918, link-local, multicast, and reserved IP addresses.
+        Rejects loopback, private RFC1918, link-local, multicast, reserved IP
+        addresses, and additional carrier/test networks (CGNAT 100.64.0.0/10,
+        etc.) by reusing the shared ``hf_guard._BLOCKED_NETS`` list so both
+        guards stay in sync (fixes #278).
         """
         import ipaddress
         import socket
         from urllib.parse import urlparse
+
+        from app.hf_guard import _BLOCKED_NETS  # shared, comprehensive block-list
 
         parsed = urlparse(url)
         if parsed.scheme not in ("http", "https"):
@@ -687,6 +692,7 @@ class ModelEngine:
                 or ip.is_multicast
                 or ip.is_reserved
                 or ip.is_unspecified
+                or any(ip in net for net in _BLOCKED_NETS)
             ):
                 raise ValueError(f"Access to internal IP address '{ip_str}' is forbidden.")
 
