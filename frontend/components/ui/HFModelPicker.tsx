@@ -89,7 +89,6 @@ function Icon({ d, size = 14 }: { d: string; size?: number }) {
 }
 
 const ICONS = {
-  sparkle: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z",
   search: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
   x: "M6 18L18 6M6 6l12 12",
   cpu: "M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z",
@@ -275,10 +274,11 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
     const vram = data.capabilities?.vram_estimate;
     rows.push({
       title: "VRAM ESTIMATE",
-      supported: vram && typeof vram === "object" ? Boolean(vram.supported) : true,
-      reason: vram && typeof vram === "object" && typeof vram.reason === "string"
-        ? vram.reason
-        : data.estimation_basis || "Derived from parameter count, architecture, and dtype.",
+      supported: true,
+      reason:
+        vram && typeof vram === "object" && "estimation_basis" in vram && typeof vram.estimation_basis === "string"
+          ? vram.estimation_basis
+          : data.estimation_basis || "Derived from parameter count, architecture, and dtype.",
       fromData: Boolean(vram),
     });
     return rows;
@@ -418,7 +418,7 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
                     transition: "background 0.12s, color 0.12s",
                   }}
                 >
-                  <Icon d={ICONS.sparkle} size={11} /> Curated
+                  Curated
                 </button>
                 <button
                   onClick={() => setActiveTab("search")}

@@ -88,7 +88,7 @@ export interface HFInspectResponse {
   estimation_basis: string;
   compatibility_level: "High" | "Partial" | "Basic" | "Unsupported";
   compatibility_reason: string;
-  capabilities: Record<string, CapabilityStatus>;
+  capabilities: Record<string, CapabilityStatus | VRAMEstimate>;
 }
 
 export interface CuratedModel {

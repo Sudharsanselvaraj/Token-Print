@@ -5,6 +5,11 @@ import type {
   PatchResponse,
   Trace,
 } from "./types";
+import {
+  clientInspectHFModel,
+  clientSearchHFModels,
+  CURATED_MODELS as CLIENT_CURATED,
+} from "./hfHub";
 
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -288,33 +293,45 @@ export async function patchAnalyze(
 // --------------------------------------------------------------------------- //
 // Hugging Face Discovery & Capability Inspection
 // --------------------------------------------------------------------------- //
+//
+// The frontend is a static export (GitHub Pages) with no resident backend, so
+// every /api/hf/* call below prefers the Python backend when reachable and
+// otherwise falls back to direct client-side Hugging Face Hub calls, which
+// huggingface.co serves with permissive CORS.
 
 export async function fetchHFCurated(): Promise<{ models: any[] }> {
-  const res = await fetch(`${API_URL}/api/hf/curated`);
-  if (!res.ok) return { models: [] };
-  return res.json();
+  try {
+    const res = await fetch(`${API_URL}/api/hf/curated`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.models && Array.isArray(data.models)) return data;
+    }
+  } catch {
+    // Backend unreachable — fall back to the bundled curated list below.
+  }
+  return { models: CLIENT_CURATED };
 }
 
 export async function searchHFModels(query: string, limit = 10): Promise<any> {
-  const url = `${API_URL}/api/hf/search?query=${encodeURIComponent(query)}&limit=${limit}`;
-  const res = await fetch(url);
-  if (!res.ok) return { query, limit, models: [] };
-  return res.json();
+  try {
+    const url = `${API_URL}/api/hf/search?query=${encodeURIComponent(query)}&limit=${limit}`;
+    const res = await fetch(url);
+    if (res.ok) return res.json();
+  } catch {
+    // Backend unreachable — fall back to direct Hub search below.
+  }
+  const models = await clientSearchHFModels(query, limit);
+  return { query, limit, models };
 }
 
 export async function inspectHFModel(modelId: string): Promise<any> {
-  const url = `${API_URL}/api/hf/inspect?model_id=${encodeURIComponent(modelId)}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    let msg = `HTTP error ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body?.detail) msg = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail);
-    } catch {
-      /* fallback */
-    }
-    throw new Error(msg);
+  try {
+    const url = `${API_URL}/api/hf/inspect?model_id=${encodeURIComponent(modelId)}`;
+    const res = await fetch(url);
+    if (res.ok) return res.json();
+  } catch {
+    // Backend unreachable — fall back to direct Hub inspection below.
   }
-  return res.json();
+  return clientInspectHFModel(modelId);
 }
 

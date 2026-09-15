@@ -14,11 +14,11 @@ models:
       logit_lens: true
       ablation: true
 
-  - id: meta-llama/Llama-3.2-1B
+  - id: TinyLlama/TinyLlama-1.1B-Chat-v1.0
     family: llama
     recommended: true
-    minimum_memory_gb: 4.0
-    description: Next-gen small Llama architecture model.
+    minimum_memory_gb: 2.0
+    description: Open 1.1B Llama architecture model, small enough for local real-time debugging.
     capabilities_preview:
       attention: true
       hidden_states: true
@@ -36,11 +36,11 @@ models:
       logit_lens: true
       ablation: true
 
-  - id: google/gemma-2-2b
-    family: gemma
+  - id: microsoft/phi-2
+    family: phi
     recommended: true
     minimum_memory_gb: 6.0
-    description: Lightweight open model from Google.
+    description: Lightweight open 2.7B transformer from Microsoft.
     capabilities_preview:
       attention: true
       hidden_states: true
