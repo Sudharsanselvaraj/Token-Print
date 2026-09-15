@@ -447,17 +447,36 @@ def hf_inspect(model_id: str) -> HFInspectResponse:
         # 1. Fetch commit revision SHA metadata
         meta_url = "https://huggingface.co/api/models/" + urllib.parse.quote(model_id, safe="/")
         revision = "main"
-        with safe_urlopen(meta_url) as resp:
-            if resp.status == 200:
-                meta_json = json.loads(resp.read(1 << 20).decode("utf-8"))
-                revision = meta_json.get("sha") or meta_json.get("revision") or "main"
+        try:
+            with safe_urlopen(meta_url) as resp:
+                if resp.status == 200:
+                    meta_json = json.loads(resp.read(1 << 20).decode("utf-8"))
+                    revision = meta_json.get("sha") or meta_json.get("revision") or "main"
+        except urllib.error.HTTPError as meta_err:
+            if meta_err.code in (401, 403):
+                _hf_inspect_cache[model_id] = (now, None)  # type: ignore[assignment]  # negative cache
+                raise HTTPException(status_code=401, detail=f"Model '{model_id}' is gated or private.") from meta_err
+            if meta_err.code == 404:
+                _hf_inspect_cache[model_id] = (now, None)  # type: ignore[assignment]
+                raise HTTPException(status_code=404, detail=f"Model '{model_id}' not found on Hugging Face Hub.") from meta_err
+            # Other HTTP errors: fall through to the generic handler below.
 
         # 2. Fetch config.json
         config_url = "https://huggingface.co/" + urllib.parse.quote(model_id, safe="/") + "/raw/main/config.json"
-        with safe_urlopen(config_url) as resp:
-            if resp.status != 200:
-                raise HTTPException(status_code=404, detail=f"Config for model '{model_id}' not found on Hugging Face Hub.")
-            config_json = json.loads(resp.read(1 << 20).decode("utf-8"))
+        try:
+            with safe_urlopen(config_url) as resp:
+                if resp.status != 200:
+                    _hf_inspect_cache[model_id] = (now, None)  # type: ignore[assignment]
+                    raise HTTPException(status_code=404, detail=f"Config for model '{model_id}' not found on Hugging Face Hub.")
+                config_json = json.loads(resp.read(1 << 20).decode("utf-8"))
+        except urllib.error.HTTPError as cfg_err:
+            if cfg_err.code in (401, 403):
+                _hf_inspect_cache[model_id] = (now, None)  # type: ignore[assignment]
+                raise HTTPException(status_code=401, detail=f"Model '{model_id}' is gated or private.") from cfg_err
+            if cfg_err.code == 404:
+                _hf_inspect_cache[model_id] = (now, None)  # type: ignore[assignment]
+                raise HTTPException(status_code=404, detail=f"Config for model '{model_id}' not found on Hugging Face Hub.") from cfg_err
+            raise
 
         # 3. Select deterministic adapter & compute capabilities
         adapter = select_model_adapter(config_json)
