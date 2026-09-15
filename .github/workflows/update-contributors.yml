@@ -16,14 +16,14 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.CONTRIBUTORS_TOKEN }}
           fetch-depth: 0
 
       - name: Regenerate contributor avatars
         id: update
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
