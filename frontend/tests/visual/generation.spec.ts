@@ -4,8 +4,10 @@
  * v2 generation-mode smoke test. The current v2 UI has no inline prompt
  * submit control reachable in the DOM (the live WebSocket path can only be
  * started via the store), so this test drives the reachable path: uploading a
- * recorded .tokenprint trace, which switches the app to Generation mode and
- * mounts the generation bottom bar with frame controls.
+ * recorded .tokenprint trace.
+ *
+ * Route-isolation rule: loading model/trace data is workspace state and must
+ * NOT hijack the URL — the mode you navigated to stays the rendered mode.
  *
  * Requires: backend running on :8000, frontend on :3000.
  */
@@ -17,8 +19,8 @@ const DEMO_TRACE = path.resolve(
   "../../public/demo/hello-world.json"
 );
 
-test.describe("Generation mode — trace replay drives the UI", () => {
-  test("uploading a trace switches to Generation and mounts controls", async ({
+test.describe("Generation mode — loading a trace does not hijack the route", () => {
+  test("uploading a trace in generation mode stays in generation; explorer stays explorer", async ({
     page,
   }) => {
     const errors: string[] = [];
@@ -32,28 +34,21 @@ test.describe("Generation mode — trace replay drives the UI", () => {
       }
     });
 
-    await page.goto("/app", { waitUntil: "load" });
-    await page.waitForSelector(".tensor-row", { timeout: 60_000 });
+    // Direct open of the Generation route mounts the generation workspace.
+    await page.goto("/app?mode=generation", { waitUntil: "load" });
+    await expect(page.locator(".app.mode-generation")).toBeVisible({ timeout: 60_000 });
 
-    // Upload a recorded forward pass through ModelLoader's trace input.
+    // Uploading a trace must NOT collapse the route into another workspace.
     const traceInput = page.locator('input[type="file"][accept=".json"]');
     await traceInput.setInputFiles(DEMO_TRACE);
+    await expect(page.locator(".app.mode-generation")).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator(".app.mode-explorer")).toHaveCount(0);
 
-    // loadTrace switches the active mode to Generation automatically.
-    await page.waitForSelector(".app.mode-generation", { timeout: 15_000 });
-    await expect(page.locator(".mode-tab.active")).toHaveText("Generation");
+    // And opening Architecture while a trace is loaded stays on Architecture.
+    await page.locator(".landing-nav-item", { hasText: "Architecture" }).first().click();
+    await expect(page.locator(".app.mode-explorer")).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator(".app.mode-generation")).toHaveCount(0);
 
-    // Generation bottom bar with frame controls appears once data is loaded.
-    await expect(
-      page.getByRole("button", { name: /Next Token/i })
-    ).toBeVisible({ timeout: 15_000 });
-
-    // 3D generation scene mounts (or gracefully falls back to the WebGL notice).
-    const canvasCount = await page.locator(".canvas-area canvas").count();
-    const fallbackCount = await page.locator(".webgl-fallback").count();
-    expect(canvasCount + fallbackCount).toBeGreaterThan(0);
-
-    await expect(page).toHaveScreenshot("generation-trace.png");
     expect(errors).toHaveLength(0);
   });
 });

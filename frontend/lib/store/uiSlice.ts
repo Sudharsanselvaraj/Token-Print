@@ -7,13 +7,11 @@ export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (set) =>
   setMode: (mode) => set({ mode }),
   navMode: "OVERVIEW",
   setNavMode: (navMode) =>
-    set((state) => {
-      const mode = state.mode === "debugger" ? "explorer" : state.mode;
+    set(() => {
       switch (navMode) {
         case "OVERVIEW":
           return {
             navMode,
-            mode,
             cameraMode: "overview",
             followMode: false,
             userOrbiting: false,
@@ -22,7 +20,6 @@ export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (set) =>
         case "LAYER_FOCUS":
           return {
             navMode,
-            mode,
             cameraMode: "layer",
             followMode: false,
             userOrbiting: false,
@@ -31,7 +28,6 @@ export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (set) =>
         case "OP_FOCUS":
           return {
             navMode,
-            mode,
             cameraMode: "operation",
             followMode: false,
             userOrbiting: false,
@@ -40,7 +36,6 @@ export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (set) =>
         case "FOLLOW":
           return {
             navMode,
-            mode,
             cameraMode: "token_follow",
             followMode: true,
             userOrbiting: false,
@@ -50,7 +45,6 @@ export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (set) =>
         default:
           return {
             navMode,
-            mode,
             userOrbiting: true,
             followMode: false,
             wtCamMode: "MANUAL",

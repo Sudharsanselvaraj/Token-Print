@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { loadTraceFile } from "../api";
 import { cueToken } from "../sound";
-import type { Mode, GenDone, GenMeta, TokenFrame, Trace } from "../types";
+import type { GenDone, GenMeta, TokenFrame, Trace } from "../types";
 import { wsGenerate } from "../ws";
 import { createArchitectureSlice } from "./architectureSlice";
 import { createArch3dSlice } from "./arch3dSlice";
@@ -37,7 +37,6 @@ export const useStore = create<StoreState>()((set, get, store) => ({
         archLoading: false,
         selectedTensor: null,
         hoveredTensor: null,
-        mode: "explorer",
       });
     } catch (error) {
       set({ archLoading: false, archError: error instanceof Error ? error.message : "GGUF parse failed" });
@@ -94,7 +93,9 @@ export const useStore = create<StoreState>()((set, get, store) => ({
     set({ genStatus: "idle", isPlaying: false, opPlaying: false });
   },
 
-  // File replay changes generation data, trace provenance, and the active UI mode.
+  // File replay changes generation data and trace provenance. It intentionally
+  // does NOT change the active route/mode: the URL decides which workspace is
+  // rendered.
   loadTrace: async (file) => {
     set({
       genStatus: "streaming",
@@ -108,7 +109,6 @@ export const useStore = create<StoreState>()((set, get, store) => ({
       opIndex: 0,
       opPlaying: false,
       autoStarted: false,
-      mode: "generation",
       debugSnapshots: {},
       debugSnapshotError: null,
     });
@@ -149,13 +149,11 @@ export const useGenerationStore = <T>(selector: (state: StoreState) => T) => use
 export const useTraceStore = <T>(selector: (state: StoreState) => T) => useStore(selector);
 export const useUiStore = <T>(selector: (state: StoreState) => T) => useStore(selector);
 
-/** Parse URL search parameters and restore the corresponding store state. */
+/** Parse URL search parameters and restore route-local transient state. */
 export function restoreFromUrl(): Partial<StoreState> {
   if (typeof window === "undefined") return {};
   const params = new URLSearchParams(window.location.search);
   const state: Partial<StoreState> = {};
-  const mode = params.get("mode") as Mode | null;
-  if (mode) state.mode = mode;
   const v = params.get("v");
   if (!v) return state;
   const tokenIndex = params.get("token");

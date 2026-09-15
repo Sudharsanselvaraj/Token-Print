@@ -60,3 +60,24 @@ test("UI slice clamps brightness and stops walkthrough autoplay on chapter selec
   assert.equal(store.getState().wtPlaying, false);
   assert.equal(store.getState().brightness, 0.3);
 });
+
+test("route isolation: navMode changes never mutate the active mode", () => {
+  const store = makeStore();
+  store.getState().setMode("debugger");
+  store.getState().setNavMode("FOLLOW");
+  assert.equal(store.getState().mode, "debugger");
+  store.getState().setNavMode("OVERVIEW");
+  assert.equal(store.getState().mode, "debugger");
+
+  store.getState().setMode("generation");
+  store.getState().setNavMode("MANUAL");
+  assert.equal(store.getState().mode, "generation");
+});
+
+test("route isolation: setMode is the only store-level mode writer", () => {
+  const store = makeStore();
+  store.getState().setMode("walkthrough");
+  assert.equal(store.getState().mode, "walkthrough");
+  store.getState().setMode("explorer");
+  assert.equal(store.getState().mode, "explorer");
+});

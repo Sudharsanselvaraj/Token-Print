@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useLayoutEffect, useState, useRef } from "react";
 import { useStore, restoreFromUrl } from "@/lib/store";
 import { useSearchParams } from "next/navigation";
-import type { Mode } from "@/lib/types";
 import { assetUrl } from "@/lib/assets";
+import { normalizeModeParam } from "@/lib/routeMode";
 import SceneLoader from "./SceneLoader";
 import PlaybackEngine from "./PlaybackEngine";
 import ModeSidebar from "./ui/ModeSidebar";
@@ -32,7 +32,6 @@ import { useKeyboard } from "@/lib/useKeyboard";
 export default function AppShell() {
   const loadArchitecture = useStore((s) => s.loadArchitecture);
   const arch = useStore((s) => s.arch);
-  const mode = useStore((s) => s.mode);
   const hovName = useStore((s) => s.hoveredTensor);
   const devMode = useStore((s) => s.devMode);
   const tileView = useStore((s) => s.tileView);
@@ -43,6 +42,20 @@ export default function AppShell() {
   const hfExplorerOpen = useStore((s) => s.hfExplorerOpen);
   const setHfExplorerOpen = useStore((s) => s.setHfExplorerOpen);
 
+  // The URL is the single source of truth for which workspace is rendered.
+  // The pathname/query determines the mode — never a global "activeMode" store.
+  const searchParams = useSearchParams();
+  const mode = normalizeModeParam(searchParams?.get("mode"));
+
+  // store.mode remains a read-only mirror so the many sub-components that
+  // still read it historically stay consistent. Self-heal any divergence from
+  // the URL BEFORE paint: legacy data actions must never be able to pick the
+  // rendered page (e.g. a loaded trace flipping the route to Generation).
+  const storeMode = useStore((s) => s.mode);
+  useLayoutEffect(() => {
+    if (storeMode !== mode) useStore.getState().setMode(mode);
+  }, [mode, storeMode]);
+
   // Responsive sidebar collapse state
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -51,25 +64,16 @@ export default function AppShell() {
 
   // Load the live Qwen model's architecture once on mount.
   useEffect(() => {
-    // Restore snapshot URL params first.
+    // Restore route-local transient params (token/op/chapter/embed) from the URL.
+    // The rendered mode itself is derived from the URL via `mode` above.
     const snapshot = restoreFromUrl();
-    if (snapshot.mode) useStore.getState().setMode(snapshot.mode);
     if (snapshot.playIndex !== undefined) useStore.getState().setPlayIndex(snapshot.playIndex);
     if (snapshot.opIndex !== undefined) useStore.getState().setOpIndex(snapshot.opIndex);
     if (snapshot.wtChapter !== undefined) useStore.getState().setWtChapter(snapshot.wtChapter);
+    if (snapshot.embedMode) useStore.getState().setEmbedMode(snapshot.embedMode);
     if (!arch) loadArchitecture();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Keep the store mode in sync with the URL while already mounted
-  // (e.g. switching modes from the global header while on /app).
-  const searchParams = useSearchParams();
-  const urlMode = searchParams?.get("mode");
-  useEffect(() => {
-    if (urlMode && urlMode !== mode) {
-      useStore.getState().setMode(urlMode as Mode);
-    }
-  }, [urlMode]);
 
   // Auto-load demo trace on first load when no backend is available.
   const demoLoaded = useRef(false);

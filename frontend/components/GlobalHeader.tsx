@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { assetUrl } from "@/lib/assets";
+import { normalizeModeParam } from "@/lib/routeMode";
 import { GithubIcon } from "./landing/GithubIcon";
 
 const APP_MODES: { href: string; label: string; mode: string }[] = [
@@ -27,7 +28,7 @@ function GlobalHeaderInner() {
   }, []);
 
   const isApp = pathname.startsWith("/app");
-  const activeMode = searchParams?.get("mode") ?? (isApp ? "explorer" : null);
+  const activeMode = isApp ? normalizeModeParam(searchParams?.get("mode")) : null;
   const docsActive = pathname.startsWith("/docs");
 
   const close = () => setOpen(false);
