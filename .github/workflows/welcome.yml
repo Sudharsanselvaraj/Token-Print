@@ -17,6 +17,6 @@ jobs:
     steps:
       - uses: actions/first-interaction@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: "Welcome to **TokenPrint**! 🎉 Thank you for opening your first issue. Please make sure to check out our [CONTRIBUTING.md](https://github.com/Sudharsanselvaraj/Token-Print/blob/main/CONTRIBUTING.md) for guidelines."
-          pr-message: "Welcome to **TokenPrint**! 🚀 Thank you for submitting your first pull request. Our maintainers and automated CI workflows will review it shortly. Be sure to check [CONTRIBUTING.md](https://github.com/Sudharsanselvaraj/Token-Print/blob/main/CONTRIBUTING.md)!"
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          issue_message: "Welcome to **TokenPrint**! 🎉 Thank you for opening your first issue. Please make sure to check out our [CONTRIBUTING.md](https://github.com/Sudharsanselvaraj/Token-Print/blob/main/CONTRIBUTING.md) for guidelines."
+          pr_message: "Welcome to **TokenPrint**! 🚀 Thank you for submitting your first pull request. Our maintainers and automated CI workflows will review it shortly. Be sure to check [CONTRIBUTING.md](https://github.com/Sudharsanselvaraj/Token-Print/blob/main/CONTRIBUTING.md)!"
