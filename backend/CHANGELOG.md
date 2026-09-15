@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-backend-v0.2.0...token-print-backend-v0.3.0) (2026-09-15)
+
+
+### Features
+
+* **backend:** CORS for deployed origins + Oracle ARM bootstrap script ([94b82cd](https://github.com/Sudharsanselvaraj/Token-Print/commit/94b82cd32b33377ee42eeae3ceb01a814fc91983))
+* **backend:** implement KV cache state machine for speculative decoding (ENG-04) ([#268](https://github.com/Sudharsanselvaraj/Token-Print/issues/268)) ([5d61e31](https://github.com/Sudharsanselvaraj/Token-Print/commit/5d61e3162e6687ede2eaa4194239ea6041c54403))
+* **generation:** workspace redesign + real sampling decode + custom-domain deploy ([bdaca41](https://github.com/Sudharsanselvaraj/Token-Print/commit/bdaca41085d51fc53f322dc53e2b96f39f294bd8))
+
+
+### Bug Fixes
+
+* **backend:** repair corrupt encoding of requirements-gguf.txt ([#229](https://github.com/Sudharsanselvaraj/Token-Print/issues/229)) ([d0be661](https://github.com/Sudharsanselvaraj/Token-Print/commit/d0be66177c2cf616108a87bab5c87c3fb9fbf796)), closes [#187](https://github.com/Sudharsanselvaraj/Token-Print/issues/187)
+* **backend:** surface GGUF_ENGINE_AVAILABLE flag and metadata-only mode ([#228](https://github.com/Sudharsanselvaraj/Token-Print/issues/228)) ([3454d06](https://github.com/Sudharsanselvaraj/Token-Print/commit/3454d0615b68bc04fa3b810e6bf78a6234c56411)), closes [#193](https://github.com/Sudharsanselvaraj/Token-Print/issues/193)
+* **ci:** fix nightly verification dependencies and test suite mocking ([#244](https://github.com/Sudharsanselvaraj/Token-Print/issues/244)) ([2edbf98](https://github.com/Sudharsanselvaraj/Token-Print/commit/2edbf988528e05c64359ffcf7eebb8dcc6596306))
+* enable README contributor auto-update ([#221](https://github.com/Sudharsanselvaraj/Token-Print/issues/221)) ([237a48e](https://github.com/Sudharsanselvaraj/Token-Print/commit/237a48e7ba952ccf2f40c538436ba268be54766d))
+* route isolation + HF Model Explorer client-side fallback ([#269](https://github.com/Sudharsanselvaraj/Token-Print/issues/269)) ([f69e2c9](https://github.com/Sudharsanselvaraj/Token-Print/commit/f69e2c9ede97dbe7e72fdb19b40c85a5e1a08618))
+
 ## [0.2.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-backend-v0.1.0...token-print-backend-v0.2.0) (2026-09-13)
 
 

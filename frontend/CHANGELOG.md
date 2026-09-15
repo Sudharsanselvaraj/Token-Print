@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.3.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-frontend-v0.2.0...token-print-frontend-v0.3.0) (2026-09-15)
+
+
+### Features
+
+* **camera:** unify 3D camera control bar across Architecture, Generation, Walkthrough, and Debugger modes ([a8b2dc3](https://github.com/Sudharsanselvaraj/Token-Print/commit/a8b2dc34d1f1271b6234ef0fe0e90fc312be8575))
+* **frontend:** add Vitest unit test suite for formulas, format, and playback (ENG-07) ([fc732f6](https://github.com/Sudharsanselvaraj/Token-Print/commit/fc732f61db2e5fb85a98aa5a0bb81d5627c0e42c))
+* **frontend:** build interactive Provenance Inspector panel (DESIGN-05) ([#257](https://github.com/Sudharsanselvaraj/Token-Print/issues/257)) ([d3c4558](https://github.com/Sudharsanselvaraj/Token-Print/commit/d3c4558eb879e7673350916664d5e3d568d687c7))
+* **frontend:** separate real timing from proxy timing in UI (ENG-15) ([#227](https://github.com/Sudharsanselvaraj/Token-Print/issues/227)) ([08c24ef](https://github.com/Sudharsanselvaraj/Token-Print/commit/08c24eff53bc41b70407e6637cbc831aec9ce7df))
+* **frontend:** split Zustand store into modular domain slices and hooks (ENG-13) ([77371e4](https://github.com/Sudharsanselvaraj/Token-Print/commit/77371e40008ba854588daa5b9db8781c2a91e09d))
+* **generation:** workspace redesign + real sampling decode + custom-domain deploy ([bdaca41](https://github.com/Sudharsanselvaraj/Token-Print/commit/bdaca41085d51fc53f322dc53e2b96f39f294bd8))
+* **responsive:** gate TokenPrint 3D interactive workspace behind desktop-only check ([1cf42bf](https://github.com/Sudharsanselvaraj/Token-Print/commit/1cf42bf2150353c9cb45db21fbcc11728b55f200))
+
+
+### Bug Fixes
+
+* **camera:** bring default Architecture mode camera closer for clear 3D model visibility ([66de42d](https://github.com/Sudharsanselvaraj/Token-Print/commit/66de42d3da69bd08389bcf8477779c7e76f6961b))
+* **ci:** improve backend readiness check and Playwright timeout for visual regression suite ([c05ca40](https://github.com/Sudharsanselvaraj/Token-Print/commit/c05ca4064ce61de0bf7f8a033125a57b6d2f600b))
+* **ci:** improve backend readiness check and Playwright timeout for visual regression suite ([6c42b95](https://github.com/Sudharsanselvaraj/Token-Print/commit/6c42b9582bf1a2119c0b0e892cde336b78f9df46))
+* **ci:** resolve No module named 'app' in nightly verify scripts ([#264](https://github.com/Sudharsanselvaraj/Token-Print/issues/264)) ([e2a6b38](https://github.com/Sudharsanselvaraj/Token-Print/commit/e2a6b38a6fa5b619fb3d94ff1d7106f0715d258f))
+* **deps:** pin react/react-dom to 19.2.8 (R3F peer &lt;19.3) ([#265](https://github.com/Sudharsanselvaraj/Token-Print/issues/265)) ([c862b7d](https://github.com/Sudharsanselvaraj/Token-Print/commit/c862b7d5eb6d638e04803b2eecc466c56a99187e))
+* **docs:** add Research & Theoretical Background documentation page for /docs/research ([d045220](https://github.com/Sudharsanselvaraj/Token-Print/commit/d0452204f8245a8f2d0818446e71448fb9b9c32a))
+* enable README contributor auto-update ([#221](https://github.com/Sudharsanselvaraj/Token-Print/issues/221)) ([237a48e](https://github.com/Sudharsanselvaraj/Token-Print/commit/237a48e7ba952ccf2f40c538436ba268be54766d))
+* **frontend:** basePath-aware asset URLs for logos, backgrounds, screenshots, and demo trace ([#212](https://github.com/Sudharsanselvaraj/Token-Print/issues/212)) ([5000906](https://github.com/Sudharsanselvaraj/Token-Print/commit/50009063f0938e4de7ab6c041e537ebe74f3f431))
+* **gallery:** fix HTTP 404 in Community Trace Gallery and redesign to TokenPrint theme ([de08390](https://github.com/Sudharsanselvaraj/Token-Print/commit/de08390a7285789bbb2cf3edd0a81e4d4df3f23f))
+* **generation:** bounds-based camera framing (60% vertical fill) + unified TokenPrint control bar ([22eb2de](https://github.com/Sudharsanselvaraj/Token-Print/commit/22eb2de05964874f220ebe2309f6e7e67aa0ce09))
+* **generation:** replace Math.random seed with deterministic pulse offset ([76d6460](https://github.com/Sudharsanselvaraj/Token-Print/commit/76d64601f511f8254b21373b313ecb9880fb15f3))
+* improve empty and unsupported panel states ([#215](https://github.com/Sudharsanselvaraj/Token-Print/issues/215)) ([fe1752a](https://github.com/Sudharsanselvaraj/Token-Print/commit/fe1752a19dce9b98f519497ea207dabcb42135dc))
+* **landing:** replace YouTube with Gmail and update community links for X and LinkedIn ([3c91b67](https://github.com/Sudharsanselvaraj/Token-Print/commit/3c91b67b10623b1b7531a9766ef0bb2f753f5e73))
+* route isolation + HF Model Explorer client-side fallback ([#269](https://github.com/Sudharsanselvaraj/Token-Print/issues/269)) ([f69e2c9](https://github.com/Sudharsanselvaraj/Token-Print/commit/f69e2c9ede97dbe7e72fdb19b40c85a5e1a08618))
+* **scene:** seed pointcloud layout jitter for deterministic visuals ([#100](https://github.com/Sudharsanselvaraj/Token-Print/issues/100)) ([3a8c4ad](https://github.com/Sudharsanselvaraj/Token-Print/commit/3a8c4ad8878deceac7651695b68e2991c497997b))
+* **ui:** remove Share and Report buttons from sidebar ([97317bc](https://github.com/Sudharsanselvaraj/Token-Print/commit/97317bcea28fc43d730acd4a3b88e4827e11eaee))
+
 ## [0.2.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-frontend-v0.1.0...token-print-frontend-v0.2.0) (2026-09-13)
 
 
