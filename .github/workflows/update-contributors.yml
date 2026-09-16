@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: update-contributors
@@ -64,34 +65,43 @@ jobs:
 
             fs.writeFileSync('README.md', next);
             console.log('README.md updated with fresh contributor avatars.');
+            core.setOutput('changed', 'true');
 
-      - name: Push updated avatars straight to main
+      - name: Open PR with updated avatars
+        if: steps.update.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.CONTRIBUTORS_TOKEN }}
         run: |
-          if [ -z "$(git status --porcelain README.md)" ]; then
-            echo "No README changes; nothing to do."
-            exit 0
-          fi
-
-          # Author the commit as the repository owner so contributor updates land
-          # under their profile (pushing is already done with the owner's PAT).
+          # Author the commit as the repository owner so contributor updates
+          # land under their profile.
           git config user.name "Sudharsanselvaraj"
           git config user.email "178299750+Sudharsanselvaraj@users.noreply.github.com"
           git add README.md
+          if git diff --cached --quiet; then
+            echo "No README changes; nothing to do."
+            exit 0
+          fi
           git commit -m "chore: auto-update contributors in README"
 
-          # The checkout above used CONTRIBUTORS_TOKEN (a classic PAT owned by the
-          # repository owner), so this push authenticates as the owner. main's branch
-          # protection has enforce_admins disabled, so the owner's push bypasses the
-          # required status checks and lands directly. Rebase-retry to ride over any
-          # merge that races in between.
-          for attempt in 1 2 3; do
-            if git push origin main --quiet; then
-              echo "Pushed README update to main."
-              exit 0
-            fi
-            echo "Push attempt $attempt rejected; rebasing onto origin/main..."
-            git pull --rebase --autostash origin main --quiet
-            sleep 3
-          done
-          echo "Could not push after 3 attempts." >&2
-          exit 1
+          # main is a protected branch (PR required, enforce_admins on), so a
+          # direct owner push is rejected. Land the update through a PR opened
+          # from a dedicated branch and let auto-merge ride it in once the
+          # required status checks pass.
+          BRANCH="ci/update-contributors"
+          git push --quiet --force origin "HEAD:$BRANCH"
+          echo "Pushed README update to $BRANCH."
+
+          PR_NUMBER="$(
+            gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty'
+          )"
+          if [ -z "$PR_NUMBER" ]; then
+            gh pr create --base main --head "$BRANCH" \
+              --title "chore: auto-update contributors in README" \
+              --body "Refreshes the contributor avatar list. Automated by the contributors workflow."
+            echo "Opened a new PR."
+          else
+            echo "Reusing existing PR #$PR_NUMBER."
+          fi
+
+          gh pr merge --auto --squash --delete-branch "$BRANCH"
+          echo "Enabled auto-merge; the PR will land once the required checks pass."

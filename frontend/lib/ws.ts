@@ -20,6 +20,10 @@ export interface GenOptions {
   needle?: string;
   // Issue #85: server-side .gguf file name to run quantized llama.cpp inference.
   gguf?: string;
+  // Phase 5.2a (#311): which producer runs this generation. "ws" talks to the
+  // live backend WebSocket (default); "local" routes through the in-browser
+  // engine seam (5.2b/5.2c). Not serialized to the server.
+  source?: "ws" | "local";
 }
 
 /**

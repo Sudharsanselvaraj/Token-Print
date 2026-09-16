@@ -5,7 +5,6 @@ import { useStore } from "@/lib/store";
 import { GraphViewMode, Token } from "@/lib/types";
 import ModelLoader from "./ModelLoader";
 import GgufControls from "./GgufControls";
-import { HFModelPicker } from "./HFModelPicker";
 import ExplorerControls from "./ExplorerControls";
 import TensorList from "./TensorList";
 import ModelSummaryCard from "./ModelSummaryCard";
@@ -228,7 +227,30 @@ export default function LeftSidebar({ collapsed, onToggleCollapse }: LeftSidebar
             {sourceTab === "live" && <ModelLoader />}
             {sourceTab === "trace" && <ModelLoader />}
             {sourceTab === "gguf" && <GgufControls />}
-            {sourceTab === "hf" && <HFModelPicker />}
+            {sourceTab === "hf" && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  padding: "10px",
+                  border: `1px solid ${TOKENS.border}`,
+                  borderRadius: TOKENS.radiusSm,
+                  background: TOKENS.surface,
+                }}
+              >
+                <span style={{ fontSize: "11px", color: TOKENS.textSecondary, fontFamily: TOKENS.fontSans }}>
+                  Search & inspect models from the Hugging Face Hub, then load the architecture locally.
+                </span>
+                <Button
+                  variant="primary"
+                  onClick={() => useStore.getState().setHfExplorerOpen(true)}
+                  style={{ fontSize: "11px" }}
+                >
+                  Open Model Explorer
+                </Button>
+              </div>
+            )}
           </div>
         </Section>
 

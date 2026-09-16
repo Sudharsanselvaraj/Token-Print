@@ -1,16 +1,19 @@
 import { create } from "zustand";
 import { loadTraceFile } from "../api";
-import { cueToken } from "../sound";
-import type { GenDone, GenMeta, TokenFrame, Trace } from "../types";
-import { wsGenerate } from "../ws";
+import type { GenerationSource } from "../generation";
+import { localSource, wsSource } from "../generation";
+import type { GenerationHandle } from "../generation";
+import type { GenDone, TokenFrame, Trace } from "../types";
+import type { GenOptions } from "../ws";
 import { createArchitectureSlice } from "./architectureSlice";
 import { createArch3dSlice } from "./arch3dSlice";
+import { createFrameSink } from "./generationSink";
 import { createGenerationSlice } from "./generationSlice";
 import { createTraceSlice } from "./traceSlice";
 import type { StoreState } from "./types";
 import { createUISlice } from "./uiSlice";
 
-let genSocket: WebSocket | null = null;
+let genHandle: GenerationHandle | null = null;
 
 /**
  * One Zustand store composed from domain slices. Middleware belongs here if it
@@ -45,7 +48,7 @@ export const useStore = create<StoreState>()((set, get, store) => ({
 
   // A new live generation resets playback and trace-debug state together.
   startGeneration: (prompt, options) => {
-    genSocket?.close();
+    genHandle?.close();
     set({
       genStatus: "streaming",
       genMeta: null,
@@ -61,42 +64,33 @@ export const useStore = create<StoreState>()((set, get, store) => ({
       debugSnapshots: {},
       debugSnapshotError: null,
     });
-    genSocket = wsGenerate(
-      prompt,
-      { maxNewTokens: 40, topK: 10, trace: true, recordTrace: true, gguf: get().activeGguf ?? undefined, ...options },
-      {
-        onFrame: (raw) => {
-          const frame = raw as { type: string } & Record<string, unknown>;
-          if (frame.type === "meta") {
-            set({ genMeta: raw as unknown as GenMeta });
-          } else if (frame.type === "token") {
-            set((state) => {
-              const genFrames = [...state.genFrames, raw as unknown as TokenFrame];
-              cueToken(genFrames.length);
-              return { genFrames, playIndex: state.autoStarted ? state.playIndex : genFrames.length - 1 };
-            });
-          } else if (frame.type === "done") {
-            set({ genStatus: "done", genText: String(frame.generated_text ?? ""), genDone: raw as unknown as GenDone });
-          } else if (frame.type === "error") {
-            set({ genStatus: "error", genError: String(frame.message ?? "error") });
-          }
-        },
-        onError: () => set((state) => state.genStatus === "streaming" ? { genStatus: "error", genError: "connection error" } : {}),
-      },
-    );
+    const opts: GenOptions = {
+      maxNewTokens: 40,
+      topK: 10,
+      trace: true,
+      recordTrace: true,
+      gguf: get().activeGguf ?? undefined,
+      ...options,
+    };
+    // Phase 5.2a (#311): the store consumes a typed FrameSink; the producer is
+    // injectable (live WebSocket today, in-browser engine in 5.2b/5.2c).
+    const sink = createFrameSink(set);
+    const source: GenerationSource = opts.source === "local" ? localSource : wsSource;
+    genHandle = source(prompt, opts, sink);
   },
 
-  // Stops an in-flight streaming generation (closes the socket, keeps frames).
+  // Stops an in-flight streaming generation (closes the source, keeps frames).
   stopGeneration: () => {
-    genSocket?.close();
-    genSocket = null;
+    genHandle?.close();
+    genHandle = null;
     set({ genStatus: "idle", isPlaying: false, opPlaying: false });
   },
 
   // File replay changes generation data and trace provenance. It intentionally
   // does NOT change the active route/mode: the URL decides which workspace is
-  // rendered.
-  loadTrace: async (file) => {
+  // rendered. Accepts either a File (parsed + validated via loadTraceFile) or an
+  // already-parsed Trace object (auto-demo, replay, cross-token jumps).
+  loadTrace: async (file: File | Trace) => {
     set({
       genStatus: "streaming",
       genMeta: null,
@@ -113,7 +107,7 @@ export const useStore = create<StoreState>()((set, get, store) => ({
       debugSnapshotError: null,
     });
     try {
-      const trace: Trace = await loadTraceFile(file);
+      const trace: Trace = file instanceof File ? await loadTraceFile(file) : file;
       const genFrames = trace.frames ?? [];
       set({
         genMeta: trace.meta,

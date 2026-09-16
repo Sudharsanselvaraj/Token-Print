@@ -1,8 +1,7 @@
 import unittest
 
 import torch
-
-from backend.app.model import GenerationState
+from app.model import GenerationState
 
 
 class DummyCache:

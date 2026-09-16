@@ -15,10 +15,10 @@ export const createArchitectureSlice: StateCreator<StoreState, [], [], Architect
   archFile: null,
   archLoading: false,
   archError: null,
-  loadArchitecture: async () => {
+  loadArchitecture: async (modelId?: string) => {
     set({ archLoading: true, archError: null });
     try {
-      const raw = await fetchArchitecture();
+      const raw = await fetchArchitecture(modelId);
       set({ arch: { ...raw, tensors: annotateTensors(raw.tensors) }, archLoading: false });
     } catch (e) {
       set({ archLoading: false, archError: e instanceof Error ? e.message : "Failed to load architecture" });
@@ -144,7 +144,7 @@ export const createArchitectureSlice: StateCreator<StoreState, [], [], Architect
     set({ loading: true, error: null });
     try {
       const data = await analyzeSentence(sentence);
-      set((state) => ({ data, loading: false, modelMode: (data.mode as ArchitectureSlice["modelMode"]) || state.modelMode, selectedLayer: Math.min(state.selectedLayer, data.num_layers - 1), selectedHead: Math.min(state.selectedHead, data.num_heads - 1), embeddingLayer: Math.min(state.embeddingLayer, data.num_layers) }));
+      set((state) => ({ data, loading: false, modelMode: (data.mode as ArchitectureSlice["modelMode"]) || state.modelMode, selectedLayer: Math.max(0, Math.min(state.selectedLayer, data.num_layers - 1)), selectedHead: Math.max(0, Math.min(state.selectedHead, data.num_heads - 1)), embeddingLayer: Math.min(state.embeddingLayer, data.num_layers) }));
     } catch (e) {
       set({ loading: false, error: e instanceof Error ? e.message : "Request failed" });
     }
@@ -153,7 +153,7 @@ export const createArchitectureSlice: StateCreator<StoreState, [], [], Architect
     set({ loading: true, error: null });
     try {
       const data = await analyzeImage(image);
-      set((state) => ({ data, loading: false, modelMode: (data.mode as ArchitectureSlice["modelMode"]) || state.modelMode, selectedLayer: Math.min(state.selectedLayer, data.num_layers - 1), selectedHead: Math.min(state.selectedHead, data.num_heads - 1), embeddingLayer: Math.min(state.embeddingLayer, data.num_layers) }));
+      set((state) => ({ data, loading: false, modelMode: (data.mode as ArchitectureSlice["modelMode"]) || state.modelMode, selectedLayer: Math.max(0, Math.min(state.selectedLayer, data.num_layers - 1)), selectedHead: Math.max(0, Math.min(state.selectedHead, data.num_heads - 1)), embeddingLayer: Math.min(state.embeddingLayer, data.num_layers) }));
     } catch (e) {
       set({ loading: false, error: e instanceof Error ? e.message : "Request failed" });
     }
