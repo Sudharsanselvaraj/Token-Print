@@ -87,6 +87,8 @@ export default function GenerationControls() {
   const [maxTokens, setMaxTokens] = useState(40);
   const [windowSize, setWindowSize] = useState(512);
   const [draftGamma, setDraftGamma] = useState(4);
+  const [needleEnabled, setNeedleEnabled] = useState(false);
+  const [needle, setNeedle] = useState("");
 
   const start = useStore((s) => s.startGeneration);
   const stop = useStore((s) => s.stopGeneration);
@@ -113,6 +115,7 @@ export default function GenerationControls() {
       maxNewTokens: maxTokens,
       windowSize,
       draftGamma,
+      needle: needleEnabled && needle.trim() ? needle.trim() : undefined,
     });
   };
 
@@ -322,10 +325,53 @@ export default function GenerationControls() {
               />
             </div>
           )}
+
+          {/* Needle-in-haystack: long-context recall probe independent of decode mode. */}
+          <label
+            style={{
+              display: "flex",
+              gap: "6px",
+              alignItems: "center",
+              fontFamily: TOKENS.fontMono,
+              fontSize: "10px",
+              color: TOKENS.textSecondary,
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={needleEnabled}
+              disabled={streaming}
+              onChange={(e) => setNeedleEnabled(e.target.checked)}
+            />
+            Needle (long-context recall probe)
+          </label>
+          {needleEnabled && (
+            <input
+              type="text"
+              value={needle}
+              disabled={streaming}
+              onChange={(e) => setNeedle(e.target.value)}
+              placeholder="Memory fact to test recall of…"
+              spellCheck={false}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                background: TOKENS.surfaceFlat,
+                border: `1px solid ${TOKENS.border}`,
+                borderRadius: TOKENS.radiusSm,
+                color: TOKENS.textPrimary,
+                fontFamily: TOKENS.fontMono,
+                fontSize: "10px",
+                padding: "4px 6px",
+              }}
+            />
+          )}
           <div style={{ fontFamily: TOKENS.fontMono, fontSize: "8.5px", lineHeight: 1.4 }}>
               Sliding-window trims the KV cache to the last N positions each step.
               Speculative drafts candidates in one batched verify pass and accepts
-              the matching prefix. PyTorch engine only.
+              the matching prefix. The needle prefaces a [MEMORY] fact the model
+              must recall across context. PyTorch engine only.
             </div>
         </div>
       </details>
