@@ -116,7 +116,9 @@ export default function ContributorsSection() {
               width: 12,
               height: 12,
               borderRadius: "50%",
-              border: "2px solid #3c3c42",
+              borderWidth: "2px",
+              borderStyle: "solid",
+              borderColor: "#3c3c42",
               borderTopColor: "#a1a1aa",
               animation: "spin 0.7s linear infinite",
             }}
