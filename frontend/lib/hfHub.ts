@@ -359,8 +359,8 @@ export async function clientInspectHFModel(modelId: string): Promise<HFInspectRe
     );
   }
 
-  // 2. Fetch config.json raw.
-  const configRes = await fetch(`${HF_HUB_BASE}/${encId}/raw/main/config.json`, JSON_OPTS);
+  // 2. Fetch config.json raw at the repo's resolved revision.
+  const configRes = await fetch(`${HF_HUB_BASE}/${encId}/raw/${encodeURIComponent(revision)}/config.json`, JSON_OPTS);
   if (!configRes.ok) {
     // HF returns HTTP 401 for BOTH gated repos and nonexistent ids on /raw
     // files (404 for non-existent), so use the meta step to phrase it right.

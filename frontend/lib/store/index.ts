@@ -95,8 +95,9 @@ export const useStore = create<StoreState>()((set, get, store) => ({
 
   // File replay changes generation data and trace provenance. It intentionally
   // does NOT change the active route/mode: the URL decides which workspace is
-  // rendered.
-  loadTrace: async (file) => {
+  // rendered. Accepts either a File (parsed + validated via loadTraceFile) or an
+  // already-parsed Trace object (auto-demo, replay, cross-token jumps).
+  loadTrace: async (file: File | Trace) => {
     set({
       genStatus: "streaming",
       genMeta: null,
@@ -113,7 +114,7 @@ export const useStore = create<StoreState>()((set, get, store) => ({
       debugSnapshotError: null,
     });
     try {
-      const trace: Trace = await loadTraceFile(file);
+      const trace: Trace = file instanceof File ? await loadTraceFile(file) : file;
       const genFrames = trace.frames ?? [];
       set({
         genMeta: trace.meta,

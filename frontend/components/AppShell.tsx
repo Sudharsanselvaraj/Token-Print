@@ -202,7 +202,7 @@ export default function AppShell() {
         isOpen={hfExplorerOpen}
         onClose={() => setHfExplorerOpen(false)}
         onSelectModel={(modelId) => {
-          useStore.getState().loadArchitecture();
+          useStore.getState().loadArchitecture(modelId);
           setHfExplorerOpen(false);
         }}
       />

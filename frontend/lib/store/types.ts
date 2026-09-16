@@ -11,6 +11,7 @@ import type {
   HotSpot,
   Mode,
   TokenFrame,
+  Trace,
 } from "../types";
 import type { TraceAnnotation } from "../types";
 
@@ -24,7 +25,7 @@ export interface ArchitectureSlice {
   archFile: File | null;
   archLoading: boolean;
   archError: string | null;
-  loadArchitecture: () => Promise<void>;
+  loadArchitecture: (modelId?: string) => Promise<void>;
   setArch: (a: ArchitectureData | null) => void;
   ggufs: GgufItem[];
   ggufMeta: { name?: string; architecture?: string; quant?: string; n_ctx?: number } | null;
@@ -222,7 +223,7 @@ export interface OrchestratorActions {
   loadGgufFile: (file: File) => Promise<void>;
   startGeneration: (prompt: string, opts?: GenOptions) => void;
   stopGeneration: () => void;
-  loadTrace: (file: File) => Promise<void>;
+  loadTrace: (file: File | Trace) => Promise<void>;
   classroomStep: () => void;
 }
 
