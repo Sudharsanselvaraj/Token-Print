@@ -324,47 +324,29 @@ function effectiveFromModel(caps: ComputedCapabilities): {
 
 export async function clientInspectHFModel(modelId: string): Promise<HFInspectResponse> {
   const id = modelId.trim();
-
-  // HF returns HTTP 401 for BOTH gated repos and nonexistent ids when you fetch
-  // /raw files, so the status alone can't distinguish them. Explain the failure
-  // using the fetched config.json response body rather than the status alone.
-  async function describeHubFetchFailure(configRes: Response, gatedFlag: string): Promise<string> {
-    let body = "";
-    try {
-      body = await configRes.text();
-    } catch {
-      // Body read is best-effort; the hub CORS policy may hide it.
-    }
-    const restricted = /restricted|access[^.\n]*gated|log\s*in|authenticated/i.test(body);
-    if (gatedFlag && gatedFlag !== "false") {
-      return `Model '${id}' is gated (${gatedFlag}) — its files require an approved Hugging Face access token, so capabilities cannot be inspected anonymously.`;
-    }
-    if (configRes.status === 401 || configRes.status === 403) {
-      if (restricted) {
-        return `Model '${id}' files are access-restricted on Hugging Face (HTTP ${configRes.status}). Log in and accept the gated-repo terms, then retry with an access token.`;
-      }
-      return `Model '${id}' not found on Hugging Face Hub (HTTP ${configRes.status}). Check the id for typos.`;
-    }
-    if (configRes.status === 404) {
-      return `Model '${id}' not found on Hugging Face Hub (HTTP 404). Check the id for typos.`;
-    }
-    return `Config for model '${id}' could not be fetched from Hugging Face Hub (HTTP ${configRes.status}).`;
-  }
-
   if (!MODEL_ID_RE.test(id)) {
     throw new Error("Invalid Hugging Face model ID format.");
   }
   const encId = id.split("/").map(encodeURIComponent).join("/");
 
-  // 1. Determine revision from the repo metadata endpoint.
+  // ./api/models/{id} metadata is the source of truth for whether the repo
+  // actually exists, whether it is gated, and what files it contains.
+  let metaFound = false;
   let revision = "main";
   let gated = "";
+  let isGguf = false;
   try {
     const metaRes = await fetch(`${HF_HUB_BASE}/api/models/${encId}`, JSON_OPTS);
     if (metaRes.ok) {
       const meta = await metaRes.json();
+      metaFound = true;
       revision = String(meta.sha ?? meta.revision ?? "main");
       gated = String(meta.gated ?? "").trim();
+      isGguf =
+        (meta.gguf && typeof meta.gguf === "object" && Object.keys(meta.gguf).length > 0) ||
+        (Array.isArray(meta.siblings) ? meta.siblings : []).some(
+          (s: { rfilename?: string }) => typeof s?.rfilename === "string" && s.rfilename.toLowerCase().endsWith(".gguf"),
+        );
     }
   } catch {
     // Rev meta is best-effort; config.json below is authoritative.
@@ -380,7 +362,32 @@ export async function clientInspectHFModel(modelId: string): Promise<HFInspectRe
   // 2. Fetch config.json raw.
   const configRes = await fetch(`${HF_HUB_BASE}/${encId}/raw/main/config.json`, JSON_OPTS);
   if (!configRes.ok) {
-    throw new Error(await describeHubFetchFailure(configRes, gated));
+    // HF returns HTTP 401 for BOTH gated repos and nonexistent ids on /raw
+    // files (404 for non-existent), so use the meta step to phrase it right.
+    if (!metaFound) {
+      throw new Error(
+        `Model '${id}' not found on Hugging Face Hub (HTTP ${configRes.status}). Check the id for typos.`,
+      );
+    }
+    if (isGguf) {
+      throw new Error(
+        `Model '${id}' is a GGUF quantized weights-only repo (no config.json) — capability inspection requires the original PyTorch/safetensors model.`,
+      );
+    }
+    let body = "";
+    try {
+      body = await configRes.text();
+    } catch {
+      // Body read is best-effort; the hub CORS policy may hide it.
+    }
+    if (/restricted|access[^.\n]*gated|log\s*in|authenticated/i.test(body)) {
+      throw new Error(
+        `Model '${id}' files are access-restricted on Hugging Face (HTTP ${configRes.status}). Log in and accept the gated-repo terms, then retry with an access token.`,
+      );
+    }
+    throw new Error(
+      `Config for model '${id}' could not be fetched from Hugging Face Hub (HTTP ${configRes.status}).`,
+    );
   }
   const config: Record<string, unknown> = await configRes.json();
 
