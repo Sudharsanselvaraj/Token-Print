@@ -51,6 +51,15 @@ test("trace slice keeps breakpoint updates immutable and bounds LOD", () => {
   assert.equal(store.getState().lodLevel, 2);
 });
 
+test("trace slice marks a throwing watch expression with the clean error marker", () => {
+  const store = makeStore();
+  store.getState().addWatch("sum", "1 + 2");
+  store.getState().addWatch("boom", "totallyUndefinedName");
+  store.getState().evalWatches();
+  assert.equal(store.getState().watches[0].value, 3);
+  assert.equal(store.getState().watches[1].value, "‹error›");
+});
+
 test("UI slice clamps brightness and stops walkthrough autoplay on chapter selection", () => {
   const store = makeStore();
   store.getState().toggleWtPlay();

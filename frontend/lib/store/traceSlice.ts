@@ -25,7 +25,7 @@ export const createTraceSlice: StateCreator<StoreState, [], [], TraceSlice> = (s
         const value = new Function("store", `with(store) { return (${watch.expr}); }`)(state);
         return { ...watch, value };
       } catch {
-        return { ...watch, value: "â€¹errorâ€º" };
+        return { ...watch, value: "‹error›" };
       }
     }),
   })),
