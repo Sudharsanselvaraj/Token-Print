@@ -65,6 +65,21 @@
 
   --mono: var(--font-mono);
 
+  /* ── Global layering contract ──────────────────────────────────────────────
+     One hierarchy for every overlay. The hard invariant: scene DOM overlays
+     (drei <Html> labels, capped at --z-scene-overlay via SceneHtml.tsx) never
+     exceed --z-modal-backdrop. Modal-scoped UI is portaled into #modal-root.
+     Mirrored as JS constants in lib/layers.ts. */
+  --z-background: 0;
+  --z-canvas: 10;
+  --z-workspace: 30;
+  --z-scene-overlay: 100;
+  --z-workspace-floating: 80;
+  --z-popover: 200;
+  --z-modal-backdrop: 1000;
+  --z-modal-content: 1100;
+  --z-modal-popover: 1200;
+
   /* Legacy mappings */
   --panel: #0b0b0b;
   --panel-border: #252525;
@@ -6507,6 +6522,20 @@ select {
 }
 
 /* --- Modal System & HF Model Picker --- */
+/* Global modal root: pinned over the full viewport at the modal layer. All
+   true modals mount here via ModalPortal (createPortal). The root itself is
+   transparent and ignores pointers; children re-enable them. */
+#modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-backdrop);
+  pointer-events: none;
+}
+
+#modal-root > * {
+  pointer-events: auto;
+}
+
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -6518,7 +6547,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
+  z-index: var(--z-modal-backdrop);
   padding: 16px;
   animation: fadeInModal 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -6542,7 +6571,7 @@ select {
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8);
   color: var(--text, #e1e1e1);
   position: relative;
-  z-index: 10001;
+  z-index: var(--z-modal-content);
   max-width: 95vw;
   max-height: 90vh;
 }
@@ -9567,7 +9596,7 @@ html:has(.app.embed) .global-nav {
 .hf-explorer-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 10500;
+  z-index: var(--z-modal-backdrop);
   background: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);

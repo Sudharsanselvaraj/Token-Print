@@ -2,8 +2,8 @@
  * ui-baseline.spec.ts
  *
  * v2 baseline: the default explorer view renders the real Qwen architecture
- * returned by the live backend (top-bar stats + tensor list) with no fatal
- * JS errors. Cross-checks the rendered numbers against GET /architecture.
+ * returned by the live backend (sidebar model card metrics + tensor list) with
+ * no fatal JS errors. Cross-checks the rendered numbers against GET /architecture.
  *
  * Requires: backend running on :8000, frontend on :3000.
  */
@@ -11,9 +11,12 @@ import { test, expect, type Page } from "@playwright/test";
 
 const ARCH_API = "http://localhost:8000/architecture";
 
-async function textOf(page: Page, selector: string): Promise<string> {
-  const el = await page.$(selector);
-  return ((await el?.textContent()) ?? "").trim();
+async function metricValue(page: Page, label: string): Promise<string> {
+  // The Metric component renders: <div><div>{label}</div><div>{value}</div></div>
+  const el = page.locator(".left-sidebar div").filter({ hasText: new RegExp(`^${label}$`) }).first();
+  const container = el.locator("xpath=..");
+  const valueDiv = container.locator("div").last();
+  return ((await valueDiv.textContent()) ?? "").trim();
 }
 
 test.describe("UI baseline — real backend data percolates to the DOM", () => {
@@ -49,26 +52,31 @@ test.describe("UI baseline — real backend data percolates to the DOM", () => {
 
     await page.goto("/app", { waitUntil: "load" });
     await page.waitForSelector(".tensor-row", { timeout: 60_000 });
-    await page.waitForSelector(".tstat.name", { timeout: 10_000 });
+    // Model name is rendered as an h1 in the sidebar ModelSummaryCard.
+    await page.waitForSelector(".left-sidebar h1", { timeout: 10_000 });
 
-    // Top bar shows the real model name and the true layer/head counts.
-    const name = await textOf(page, ".tstat.name");
-    expect(name).toBe(arch.metadata.name);
-    expect(await textOf(page, ".tstat:has-text('layers')")).toContain(
-      String(arch.metadata.num_layers)
-    );
-    expect(await textOf(page, ".tstat:has-text('heads')")).toContain(
-      String(arch.metadata.num_heads)
-    );
+    // Model name matches the live backend metadata.
+    const h1 = await page.locator(".left-sidebar h1").first().textContent();
+    expect(h1?.trim()).toBe(arch.metadata.name);
+
+    // Metric grid shows the true layer/head counts.
+    expect(await metricValue(page, "LAYERS")).toBe(String(arch.metadata.num_layers));
+    expect(await metricValue(page, "HEADS")).toBe(String(arch.metadata.num_heads));
 
     // Tensor list reflects the backend's full tensor inventory.
     expect(await page.locator(".tensor-row").count()).toBe(
       arch.tensor_count
     );
 
-    // All four mode tabs are present; explorer is active by default.
-    expect(await page.locator(".mode-tab").count()).toBe(4);
-    await expect(page.locator(".mode-tab.active")).toHaveText("Architecture");
+    // All four workspace mode links are present in the header; Architecture is active.
+    for (const label of ["Architecture", "Generation", "Walkthrough", "Debugger"]) {
+      await expect(
+        page.locator(".landing-nav-item", { hasText: label }).first()
+      ).toBeVisible();
+    }
+    await expect(
+      page.locator(".landing-nav-item.active", { hasText: "Architecture" })
+    ).toBeVisible();
 
     // Screenshot for visual diff baseline.
     await expect(page).toHaveScreenshot("ui-baseline.png");

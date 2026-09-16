@@ -2,7 +2,7 @@
 
 import React, { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
+import { SceneHtml } from "@/components/ui/SceneHtml";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
 import { LAYOUT, nodeWorldPos } from "./ArchitectureLayout";
@@ -57,7 +57,7 @@ export function TokenPacketSystem() {
   return (
     <group ref={packetGroupRef}>
       {/* Clean Floating Token Name — Token Word Alone Travels without any 3D box/sphere structure */}
-      <Html
+      <SceneHtml
         position={[0, 0, 0]}
         center
         distanceFactor={16}
@@ -74,7 +74,7 @@ export function TokenPacketSystem() {
         }}>
           {activeToken.text}
         </div>
-      </Html>
+      </SceneHtml>
     </group>
   );
 }

@@ -2,7 +2,8 @@
 
 import React, { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Html, Line } from "@react-three/drei";
+import { Line } from "@react-three/drei";
+import { SceneHtml } from "@/components/ui/SceneHtml";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
 import { LAYOUT, layerOrigin } from "./ArchitectureLayout";
@@ -100,11 +101,11 @@ export function GqaVisualization3D() {
                   metalness={0.9}
                 />
               </mesh>
-              <Html position={[0, 0.7, 0]} center distanceFactor={14}>
+              <SceneHtml position={[0, 0.7, 0]} center distanceFactor={14}>
                 <div className="bg-black/90 text-white border border-zinc-700 px-1 py-0.5 font-mono text-[8px] whitespace-nowrap">
                   KV GROUP {i + 1} ({qPerKv} Q HEADS)
                 </div>
-              </Html>
+              </SceneHtml>
             </group>
           ))}
 
@@ -153,11 +154,11 @@ export function GqaVisualization3D() {
               lineWidth={2}
             />
           </group>
-          <Html position={[0, 1.2, 0]} center distanceFactor={14}>
+          <SceneHtml position={[0, 1.2, 0]} center distanceFactor={14}>
             <div className="bg-black/90 text-white border border-zinc-700 px-1.5 py-0.5 font-mono text-[9px] whitespace-nowrap">
               RoPE 2D PHASE ROTATION PLANE
             </div>
-          </Html>
+          </SceneHtml>
         </group>
       )}
 
@@ -192,11 +193,11 @@ export function GqaVisualization3D() {
               roughness={0.1}
             />
           </mesh>
-          <Html position={[LAYOUT.BRANCH_K_X, 0.9, 0]} center distanceFactor={14}>
+          <SceneHtml position={[LAYOUT.BRANCH_K_X, 0.9, 0]} center distanceFactor={14}>
             <div className="bg-black/90 text-white border border-zinc-700 px-1.5 py-0.5 font-mono text-[9px] whitespace-nowrap">
               SwiGLU: SiLU(GATE) ⊙ UP
             </div>
-          </Html>
+          </SceneHtml>
         </group>
       )}
     </group>

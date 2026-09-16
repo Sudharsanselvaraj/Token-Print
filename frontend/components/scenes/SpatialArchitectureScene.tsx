@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import * as THREE from "three";
-import { Html } from "@react-three/drei";
+import { SceneHtml } from "@/components/ui/SceneHtml";
 import { useStore } from "@/lib/store";
 import { TransformerLayer3D } from "./TransformerLayer3D";
 import { LayerBlockLOD } from "./LayerBlockLOD";
@@ -130,11 +130,11 @@ export function SpatialArchitectureScene() {
                   enterInspectMode("op_embed");
                 }}
               >
-                <Html center distanceFactor={18} style={{ pointerEvents: "none", userSelect: "none" }}>
+                <SceneHtml center distanceFactor={18} style={{ pointerEvents: "none", userSelect: "none" }}>
                   <div className="text-white font-mono text-[11px] font-bold tracking-wide whitespace-nowrap bg-black/80 px-2 py-0.5 border border-zinc-800 rounded">
                     {tok.text}
                   </div>
-                </Html>
+                </SceneHtml>
               </group>
             );
           })}

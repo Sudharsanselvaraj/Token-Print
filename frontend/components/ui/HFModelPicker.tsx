@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import type { CuratedModel, HFInspectResponse, HFModelMeta } from "../../lib/types";
 import { fetchHFCurated, searchHFModels, inspectHFModel } from "../../lib/api";
 import { TOKENS } from "./primitives";
+import ModalPortal from "./ModalPortal";
 
 // ─── Monochrome palette (semantic green/red only for supported/unavailable) ───
 const C = {
@@ -290,15 +291,16 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
   };
 
   return (
-    <div
-      className="hf-explorer-backdrop"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Hugging Face Model Explorer"
-    >
+    <ModalPortal>
+      <div
+        className="hf-explorer-backdrop"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Hugging Face Model Explorer"
+      >
       <div className="hf-explorer-panel" style={{ background: C.bg, color: C.text, fontFamily: TOKENS.fontSans }}>
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div
@@ -773,6 +775,7 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
 

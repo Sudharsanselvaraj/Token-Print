@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Html } from "@react-three/drei";
+import { SceneHtml } from "@/components/ui/SceneHtml";
 import { InspectableComponent } from "./componentDefinitions";
 
 interface InspectLabelProps {
@@ -18,7 +18,7 @@ export function InspectLabel({ component, position = [0, 2.2, 0] }: InspectLabel
       : null;
 
   return (
-    <Html
+    <SceneHtml
       position={position}
       center
       distanceFactor={18}
@@ -37,6 +37,6 @@ export function InspectLabel({ component, position = [0, 2.2, 0] }: InspectLabel
           </div>
         )}
       </div>
-    </Html>
+    </SceneHtml>
   );
 }

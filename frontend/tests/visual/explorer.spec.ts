@@ -32,10 +32,13 @@ test.describe("Explorer — real backend data", () => {
     await page.goto("/app", { waitUntil: "load" });
     // Wait for the tensor list to populate (real /architecture call).
     await page.waitForSelector(".tensor-row", { timeout: 60_000 });
-    // Model name in the top bar reflects the live backend's metadata.
-    await page.waitForSelector(".tstat.name", { timeout: 10_000 });
+    // Model name is rendered in the sidebar ModelSummaryCard h1.
+    await page.waitForSelector(".left-sidebar h1", { timeout: 10_000 });
 
-    await expect(page.locator(".mode-tab.active")).toHaveText("Architecture");
+    // Architecture nav link is active in explorer mode.
+    await expect(
+      page.locator(".landing-nav-item.active", { hasText: "Architecture" })
+    ).toBeVisible();
     expect(await page.locator(".tensor-row").count()).toBeGreaterThan(0);
 
     // Screenshot of initial explorer state.

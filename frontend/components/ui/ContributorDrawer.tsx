@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import ContributorsSection from "./ContributorsSection";
+import { MODAL_BACKDROP_Z } from "@/lib/layers";
+import ModalPortal from "./ModalPortal";
 import { TOKENS } from "./primitives";
 
 interface IssueItem {
@@ -145,26 +147,27 @@ export default function ContributorDrawer({ open, onClose }: ContributorDrawerPr
   };
 
   return (
-    <div
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Community & Open Source"
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0, 0, 0, 0.85)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 99999,
-        padding: "20px",
-      }}
-    >
+    <ModalPortal>
+      <div
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Community & Open Source"
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0, 0, 0, 0.85)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: MODAL_BACKDROP_Z,
+          padding: "20px",
+        }}
+      >
       <div
         style={{
           width: "720px",
@@ -451,5 +454,6 @@ export default function ContributorDrawer({ open, onClose }: ContributorDrawerPr
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

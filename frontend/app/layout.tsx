@@ -18,6 +18,9 @@ export default function RootLayout({
       <body>
         <GlobalHeader />
         {children}
+        {/* Global modal mount point — declared here so it always exists at the
+            end of <body>; ModalPortal also auto-creates it if missing. */}
+        <div id="modal-root" />
       </body>
     </html>
   );

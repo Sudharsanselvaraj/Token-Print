@@ -1,5 +1,5 @@
 import { useStore } from "@/lib/store";
-import { Html } from "@react-three/drei";
+import { SceneHtml } from "@/components/ui/SceneHtml";
 import { useState } from "react";
 import type { TraceAnnotation } from "@/lib/types";
 
@@ -42,7 +42,7 @@ function AnnotationItem({
   const [text, setText] = useState(ann.text);
 
   return (
-    <Html position={ann.position} center zIndexRange={[100, 0]} className="annotation-marker">
+    <SceneHtml position={ann.position} center className="annotation-marker">
       <div className="annotation-content">
         <div className="annotation-pin">📍</div>
         {editing ? (
@@ -63,6 +63,6 @@ function AnnotationItem({
           </div>
         )}
       </div>
-    </Html>
+    </SceneHtml>
   );
 }

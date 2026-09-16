@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import { assetUrl } from "@/lib/assets";
+import { MODAL_BACKDROP_Z } from "@/lib/layers";
 import { TOKENS } from "./primitives";
+import ModalPortal from "./ModalPortal";
 
 // ─── Monochrome palette — mirrors HFModelPicker's C object exactly ─────────────
 const C = {
@@ -347,7 +349,7 @@ export default function TraceGallery() {
   const hasTraces = REAL_TRACES.length > 0;
 
   return (
-    <>
+    <ModalPortal>
       <style>{`@keyframes tg-spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* Backdrop */}
@@ -360,7 +362,7 @@ export default function TraceGallery() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          zIndex: 10000,
+          zIndex: MODAL_BACKDROP_Z,
           padding: 16,
           animation: "fadeInModal 0.18s cubic-bezier(0.16,1,0.3,1)",
         }}
@@ -587,6 +589,6 @@ export default function TraceGallery() {
           </div>
         </div>
       </div>
-    </>
+    </ModalPortal>
   );
 }

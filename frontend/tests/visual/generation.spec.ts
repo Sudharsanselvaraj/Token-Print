@@ -1,13 +1,10 @@
 /**
  * generation.spec.ts
  *
- * v2 generation-mode smoke test. The current v2 UI has no inline prompt
- * submit control reachable in the DOM (the live WebSocket path can only be
- * started via the store), so this test drives the reachable path: uploading a
- * recorded .tokenprint trace.
- *
- * Route-isolation rule: loading model/trace data is workspace state and must
- * NOT hijack the URL — the mode you navigated to stays the rendered mode.
+ * v2 generation-mode smoke test. The current v2 UI has an inline prompt
+ * + GENERATE button for live WebSocket generation. This test verifies:
+ *   - Generation mode mounts with its controls (prompt textarea, generate button).
+ *   - Loading a trace in explorer mode does NOT hijack the route into generation.
  *
  * Requires: backend running on :8000, frontend on :3000.
  */
@@ -19,8 +16,8 @@ const DEMO_TRACE = path.resolve(
   "../../public/demo/hello-world.json"
 );
 
-test.describe("Generation mode — loading a trace does not hijack the route", () => {
-  test("uploading a trace in generation mode stays in generation; explorer stays explorer", async ({
+test.describe("Generation mode — workspace renders and route isolation", () => {
+  test("generation mode mounts with controls; loading a trace stays on the current route", async ({
     page,
   }) => {
     const errors: string[] = [];
@@ -38,16 +35,27 @@ test.describe("Generation mode — loading a trace does not hijack the route", (
     await page.goto("/app?mode=generation", { waitUntil: "load" });
     await expect(page.locator(".app.mode-generation")).toBeVisible({ timeout: 60_000 });
 
-    // Uploading a trace must NOT collapse the route into another workspace.
-    const traceInput = page.locator('input[type="file"][accept=".json"]');
-    await traceInput.setInputFiles(DEMO_TRACE);
-    await expect(page.locator(".app.mode-generation")).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator(".app.mode-explorer")).toHaveCount(0);
+    // Generation controls are present.
+    await expect(page.locator("textarea")).toBeVisible();
+    await expect(page.locator("button", { hasText: "GENERATE" })).toBeVisible();
 
-    // And opening Architecture while a trace is loaded stays on Architecture.
+    // Navigate to Architecture — must switch cleanly.
     await page.locator(".landing-nav-item", { hasText: "Architecture" }).first().click();
     await expect(page.locator(".app.mode-explorer")).toBeVisible({ timeout: 15_000 });
     await expect(page.locator(".app.mode-generation")).toHaveCount(0);
+
+    // Upload a trace from the explorer sidebar. loadTrace must NOT hijack the
+    // route into generation mode (the original v2 regression).
+    const traceInput = page.locator('input[type="file"][accept=".json"]').first();
+    await traceInput.setInputFiles(DEMO_TRACE);
+    await page.waitForTimeout(2_000);
+    await expect(page.locator(".app.mode-explorer")).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator(".app.mode-generation")).toHaveCount(0);
+
+    // Navigate back to Generation — still works.
+    await page.locator(".landing-nav-item", { hasText: "Generation" }).first().click();
+    await expect(page.locator(".app.mode-generation")).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator(".app.mode-explorer")).toHaveCount(0);
 
     expect(errors).toHaveLength(0);
   });
