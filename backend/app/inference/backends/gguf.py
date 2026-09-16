@@ -28,7 +28,7 @@ class GGUFBackend(InferenceBackend):
         self.gguf_path = model_id
         from app.gguf_engine import GGUFEngine
         self._engine = GGUFEngine(self.gguf_path)
-        self._engine.ensure_loaded()
+        self._engine._ensure_loaded()
         return True
 
     async def unload_model(self) -> bool:
@@ -39,7 +39,7 @@ class GGUFBackend(InferenceBackend):
         eng = self._get_engine()
         if eng is None:
             raise RuntimeError("GGUF engine is not loaded.")
-        eng.ensure_loaded()
+        eng._ensure_loaded()
         return eng._llm.tokenize(text.encode("utf-8"))
 
     async def forward(self, sentence: str, **kwargs: Any) -> dict[str, Any]:
@@ -49,10 +49,8 @@ class GGUFBackend(InferenceBackend):
         eng = self._get_engine()
         if eng is None:
             raise RuntimeError("GGUF engine is not loaded.")
-        tokens = []
-        for token in eng.generate_tokens(prompt, max_tokens=kwargs.get("max_tokens", 40)):
-            tokens.append(token.get("text", ""))
-        return "".join(tokens)
+        frames = eng.generate(prompt, max_new_tokens=int(kwargs.get("max_tokens", 40)))
+        return "".join(f.get("chosen", {}).get("text", "") for f in frames if f.get("type") == "token")
 
     async def analyze(self, sentence: str, **kwargs: Any) -> AnalyzeResponse:
         raise NotImplementedError(
