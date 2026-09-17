@@ -229,3 +229,4 @@ export interface OrchestratorActions {
 
 /** The complete Zustand store is the composition of its domain slices. */
 export type StoreState = ArchitectureSlice & GenerationSlice & TraceSlice & UISlice & Arch3dSlice & OrchestratorActions;
+
