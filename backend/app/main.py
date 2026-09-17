@@ -68,8 +68,9 @@ GGUF_DIR.mkdir(parents=True, exist_ok=True)
 # Hard upload limit for GGUF files (ENG-09). 10 GB expressed in bytes.
 MAX_GGUF_BYTES = 10 * 1024 * 1024 * 1024
 
-# Cache of opened GGUF engines keyed by resolved path.
+# Cache of opened GGUF engines keyed by resolved path (max 3 resident engines).
 _gguf_engines: dict[str, GGUFEngine] = {}
+_MAX_GGUF_ENGINES = 3
 
 
 def _resolve_gguf(path: str) -> str:
@@ -85,9 +86,22 @@ def _resolve_gguf(path: str) -> str:
 
 def _gguf_engine_for(path: str) -> GGUFEngine:
     resolved = _resolve_gguf(path)
-    if resolved not in _gguf_engines:
-        _gguf_engines[resolved] = GGUFEngine(resolved)
-    return _gguf_engines[resolved]
+    if resolved in _gguf_engines:
+        inst = _gguf_engines.pop(resolved)
+        _gguf_engines[resolved] = inst
+        return inst
+    while len(_gguf_engines) >= _MAX_GGUF_ENGINES:
+        oldest_key, oldest_engine = next(iter(_gguf_engines.items()))
+        del _gguf_engines[oldest_key]
+        if hasattr(oldest_engine, "close") and callable(oldest_engine.close):
+            try:
+                oldest_engine.close()
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("GGUFEngine.close() raised during eviction: %s", exc)
+        logger.info("Evicted GGUFEngine for %s", oldest_key)
+    inst = GGUFEngine(resolved)
+    _gguf_engines[resolved] = inst
+    return inst
 
 
 @asynccontextmanager
