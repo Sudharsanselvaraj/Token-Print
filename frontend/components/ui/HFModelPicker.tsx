@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import type { CuratedModel, HFInspectResponse, HFModelMeta } from "../../lib/types";
 import { fetchHFCurated, searchHFModels, inspectHFModel } from "../../lib/api";
 import { TOKENS } from "./primitives";
@@ -149,7 +149,18 @@ interface HFModelPickerProps {
   onSelectModel?: (modelId: string) => void;
 }
 
-export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel }: HFModelPickerProps) {
+export function HFModelPicker({ isOpen = true, onClose, onSelectModel }: HFModelPickerProps) {
+  const [localOpen, setLocalOpen] = useState(true);
+  const effectiveOpen = isOpen && localOpen;
+
+  const handleClose = useCallback(() => {
+    setLocalOpen(false);
+    onClose?.();
+  }, [onClose]);
+
+  useEffect(() => {
+    setLocalOpen(isOpen);
+  }, [isOpen]);
   const [activeTab, setActiveTab] = useState<"curated" | "search">("curated");
   const [curatedModels, setCuratedModels] = useState<CuratedModel[]>([]);
   const [curatedLoading, setCuratedLoading] = useState(false);
@@ -170,9 +181,9 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
 
   // Escape to close + scroll lock while open.
   useEffect(() => {
-    if (!isOpen) return;
+    if (!effectiveOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") handleClose();
     };
     window.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
@@ -181,7 +192,7 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
     };
-  }, [isOpen, onClose]);
+  }, [effectiveOpen, handleClose]);
 
   // Focus the search input when switching to the Search Hub tab.
   useEffect(() => {
@@ -190,7 +201,7 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
 
   // Fetch curated models on mount (open once).
   useEffect(() => {
-    if (!isOpen) return;
+    if (!effectiveOpen) return;
     let cancelled = false;
     setCuratedLoading(true);
     setCuratedError(null);
@@ -257,7 +268,7 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
     };
   }, [isOpen, selectedModelId]);
 
-  if (!isOpen) return null;
+  if (!effectiveOpen) return null;
 
   const buildCapabilities = (data: HFInspectResponse): CapabilityRow[] => {
     const rows: CapabilityRow[] = CAPABILITY_ORDER.map(([key, title]) => {
@@ -295,7 +306,7 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
       <div
         className="hf-explorer-backdrop"
         onMouseDown={(e) => {
-          if (e.target === e.currentTarget) onClose();
+          if (e.target === e.currentTarget) handleClose();
         }}
         role="dialog"
         aria-modal="true"
@@ -351,7 +362,7 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close"
             onMouseEnter={() => setCloseHover(true)}
             onMouseLeave={() => setCloseHover(false)}
@@ -749,7 +760,7 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
           <button
             onClick={() => {
               if (onSelectModel && selectedModelId) onSelectModel(selectedModelId);
-              else onClose();
+              else handleClose();
             }}
             onMouseEnter={() => setLocalHover(true)}
             onMouseLeave={() => setLocalHover(false)}
