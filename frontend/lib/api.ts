@@ -148,6 +148,26 @@ export async function openGguf(path: string): Promise<{
   return res.ok ? res.json() : { ok: false, detail: `Open failed (${res.status})` };
 }
 
+/** POST /gguf/unload — explicitly unload a cached GGUF model and release memory. */
+export async function unloadGguf(path: string): Promise<{
+  ok: boolean;
+  name?: string;
+  unloaded?: boolean;
+  detail?: string;
+}> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/gguf/unload`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+    });
+  } catch {
+    return { ok: false, detail: "Backend unreachable" };
+  }
+  return res.ok ? res.json() : { ok: false, detail: `Unload failed (${res.status})` };
+}
+
 /** GET /architecture — real model metadata + tensor list (Explorer source). */
 export async function fetchArchitecture(
   modelId?: string,

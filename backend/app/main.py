@@ -35,6 +35,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from .ablation import Ablation
+from .gguf_cache import GGUFEngineCache
 from .gguf_engine import GGUF_ENGINE_AVAILABLE, GGUFEngine
 from .model import ModelEngine, TokenizedTooLong
 from .reduce import chunk_attribution, query_self_attribution, ungrounded_flags
@@ -68,8 +69,10 @@ GGUF_DIR.mkdir(parents=True, exist_ok=True)
 # Hard upload limit for GGUF files (ENG-09). 10 GB expressed in bytes.
 MAX_GGUF_BYTES = 10 * 1024 * 1024 * 1024
 
-# Cache of opened GGUF engines keyed by resolved path.
-_gguf_engines: dict[str, GGUFEngine] = {}
+# Thread-safe LRU cache for resident GGUF engines (Issue #279).
+_gguf_cache = GGUFEngineCache()
+# Kept as alias for backward compatibility.
+_gguf_engines = _gguf_cache
 
 
 def _resolve_gguf(path: str) -> str:
@@ -85,9 +88,7 @@ def _resolve_gguf(path: str) -> str:
 
 def _gguf_engine_for(path: str) -> GGUFEngine:
     resolved = _resolve_gguf(path)
-    if resolved not in _gguf_engines:
-        _gguf_engines[resolved] = GGUFEngine(resolved)
-    return _gguf_engines[resolved]
+    return _gguf_cache.get_or_create(resolved)
 
 
 @asynccontextmanager
@@ -112,6 +113,7 @@ async def lifespan(app: FastAPI):
             "pip install -r requirements-gguf.txt for real quantized generation)"
         )
     yield
+    _gguf_cache.clear()
     engine = None
 
 
@@ -268,7 +270,7 @@ async def gguf_list() -> dict:
                 "path": p.name,
                 "size_bytes": p.stat().st_size,
                 "quant": _quant_guess(p.name),
-                "loaded": str(p.resolve()) in _gguf_engines,
+                "loaded": str(p.resolve()) in _gguf_cache,
             }
         )
     return {"files": items, "engine_available": GGUF_ENGINE_AVAILABLE}
@@ -317,13 +319,30 @@ async def gguf_open(payload: dict = ...) -> dict:
     if not path:
         raise HTTPException(status_code=400, detail="`path` is required.")
     resolved = _resolve_gguf(path)
-    if resolved not in _gguf_engines:
-        _gguf_engines[resolved] = GGUFEngine(resolved)
+    engine_inst = _gguf_cache.get_or_create(resolved)
     try:
-        meta = _gguf_engines[resolved].metadata()
+        meta = engine_inst.metadata()
     except (RuntimeError, ModuleNotFoundError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {"ok": True, **meta}
+
+
+@app.post("/gguf/unload")
+async def gguf_unload(payload: dict = ...) -> dict:
+    """Explicitly unload a resident GGUF engine and release its memory."""
+    path = str(payload.get("path") or "")
+    if not path:
+        raise HTTPException(status_code=400, detail="`path` is required.")
+    resolved = _resolve_gguf(path)
+    unloaded = _gguf_cache.unload(resolved)
+    safe_name = os.path.basename(resolved)
+    return {"ok": True, "name": safe_name, "unloaded": unloaded}
+
+
+@app.get("/gguf/cache")
+async def gguf_cache_stats() -> dict:
+    """Return resident GGUF engine cache statistics and limits."""
+    return _gguf_cache.stats()
 
 
 from app.inference.adapters import select_model_adapter
