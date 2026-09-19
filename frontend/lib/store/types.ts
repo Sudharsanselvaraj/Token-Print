@@ -24,7 +24,7 @@ export interface ArchitectureSlice {
   archFile: File | null;
   archLoading: boolean;
   archError: string | null;
-  loadArchitecture: () => Promise<void>;
+  loadArchitecture: (modelId?: string) => Promise<void>;
   setArch: (a: ArchitectureData | null) => void;
   ggufs: GgufItem[];
   ggufMeta: { name?: string; architecture?: string; quant?: string; n_ctx?: number } | null;

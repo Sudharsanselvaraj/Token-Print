@@ -15,10 +15,10 @@ export const createArchitectureSlice: StateCreator<StoreState, [], [], Architect
   archFile: null,
   archLoading: false,
   archError: null,
-  loadArchitecture: async () => {
+  loadArchitecture: async (modelId?: string) => {
     set({ archLoading: true, archError: null });
     try {
-      const raw = await fetchArchitecture();
+      const raw = await fetchArchitecture(modelId);
       set({ arch: { ...raw, tensors: annotateTensors(raw.tensors) }, archLoading: false });
     } catch (e) {
       set({ archLoading: false, archError: e instanceof Error ? e.message : "Failed to load architecture" });

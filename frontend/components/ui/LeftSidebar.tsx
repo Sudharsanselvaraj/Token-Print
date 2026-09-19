@@ -229,7 +229,13 @@ export default function LeftSidebar({ collapsed, onToggleCollapse }: LeftSidebar
             {sourceTab === "live" && <ModelLoader />}
             {sourceTab === "trace" && <ModelLoader />}
             {sourceTab === "gguf" && <GgufControls />}
-            {sourceTab === "hf" && <HFModelPicker />}
+            {sourceTab === "hf" && (
+              <HFModelPicker
+                onSelectModel={(modelId) => {
+                  useStore.getState().loadArchitecture(modelId);
+                }}
+              />
+            )}
           </div>
         </Section>
 

@@ -747,8 +747,14 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
           </button>
           <button
             onClick={() => {
-              if (onSelectModel && selectedModelId) onSelectModel(selectedModelId);
-              else onClose();
+              if (onSelectModel && selectedModelId) {
+                onSelectModel(selectedModelId);
+              } else if (selectedModelId) {
+                useStore.getState().loadArchitecture(selectedModelId);
+                onClose();
+              } else {
+                onClose();
+              }
             }}
             onMouseEnter={() => setLocalHover(true)}
             onMouseLeave={() => setLocalHover(false)}
