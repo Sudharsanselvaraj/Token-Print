@@ -22,73 +22,34 @@ jobs:
           token: ${{ secrets.CONTRIBUTORS_TOKEN }}
           fetch-depth: 0
 
-      - name: Keep the contributor wall embedded in the README
-        id: update
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const fs = require('fs');
+      - name: Generate contributor poster
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python -m pip install --disable-pip-version-check Pillow
+          python scripts/generate_contributor_poster.py
 
-            const start = '<!-- CONTRIBUTORS:START -->';
-            const end = '<!-- CONTRIBUTORS:END -->';
-            // The SVG is generated from GitHub's live contributor list, so it
-            // stays current without maintaining a manual avatar roster here.
-            const block = `${start}\n<div align="center">\n` +
-              `  <a href="https://github.com/${context.repo.owner}/${context.repo.repo}/graphs/contributors">\n` +
-              `    <img src="https://contributors-img.firebaseapp.com/image?repo=${context.repo.owner}/${context.repo.repo}" alt="${context.repo.repo} contributors" />\n` +
-              `  </a>\n  <br />\n  <sub>Every person who has contributed to ${context.repo.repo}. Thank you.</sub>\n</div>\n${end}`;
-
-            let readme = fs.readFileSync('README.md', 'utf8');
-            if (!readme.includes(start)) {
-              console.log('Contributors markers not found in README.md; skipping update.');
-              return;
-            }
-
-            const next = readme.replace(new RegExp(`${start}[\\s\\S]*?${end}`), block);
-            if (next === readme) {
-              console.log('README contributor wall unchanged; nothing to commit.');
-              return;
-            }
-
-            fs.writeFileSync('README.md', next);
-            console.log('README.md updated with the contributor wall.');
-            core.setOutput('changed', 'true');
-
-      - name: Open PR with updated contributor wall
-        if: steps.update.outputs.changed == 'true'
+      - name: Open PR with updated contributor poster
         env:
           GH_TOKEN: ${{ secrets.CONTRIBUTORS_TOKEN }}
         run: |
-          # Author the commit as the repository owner so contributor updates
-          # land under their profile.
           git config user.name "Sudharsanselvaraj"
           git config user.email "178299750+Sudharsanselvaraj@users.noreply.github.com"
-          git add README.md
+          git add .github/assets/contributors.png
           if git diff --cached --quiet; then
-            echo "No README changes; nothing to do."
+            echo "Contributor poster unchanged; nothing to do."
             exit 0
           fi
-          git commit -m "chore: auto-update contributors in README"
+          git commit -m "chore: refresh contributor poster"
 
-          # main is a protected branch (PR required, enforce_admins on), so a
-          # direct owner push is rejected. Land the update through a PR opened
-          # from a dedicated branch and let auto-merge ride it in once the
-          # required status checks pass.
           BRANCH="ci/update-contributors"
           git push --quiet --force origin "HEAD:$BRANCH"
-          echo "Pushed README update to $BRANCH."
-
           PR_NUMBER="$(
             gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty'
           )"
           if [ -z "$PR_NUMBER" ]; then
             gh pr create --base main --head "$BRANCH" \
-              --title "chore: auto-update contributors in README" \
-              --body "Refreshes the contributor avatar list. Automated by the contributors workflow."
-            echo "Opened a new PR."
-          else
-            echo "Reusing existing PR #$PR_NUMBER."
+              --title "chore: refresh contributor poster" \
+              --body "Refreshes the contributor poster from GitHub's human contributor list."
           fi
-
           gh pr merge --auto --squash --delete-branch "$BRANCH"
-          echo "Enabled auto-merge; the PR will land once the required checks pass."
