@@ -91,7 +91,10 @@ export default function Scene({
       <pointLight position={[0, 25, -20]} intensity={1.2} color="#ffffff" distance={150} />
 
       {/* Studio Environment Map for Specular Reflections */}
-      <Environment preset="studio" environmentIntensity={0.6} />
+      {/* Keep async lighting from suspending Canvas while it connects its DOM events. */}
+      <Suspense fallback={null}>
+        <Environment preset="studio" environmentIntensity={0.6} />
+      </Suspense>
 
       {/* Ground Contact Shadows */}
       <ContactShadows position={[0, -360, 0]} opacity={0.4} scale={60} blur={2.5} far={30} />

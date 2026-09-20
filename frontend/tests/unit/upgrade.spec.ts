@@ -46,3 +46,18 @@ test("experiment round trip detects tampering and numerical mismatches", async (
   expect(compareNumbers([1, 2], [1.00001, 2])).toBeTruthy();
   expect(compareNumbers([1, 2], [1, 3])).toBeFalsy();
 });
+
+test("verification never tolerates a nearby but different token identity", () => {
+  expect(
+    compareNumbers(
+      { chosen: { id: 50000, text: "�", logprob: -1 } },
+      { chosen: { id: 50001, text: "�", logprob: -1 } },
+    ),
+  ).toBeFalsy();
+  expect(
+    compareNumbers(
+      [{ token_id: 50000, prob: 0.2 }],
+      [{ token_id: 50001, prob: 0.2 }],
+    ),
+  ).toBeFalsy();
+});

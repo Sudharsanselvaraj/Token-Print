@@ -21,7 +21,7 @@ test.describe("Walkthrough — mode mounts and chapter nav works", () => {
     page,
   }) => {
     const errors: string[] = [];
-    page.on("pageerror", (e) => errors.push(String(e)));
+    page.on("pageerror", (e) => errors.push(e.stack ?? String(e)));
 
     await page.goto("/app", { waitUntil: "load" });
     await page.waitForSelector(".landing-nav-item", { timeout: 30_000 });
@@ -51,4 +51,31 @@ test.describe("Walkthrough — mode mounts and chapter nav works", () => {
 
     expect(errors).toHaveLength(0);
   });
+});
+
+test("slow lighting does not suspend canvas event initialization", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.stack ?? String(error)));
+  const session = await page.context().newCDPSession(page);
+  await session.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+  let releaseLighting!: () => void;
+  const lightingGate = new Promise<void>((resolve) => { releaseLighting = resolve; });
+  await page.route("**/*.hdr", async (route) => {
+    await lightingGate;
+    await route.continue();
+  });
+  try {
+    await page.goto("/app");
+    await page.locator(".landing-nav-item", { hasText: "Walkthrough" }).first().click();
+    // The canvas must render before the optional lighting download finishes.
+    await page.waitForFunction(() => !!(window as unknown as { __ns?: unknown }).__ns);
+    await page.locator('[title="Next chapter (→)"]').first().click();
+    await expect(page.getByText(chapterLabel(2))).toBeVisible();
+    releaseLighting();
+    await page.waitForTimeout(1500);
+    expect(errors).toEqual([]);
+  } finally {
+    releaseLighting();
+    await session.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+  }
 });

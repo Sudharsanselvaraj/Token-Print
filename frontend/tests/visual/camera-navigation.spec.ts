@@ -28,7 +28,20 @@ test("overview, layer and operation frame consistently and manual orbit stays pu
     steps: 10,
   });
   await page.mouse.up();
-  await page.waitForTimeout(1500);
+  // Wait for OrbitControls inertia to settle on both hardware and software renderers.
+  await expect
+    .poll(
+      async () => {
+        const previous = await camera(page);
+        await page.waitForTimeout(1000);
+        const current = await camera(page);
+        return Math.hypot(
+          ...current.map((value, index) => value - previous[index]),
+        );
+      },
+      { timeout: 30000 },
+    )
+    .toBeLessThan(0.03);
   const before = await camera(page);
   await page.waitForTimeout(2500);
   const after = await camera(page);

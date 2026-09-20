@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Unit and store regression tests
+        run: npm run test:unit && npm run test:store
+
       # `next build` type-checks the whole tree and runs ESLint, so a green
       # build is the real gate. It needs no backend — the app is env-driven.
       - name: Build (type-check + lint + compile)

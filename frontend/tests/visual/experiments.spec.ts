@@ -46,7 +46,7 @@ test("real generation can be exported, imported, replayed and verified", async (
     .getByRole("button", { name: "Re-run and verify", exact: true })
     .click();
   await expect(
-    page.getByText(/Verified: model revision and measured predictions match/),
+    page.getByText(/Verified: model revision and token IDs match exactly/),
   ).toBeVisible();
   bundle.experiment.model.revision = "0".repeat(40);
   // Integrity protection also covers model metadata.
@@ -93,6 +93,6 @@ test("real activation patch saves its parameters and verifies its layer predicti
     .getByRole("button", { name: "Re-run and verify", exact: true })
     .click();
   await expect(
-    page.getByText(/Verified: model revision and measured predictions match/),
+    page.getByText(/Verified: model revision and token IDs match exactly/),
   ).toBeVisible();
 });

@@ -56,7 +56,7 @@ jobs:
             fi
             sleep 2
           done
-          if [ $i -eq 121 ]; then echo "Backend failed to start"; exit 1; fi
+          curl -fsS http://localhost:8000/architecture > /dev/null || { echo "Backend failed to start"; exit 1; }
 
       # ── Frontend setup ────────────────────────────────────────────────────
       - uses: actions/setup-node@v7
@@ -98,6 +98,7 @@ jobs:
         working-directory: frontend
         env:
           UPDATE_SNAPSHOTS: ${{ inputs.update_snapshots }}
+          TOKENPRINT_LIVE_EXPERIMENTS: "1"
         run: |
           if [ "$UPDATE_SNAPSHOTS" = "true" ]; then
             npx playwright test --update-snapshots
@@ -134,7 +135,7 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
-            if ('${{ steps.playwright.conclusion }}' !== 'failure') return;
+            if ('${{ steps.playwright.outcome }}' !== 'failure') return;
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const body = [
               '## ⚠️ Visual regression tests failed',
@@ -159,3 +160,7 @@ jobs:
             } catch (err) {
               console.log('Skipping PR comment (fork PR read-only token):', err.message);
             }
+
+      - name: Fail when browser tests fail
+        if: always() && steps.playwright.outcome == 'failure'
+        run: exit 1

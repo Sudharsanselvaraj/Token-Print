@@ -222,9 +222,13 @@ export function compareNumbers(
     return (
       !!actual &&
       typeof actual === "object" &&
-      Object.entries(expected).every(([k, v]) =>
-        compareNumbers(v, (actual as Record<string, unknown>)[k], tolerance),
-      )
+      Object.entries(expected).every(([k, v]) => {
+        const observed = (actual as Record<string, unknown>)[k];
+        // IDs and positions are categorical: tolerance applies only to measurements.
+        if (["id", "token_id", "step", "layer", "index"].includes(k))
+          return v === observed;
+        return compareNumbers(v, observed, tolerance);
+      })
     );
   return expected === actual;
 }
@@ -292,7 +296,7 @@ export async function verifyExperiment(
       xs.map((f) => ({ chosen: f.chosen, topk: f.topk }));
     if (!compareNumbers(observed(e.results as TokenFrame[]), observed(frames)))
       throw new Error(
-        "Verification mismatch: token IDs, logits or probabilities differ (relative/absolute tolerance 1e-4).",
+        "Verification mismatch: token IDs differ or measured logits/probabilities exceed relative/absolute tolerance 1e-4.",
       );
   } else {
     const identity = await backendIdentity();
@@ -335,5 +339,5 @@ export async function verifyExperiment(
         "Verification mismatch: layer predictions differ (relative/absolute tolerance 1e-4).",
       );
   }
-  return "Verified: model revision and measured predictions match (tolerance 1e-4). Timings may vary by hardware.";
+  return "Verified: model revision and token IDs match exactly; measured predictions match within tolerance 1e-4. Timings may vary by hardware.";
 }
