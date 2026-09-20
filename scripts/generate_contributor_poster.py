@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render TokenPrint's human-contributor poster from GitHub's public API."""
+"""Render TokenPrint's non-bot contributor poster from GitHub's public API."""
 
 from __future__ import annotations
 
@@ -18,6 +18,11 @@ OUTPUT = ROOT / ".github" / "assets" / "contributors.png"
 REPOSITORY = os.environ.get("GITHUB_REPOSITORY", "Sudharsanselvaraj/Token-Print")
 API = f"https://api.github.com/repos/{REPOSITORY}"
 SIZE = (1600, 860)
+# GitHub's REST contributor list currently omits this authored main-branch
+# commit. Keep the contributor visible while still resolving their avatar from
+# GitHub rather than inventing one.
+EXTRA_CONTRIBUTOR_LOGINS = ("AbinanthanS",)
+EXCLUDED_LOGINS = {"claude"}
 
 
 def request(url: str) -> bytes:
@@ -66,9 +71,20 @@ def avatar(url: str, diameter: int) -> Image.Image:
 def main() -> int:
     repo = json.loads(request(API))
     contributors = json.loads(request(f"{API}/contributors?per_page=100"))
-    humans = [person for person in contributors if person.get("type") == "User" and not person["login"].endswith("[bot]")]
-    if not humans:
-        raise RuntimeError("GitHub returned no human contributors")
+    people = [
+        person for person in contributors
+        if person.get("type") == "User"
+        and not person["login"].endswith("[bot]")
+        and person["login"].casefold() not in EXCLUDED_LOGINS
+    ]
+    present = {person["login"].casefold() for person in people}
+    for login in EXTRA_CONTRIBUTOR_LOGINS:
+        if login.casefold() not in present:
+            person = json.loads(request(f"https://api.github.com/users/{login}"))
+            if person.get("type") == "User":
+                people.append(person)
+    if not people:
+        raise RuntimeError("GitHub returned no non-bot contributors")
 
     image = Image.new("RGB", SIZE, "#07080d")
     draw = ImageDraw.Draw(image)
@@ -81,7 +97,7 @@ def main() -> int:
     centered(draw, "Thanks for contributing", 112, font(64, bold=True), "#f5f7ff")
     centered(draw, "Every real improvement makes model internals easier to understand.", 192, font(24), "#b0b9ca")
 
-    cards = [("HUMAN CONTRIBUTORS", str(len(humans))), ("GITHUB STARS", f"{repo['stargazers_count']}+")]
+    cards = [("CONTRIBUTORS", str(len(people))), ("GITHUB STARS", f"{repo['stargazers_count']}+")]
     card_width, card_height, gap = 280, 92, 24
     left = (SIZE[0] - (card_width * len(cards) + gap)) // 2
     for index, (label, value) in enumerate(cards):
@@ -94,12 +110,12 @@ def main() -> int:
         draw.text((centered_x - (label_box[2] - label_box[0]) // 2, 315), label, font=font(14, bold=True), fill="#8fa4c7")
 
     diameter, spacing = 118, 28
-    columns = min(6, len(humans))
-    rows = (len(humans) + columns - 1) // columns
+    columns = min(7, len(people))
+    rows = (len(people) + columns - 1) // columns
     grid_width = columns * diameter + (columns - 1) * spacing
     grid_left = (SIZE[0] - grid_width) // 2
     grid_top = 400
-    for index, person in enumerate(humans):
+    for index, person in enumerate(people):
         row, column = divmod(index, columns)
         x = grid_left + column * (diameter + spacing)
         y = grid_top + row * 178
@@ -115,7 +131,7 @@ def main() -> int:
     centered(draw, "Built together · github.com/Sudharsanselvaraj/Token-Print", 790, font(16), "#8391ab")
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     image.save(OUTPUT, optimize=True)
-    print(f"Wrote {OUTPUT.relative_to(ROOT)} for {len(humans)} human contributors")
+    print(f"Wrote {OUTPUT.relative_to(ROOT)} for {len(people)} contributors")
     return 0
 
 

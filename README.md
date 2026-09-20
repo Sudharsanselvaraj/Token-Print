@@ -126,7 +126,7 @@ send a PR. First-timers genuinely welcome.
 <!-- CONTRIBUTORS:START -->
 <div align="center">
   <a href="https://github.com/Sudharsanselvaraj/Token-Print/graphs/contributors">
-    <img src=".github/assets/contributors.png" alt="Thanks for contributing — TokenPrint's human contributors" width="1000" />
+    <img src=".github/assets/contributors.png" alt="Thanks for contributing — TokenPrint contributors" width="1000" />
   </a>
 </div>
 <!-- CONTRIBUTORS:END -->
