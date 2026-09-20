@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { validateTrace } from "../traceValidation";
 import { loadTraceFile } from "../api";
 import type { GenerationSource } from "../generation";
 import { localSource, wsSource } from "../generation";
@@ -52,6 +53,7 @@ export const useStore = create<StoreState>()((set, get, store) => ({
     set({
       genStatus: "streaming",
       genMeta: null,
+      genDone: null,
       genFrames: [],
       genText: "",
       genError: null,
@@ -61,12 +63,14 @@ export const useStore = create<StoreState>()((set, get, store) => ({
       opPlaying: false,
       autoStarted: false,
       traceSource: "live",
+      ...(options?.source === "local" ? { arch: null, data: null, archError: null } : {}),
       debugSnapshots: {},
       debugSnapshotError: null,
     });
     const opts: GenOptions = {
       maxNewTokens: 40,
       topK: 10,
+      seed: 0,
       trace: true,
       recordTrace: true,
       gguf: get().activeGguf ?? undefined,
@@ -91,6 +95,8 @@ export const useStore = create<StoreState>()((set, get, store) => ({
   // rendered. Accepts either a File (parsed + validated via loadTraceFile) or an
   // already-parsed Trace object (auto-demo, replay, cross-token jumps).
   loadTrace: async (file: File | Trace) => {
+    genHandle?.close();
+    genHandle = null;
     set({
       genStatus: "streaming",
       genMeta: null,
@@ -107,9 +113,21 @@ export const useStore = create<StoreState>()((set, get, store) => ({
       debugSnapshotError: null,
     });
     try {
-      const trace: Trace = file instanceof File ? await loadTraceFile(file) : file;
+      const trace: Trace = file instanceof File ? await loadTraceFile(file) : validateTrace(file);
       const genFrames = trace.frames ?? [];
       set({
+        arch: trace.architecture_data ?? null,
+        archFile: null,
+        compareArch: null,
+        compareFile: null,
+        dequantA: null,
+        dequantB: null,
+        selectedTensor: null,
+        selectedHead: 0,
+        selectedLayer: 0,
+        data: trace.analysis ?? null,
+        archError: null,
+        archLoading: false,
         genMeta: trace.meta,
         genFrames,
         genText: trace.done?.generated_text ?? "",

@@ -193,7 +193,7 @@ export default function HeadInspector() {
       )}
 
       {/* Per-head heatmap for the selected head */}
-      <div className="hi-heatmap">
+      <div className="hi-heatmap" style={{ gridTemplateColumns: `repeat(${Math.min(head[0]?.length ?? 1, 16)}, 1fr)` }}>
         {head.slice(0, 16).map((row, fi) =>
           row.slice(0, 16).map((w, ti) => (
             <div

@@ -1,0 +1,9 @@
+{
+  "name": "TokenPrint contributor",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bookworm",
+  "features": { "ghcr.io/devcontainers/features/node:1": { "version": "20" } },
+  "forwardPorts": [3000, 8000],
+  "portsAttributes": { "3000": { "label": "TokenPrint" }, "8000": { "label": "Inference API" } },
+  "postCreateCommand": "python scripts/start.py --install-only",
+  "customizations": { "vscode": { "extensions": ["ms-python.python", "dbaeumer.vscode-eslint"], "settings": { "python.defaultInterpreterPath": "${containerWorkspaceFolder}/backend/.venv/bin/python" } } }
+}

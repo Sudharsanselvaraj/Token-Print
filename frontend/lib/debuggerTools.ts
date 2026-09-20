@@ -16,7 +16,7 @@ export const DEBUGGER_OVERVIEW: DebuggerTool = {
   id: "overview",
   label: "Overview",
   purpose:
-    "Full debugger dashboard — every live analysis, intervention, trace and model tool arranged in the workspace, with model state shown in this inspector.",
+    "Choose a focused workspace. Each tool explains the data and backend capabilities it needs.",
 };
 
 export const DEBUGGER_TOOL_GROUPS: DebuggerToolGroup[] = [
@@ -43,6 +43,7 @@ export const DEBUGGER_TOOL_GROUPS: DebuggerToolGroup[] = [
   {
     label: "TRACE",
     tools: [
+      { id: "experiments", label: "Experiments", purpose: "Save, import, replay and verify model experiments with their inputs and results." },
       { id: "trace_frames", label: "Trace Frames", purpose: "Step frame-by-frame through the recorded token trace (tokens, positions, cache)." },
       { id: "operation_timeline", label: "Operation Timeline", purpose: "Flame-graph and per-layer op breakdown across the whole forward pass." },
       { id: "token_state", label: "Token State", purpose: "Current token, token id and running generated sequence for the active trace." },

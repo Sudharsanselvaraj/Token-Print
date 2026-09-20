@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { API_URL } from "@/lib/api";
 import { useStore } from "@/lib/store";
 
 /**
@@ -16,6 +17,7 @@ import { useStore } from "@/lib/store";
  * never invented).
  */
 export default function GgufControls() {
+  const [error, setError] = useState<string | null>(null);
   const ggufs = useStore((s) => s.ggufs);
   const ggufMeta = useStore((s) => s.ggufMeta);
   const activeGguf = useStore((s) => s.activeGguf);
@@ -25,23 +27,24 @@ export default function GgufControls() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    refreshGgufs();
+    fetch(`${API_URL}/health`).then(r => { if (!r.ok) throw new Error(`Backend unavailable (${r.status})`); return refreshGgufs(); }).catch(e => setError(`${e.message}. Start the Python backend to list or upload GGUF files.`));
   }, [refreshGgufs]);
 
   const onFile = (f: File | null) => {
-    if (f) uploadGguf(f).catch(() => {});
+    if (f) { setError(null); uploadGguf(f).catch(e => setError(e.message)); }
   };
 
   const quant = ggufMeta?.quant ?? ggufs.find((g) => g.path === activeGguf)?.quant;
 
   return (
     <div className="panel selector" style={{ marginTop: 8 }}>
+      {error && <p role="alert">{error}</p>}
       <label className="footer-note" style={{ display: "block" }}>
         Quantized backend
       </label>
       <select
         value={activeGguf ?? ""}
-        onChange={(e) => selectGguf(e.target.value || null).catch(() => {})}
+        onChange={(e) => { setError(null); selectGguf(e.target.value || null).catch(error => setError(error.message)); }}
         style={{ width: "100%", marginTop: 4 }}
       >
         <option value="">Full-precision PyTorch</option>

@@ -79,7 +79,7 @@ export default function HeadGrid() {
         </select>
       </div>
       {matrix ? (
-        <div className="hg-grid">
+        <div className="hg-grid" style={{ gridTemplateColumns: `repeat(${matrix.length}, 1fr)` }}>
           {matrix.map((row, i) =>
             row.map((val, j) => {
               // Normalize 0-1 for coloring: blue-white-red

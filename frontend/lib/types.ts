@@ -233,6 +233,10 @@ export interface OpCatalogEntry {
 }
 
 export interface GenMeta {
+  prompt?: string;
+  model_revision?: string | null;
+  runtime_version?: string;
+  model_dimensions?: { num_heads: number; num_kv_heads: number; hidden_size: number; head_dim: number; ffn_size: number; vocab_size: number; context_length: number };
   model: string;
   device: string;
   architecture: string;
@@ -244,6 +248,7 @@ export interface GenMeta {
   top_k: number;
   decoding: string;
   decoding_params?: {
+    seed?: number | null;
     window_size?: number;
     draft_gamma?: number;
     needle?: string | null;
@@ -305,6 +310,8 @@ export type GenStatus = "idle" | "streaming" | "done" | "error";
 
 // --- Trace format (v0.2 Record & Replay) ---------------------------------- //
 export interface Trace {
+  architecture_data?: ArchitectureData;
+  analysis?: AnalyzeResponse;
   trace_version: number;
   created_at: string;
   model: string;

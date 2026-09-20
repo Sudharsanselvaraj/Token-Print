@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
-import { assetUrl } from "@/lib/assets";
+import { DEMO_TRACES, fetchDemo } from "@/lib/demo";
+import { useRouter } from "next/navigation";
 import { MODAL_BACKDROP_Z } from "@/lib/layers";
 import { TOKENS } from "./primitives";
 import ModalPortal from "./ModalPortal";
@@ -39,22 +40,7 @@ type TraceMeta = {
 // ─── Real traces — ONLY entries with actual files in /public/demo/ ─────────────
 // DO NOT add entries here unless the file physically exists.
 // Fake/invented traces must never be added just to fill the UI.
-const REAL_TRACES: TraceMeta[] = [
-  {
-    id: "hello-world",
-    title: "Hello World",
-    description:
-      'Inference trace captured from the prompt "Hello world! The meaning of life is" decoded greedily for 10 tokens.',
-    model: "Qwen/Qwen2.5-0.5B-Instruct",
-    architecture: "qwen2",
-    tokenCount: 10,
-    traceType: "Causal LM / Greedy Decode",
-    source: "TokenPrint Demo",
-    traceId: "demo:hello-world",
-    tags: ["demo", "causal_lm", "greedy", "qwen2"],
-    filePath: "/demo/hello-world.json",
-  },
-];
+const REAL_TRACES: TraceMeta[] = DEMO_TRACES;
 
 // ─── Icon helper ───────────────────────────────────────────────────────────────
 function Icon({ d, size = 14 }: { d: string; size?: number }) {
@@ -282,6 +268,7 @@ function TraceCard({
 
 // ─── Main gallery modal ────────────────────────────────────────────────────────
 export default function TraceGallery() {
+  const router = useRouter();
   const open = useStore((s) => s.traceGalleryOpen);
   const setOpen = useStore((s) => s.setTraceGalleryOpen);
   const loadTrace = useStore((s) => s.loadTrace);
@@ -318,21 +305,10 @@ export default function TraceGallery() {
       setLoadingId(trace.id);
       setLoadError(null);
       try {
-        // assetUrl() prepends NEXT_PUBLIC_ASSET_BASE, ensuring correctness on
-        // both localhost and tokenprint.in without any basePath mismatch.
-        const resp = await fetch(assetUrl(trace.filePath));
-        if (!resp.ok) {
-          throw new Error(
-            `Server returned ${resp.status} ${resp.statusText} for ${trace.filePath}`
-          );
-        }
-        const blob = await resp.blob();
-        const file = new File([blob], `${trace.id}.json`, {
-          type: "application/json",
-        });
-        // loadTrace() validates, parses, and populates all visualization state,
-        // then switches the UI mode to "generation" automatically.
-        await loadTrace(file);
+        await loadTrace(await fetchDemo(trace.id));
+        const error = useStore.getState().genError;
+        if (error) throw new Error(error);
+        router.push("/app?mode=generation&tour=1");
         setOpen(false);
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "Failed to load trace";
@@ -341,7 +317,7 @@ export default function TraceGallery() {
         setLoadingId(null);
       }
     },
-    [loadTrace, setOpen]
+    [loadTrace, setOpen, router]
   );
 
   if (!open) return null;

@@ -35,7 +35,9 @@ For complete developer guides, see:
 
 ## Development setup
 
-Requirements: **Python 3.11+**, **Node 18+**, and a machine that can run a small
+Start with `python3 scripts/start.py`, or reopen the repository in the development container. See [supported setup](docs/local-setup.md) and the [working adapter/panel examples](docs/contributor-examples.md).
+
+Requirements: **Python 3.11/3.12**, **Node 20.9+**, and a machine that can run a small
 Hugging Face model locally (Apple Silicon / MPS, CUDA, or CPU all work).
 
 ### Backend (FastAPI + Transformers)

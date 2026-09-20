@@ -56,17 +56,19 @@ export default function ModelSummaryCard({
 
   const [contribOpen, setContribOpen] = useState(false);
 
+  const meta = useStore(s => s.genMeta);
   const m = arch?.metadata;
-  const modelName = m?.name || data?.model || "Qwen2.5-0.5B-Instruct";
-  const architecture = m?.architecture || "Qwen2ForCausalLM";
-  const paramsFormatted = m?.total_params ? `${(m.total_params / 1e6).toFixed(2)}M` : "494.03M";
-  const numLayers = m?.num_layers || data?.num_layers || 24;
-  const numHeads = m?.num_heads || data?.num_heads || 14;
-  const kvHeads = m?.num_kv_heads || 2;
-  const contextLen = m?.context_length || 32768;
-  const hiddenSize = m?.hidden_size || data?.hidden_size || 896;
-  const vocabSize = m?.vocab_size || 151936;
-  const dtype = m?.torch_dtype || m?.quantization || "float32";
+  const dims = meta?.model_dimensions;
+  const modelName = meta?.model || m?.name || data?.model || "No model loaded";
+  const architecture = meta?.architecture || m?.architecture || "—";
+  const paramsFormatted = m?.total_params ? `${(m.total_params / 1e6).toFixed(2)}M` : "—";
+  const numLayers = meta?.num_layers ?? m?.num_layers ?? data?.num_layers ?? "—";
+  const numHeads = dims?.num_heads ?? m?.num_heads ?? data?.num_heads ?? "—";
+  const kvHeads = dims?.num_kv_heads ?? m?.num_kv_heads ?? "—";
+  const contextLen = dims?.context_length ?? m?.context_length ?? "—";
+  const hiddenSize = dims?.hidden_size ?? m?.hidden_size ?? data?.hidden_size ?? "—";
+  const vocabSize = dims?.vocab_size ?? m?.vocab_size ?? "—";
+  const dtype = meta?.source === "browser" ? "float32 ONNX" : m?.torch_dtype || m?.quantization || "—";
 
   return (
     <>
@@ -101,7 +103,7 @@ export default function ModelSummaryCard({
           <Metric label="CONTEXT" value={contextLen.toLocaleString()} />
           <Metric label="VOCAB" value={vocabSize.toLocaleString()} />
           <Metric label="DTYPE" value={dtype} />
-          <Metric label="RUNTIME" value={data?.provenance?.backend || "hf_local"} />
+          <Metric label="RUNTIME" value={meta?.device || data?.provenance?.backend || "—"} />
         </MetricGrid>
 
         {/* Model actions */}

@@ -1,0 +1,25 @@
+name: Fresh installation
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  pull_request:
+    paths: [scripts/start.py, scripts/smoke-install.py, backend/requirements.txt, .devcontainer/**, .github/workflows/release-install.yml]
+permissions:
+  contents: read
+jobs:
+  clean-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TOKENPRINT_DEVICE: cpu
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+      - name: Install from scratch and run real inference
+        run: python scripts/start.py --fresh --smoke --venv /tmp/tokenprint-fresh

@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useCallback } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { Billboard, Text, Line } from "@react-three/drei";
-import { Color, Group, PerspectiveCamera, Vector3 } from "three";
+import { Color, Group, Vector3 } from "three";
 import * as THREE from "three";
-import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { useStore } from "@/lib/store";
 import { CHAPTERS } from "@/lib/walkthrough";
@@ -15,16 +14,6 @@ import TransformerStack, {
 import { KIND_COLORS, type OpKind } from "@/lib/sceneColors";
 
 const GAP = 3.4;
-
-// ─── Flight dynamics ────────────────────────────────────────────────────────
-// Purposefully tuned so long vertical transitions visibly travel through the
-// model (never teleport) while close-up adjustments settle quickly.
-
-const K_POS   = 2.4;   // position approach rate
-const K_LOOK  = 2.0;   // look-at approach rate (slightly slower = camera leads)
-const K_FOV   = 2.8;   // fov approach rate
-const MAX_VEL = 24.0;  // max units/sec (keeps far jumps kinetic)
-const CLOSE   = 0.03;  // snap threshold (stops jitter at rest)
 
 // ─── World-space anchor resolution ──────────────────────────────────────────
 // All anchors are named Object3D children of the TransformerStack rendered by
@@ -37,91 +26,6 @@ function anchorPos(scene: THREE.Object3D, name: string | null): Vector3 | null {
   const obj = scene.getObjectByName(name);
   return obj ? obj.getWorldPosition(tmpV.clone()) : null;
 }
-
-// ─── Per-chapter camera shot ────────────────────────────────────────────────
-// Camera offsets are *relative to the anchor's world position* — no hardcoded
-// Y formulas, all positions resolved via scene traversal.
-
-interface Shot {
-  /** Returns the anchor Object3D name. `mid` is the stack midpoint layer index. */
-  anchor: (mid: number) => string | null;
-  /** Camera position = anchorWorld + camOffset. */
-  camOffset: [number, number, number];
-  /** Look-at target = anchorWorld + lookOffset. */
-  lookOffset: [number, number, number];
-  fov: number;
-}
-const OVERVIEW_FOV = 50;
-
-const SHOTS: Record<string, Shot> = {
-  overview: {
-    anchor:      () => null, // special-cased
-    camOffset:   [0, 0, 0],
-    lookOffset:  [0, 0, 0],
-    fov:         OVERVIEW_FOV,
-  },
-  tokenizer: {
-    anchor:      () => "wt_embedding",
-    camOffset:   [0, 2.8, 9.4],
-    lookOffset:  [0, 1.4, 0],
-    fov:         46,
-  },
-  embedding: {
-    anchor:      () => "wt_embedding",
-    camOffset:   [0.6, 1.8, 5.4],
-    lookOffset:  [0, 0.15, 0],
-    fov:         44,
-  },
-  norm: {
-    anchor:      (mid) => `wt_norm_${mid}`,
-    camOffset:   [3.8, 0.9, 7.8],
-    lookOffset:  [0, 0.35, 0],
-    fov:         42,
-  },
-  attention: {
-    anchor:      (mid) => `wt_attn_${mid}`,
-    camOffset:   [0.8, 0.85, 7.2],
-    lookOffset:  [0, 0.2, 0.4],
-    fov:         42,
-  },
-  mlp: {
-    anchor:      (mid) => `wt_mlp_${mid}`,
-    camOffset:   [3.6, 0.7, 7.4],
-    lookOffset:  [0, 0.25, 0],
-    fov:         42,
-  },
-  softmax: {
-    anchor:      () => "wt_output",
-    camOffset:   [2.8, 1.6, 9.2],
-    lookOffset:  [0, 1.2, 0],
-    fov:         44,
-  },
-};
-
-/** Compute the overview camera goal from the embedding + output anchor Y bounds. */
-function overviewGoal(
-  scene: THREE.Object3D,
-  nLayers: number,
-): { position: [number, number, number]; target: [number, number, number]; fov: number } | null {
-  const emb = anchorPos(scene, "wt_embedding");
-  const out = anchorPos(scene, "wt_output");
-  if (!emb || !out) return null;
-
-  const stackTop    = emb.y + 0.5;
-  const stackBot    = out.y - 0.55;
-  const centerY     = (stackTop + stackBot) / 2;
-  const height      = Math.max(stackTop - stackBot, 1);
-  const halfFovRad  = (OVERVIEW_FOV / 2) * (Math.PI / 180);
-  const dist        = (height / 2) / Math.tan(halfFovRad) * 1.18; // 18% margin for labels
-
-  return {
-    position: [dist * 0.34, centerY, dist],
-    target:   [0, centerY, 0],
-    fov:      OVERVIEW_FOV,
-  };
-}
-
-// ─── Active operation mapping per chapter ───────────────────────────────────
 
 function activeOp(
   sceneKey: string,
@@ -138,231 +42,6 @@ function activeOp(
     default:          return { activeLayer: null, activeKind: null };
   }
 }
-
-// ─── Debug overlay div ref (created once, updated via DOM) ──────────────────
-let debugDiv: HTMLDivElement | null = null;
-
-function ensureDebugDiv() {
-  if (debugDiv) return debugDiv;
-  debugDiv = document.createElement("div");
-Object.assign(debugDiv.style, {
-      position:    "fixed",
-      top:         "68px",
-      left:        "312px",
-      width:       "280px",
-      padding:     "7px 9px",
-      background:  "rgba(5,5,5,0.88)",
-      border:      "1px solid #2a2a2a",
-      borderRadius:"4px",
-      color:       "#9ca3af",
-      fontFamily:  "ui-monospace, 'JetBrains Mono', 'Fira Code', monospace",
-      fontSize:    "10px",
-      lineHeight:  "1.55",
-      whiteSpace:  "pre",
-      pointerEvents: "none",
-      zIndex:      "40",
-      display:     "none",
-    });
-    debugDiv.id = "wt-debug";
-    debugDiv.setAttribute("data-wt-debug", "1");
-  document.body.appendChild(debugDiv);
-  return debugDiv;
-}
-
-// ─── Authoritative walkthrough camera controller ────────────────────────────
-
-function WalkthroughCameraController({
-}: {
-}) {
-  const { camera: rawCamera, scene } = useThree();
-  const cam = rawCamera as unknown as PerspectiveCamera;
-  const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
-  const chapterIdx  = useStore((s) => s.wtChapter);
-  const nLayers     = useStore((s) => s.arch?.metadata?.num_layers) ?? 24;
-  const wtCamMode   = useStore((s) => s.wtCamMode);
-  const setWtCamMode = useStore((s) => s.setWtCamMode);
-  const wtCamDebug  = useStore((s) => s.wtCamDebug);
-
-  const ch = CHAPTERS[Math.min(chapterIdx, CHAPTERS.length - 1)];
-  const mid = Math.floor(nLayers / 2);
-
-  // Current computed goal (set on chapter/mode changes, updated for overview)
-  const goalPos  = useRef(new Vector3());
-  const goalLook = useRef(new Vector3());
-  const goalFov  = useRef(OVERVIEW_FOV);
-  const goalSet  = useRef(false);
-
-  const tmpPos  = useRef(new Vector3());
-  const tmpLook = useRef(new Vector3());
-
-  // Compute new goal whenever chapter or mode demands it
-  const computeGoal = useCallback(() => {
-    const shot = SHOTS[ch.scene];
-    if (!shot) return;
-    if (ch.scene === "overview") {
-      const g = overviewGoal(scene, nLayers);
-      if (g) {
-        goalPos.current.set(...g.position);
-        goalLook.current.set(...g.target);
-        goalFov.current = g.fov;
-        goalSet.current = true;
-      }
-      return;
-    }
-    const anchorName = shot.anchor(mid);
-    const wp = anchorPos(scene, anchorName);
-    if (!wp) return;
-    goalPos.current.set(
-      wp.x + shot.camOffset[0],
-      wp.y + shot.camOffset[1],
-      wp.z + shot.camOffset[2],
-    );
-    goalLook.current.set(
-      wp.x + shot.lookOffset[0],
-      wp.y + shot.lookOffset[1],
-      wp.z + shot.lookOffset[2],
-    );
-    goalFov.current = shot.fov;
-    goalSet.current = true;
-  }, [ch.scene, mid, nLayers, scene]);
-
-  // Trigger cinematic on chapter transition or when entering cinematic mode
-  useEffect(() => {
-    if (wtCamMode === "CINEMATIC") computeGoal();
-  }, [wtCamMode, computeGoal]);
-
-  // Chapter change always enters cinematic (acceptance: playback ticks continuously update state)
-  useEffect(() => {
-    setWtCamMode("CINEMATIC");
-  }, [chapterIdx, setWtCamMode]);
-
-  // Detect user orbit → MANUAL
-  useEffect(() => {
-    if (!controls) return;
-    const onStart = () => setWtCamMode("MANUAL");
-    controls.addEventListener("start", onStart);
-    return () => controls.removeEventListener("start", onStart);
-  }, [controls, setWtCamMode]);
-
-  // Overview goal must recompute when anchors settle (after data loads); re-check periodically
-  useEffect(() => {
-    if (ch.scene !== "overview") return;
-    // Anchor objects may not exist on first mount (Suspense); retry briefly.
-    let frame = 0;
-    const iv = setInterval(() => {
-      computeGoal();
-      frame++;
-      if (frame > 120 || goalSet.current) clearInterval(iv);
-    }, 50);
-    return () => clearInterval(iv);
-  }, [ch.scene, computeGoal]);
-
-  // Mount retry: any chapter's anchors may not be committed on the very first
-  // render; keep trying until the goal resolves (acceptance: playback ticks
-  // continuously update the cinematic state).
-  useEffect(() => {
-    if (goalSet.current) return;
-    let frame = 0;
-    const iv = setInterval(() => {
-      computeGoal();
-      frame++;
-      if (frame > 200 || goalSet.current) clearInterval(iv);
-    }, 50);
-    return () => clearInterval(iv);
-  }, [computeGoal, goalSet]);
-
-  // ─── Frame loop: damped cinematic flight ──────────────────────────────────
-  useFrame((_, delta) => {
-    if (wtCamMode === "MANUAL" || !goalSet.current || !controls) {
-      updateDebug(wtCamDebug, ch, cam, controls, goalPos.current, goalLook.current, goalFov.current, wtCamMode);
-      return;
-    }
-
-    const dt = Math.min(delta, 0.1); // clamp delta to avoid huge jumps after tab-away
-
-    // ─ position ─
-    const distPos = cam.position.distanceTo(goalPos.current);
-    if (distPos > CLOSE) {
-      const step = Math.min(K_POS * distPos, MAX_VEL) * dt;
-      tmpPos.current.copy(goalPos.current).sub(cam.position).normalize();
-      cam.position.addScaledVector(tmpPos.current, Math.min(step, distPos));
-    }
-
-    // ─ look-at ─
-    const distLook = controls.target.distanceTo(goalLook.current);
-    if (distLook > CLOSE) {
-      const step = Math.min(K_LOOK * distLook, MAX_VEL * 0.7) * dt;
-      tmpLook.current.copy(goalLook.current).sub(controls.target).normalize();
-      controls.target.addScaledVector(tmpLook.current, Math.min(step, distLook));
-    }
-
-    // ─ fov ─
-    const fovDelta = goalFov.current - cam.fov;
-    if (Math.abs(fovDelta) > 0.02) {
-      cam.fov += fovDelta * Math.min(K_FOV * dt, 0.35);
-      cam.updateProjectionMatrix();
-    }
-
-    controls.update();
-
-    // ─ overview goal re-resolves every frame (anchors may not exist initially) ─
-    if (ch.scene === "overview") computeGoal();
-
-    updateDebug(wtCamDebug, ch, cam, controls, goalPos.current, goalLook.current, goalFov.current, wtCamMode);
-  });
-
-  // Debug div cleanup
-  useEffect(() => {
-    return () => {
-      if (debugDiv?.parentNode) debugDiv.parentNode.removeChild(debugDiv);
-      debugDiv = null;
-    };
-  }, []);
-
-  // Initial snap (first frame, before any lerp kicks in)
-  useEffect(() => {
-    computeGoal();
-    if (goalSet.current) {
-      cam.position.copy(goalPos.current);
-      if (controls) {
-        controls.target.copy(goalLook.current);
-        controls.update();
-      }
-      cam.fov = goalFov.current;
-      cam.updateProjectionMatrix();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return null;
-}
-
-/** Write camera state into the debug overlay div (no React re-render). */
-function updateDebug(
-  on: boolean,
-  ch: { title: string; scene: string; id: string },
-  camera: THREE.PerspectiveCamera,
-  ctrl: OrbitControlsImpl | null,
-  goalPos: Vector3,
-  goalLook: Vector3,
-  goalFov: number,
-  camMode: string,
-) {
-  const div = ensureDebugDiv();
-  if (!on) { div.style.display = "none"; return; }
-  div.style.display = "block";
-  const p = camera.position;
-  const t = ctrl?.target;
-  div.textContent =
-    `CH ${ch.id.toUpperCase()} · ${ch.title.toUpperCase()}\n` +
-    `ANCHOR goal  [${goalPos.x.toFixed(2)}, ${goalPos.y.toFixed(2)}, ${goalPos.z.toFixed(2)}]\n` +
-    `CAM pos  [${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}]\n` +
-    `TGT look [${(t?.x ?? 0).toFixed(2)}, ${(t?.y ?? 0).toFixed(2)}, ${(t?.z ?? 0).toFixed(2)}]\n` +
-    `FOV ${goalFov.toFixed(1)} (cam ${camera.fov.toFixed(1)})\n` +
-    `MODE ${camMode}`;
-}
-
-// ─── Main scene ─────────────────────────────────────────────────────────────
 
 export default function WalkthroughScene() {
   const chapterIdx  = useStore((s) => s.wtChapter);
@@ -414,7 +93,7 @@ export default function WalkthroughScene() {
   return (
     <group>
       {/* ── Camera controller ──────────────────────────────────────────── */}
-      <WalkthroughCameraController />
+
 
       {/* ── Backdrop ───────────────────────────────────────────────────── */}
       {(() => {

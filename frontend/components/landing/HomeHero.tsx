@@ -41,10 +41,11 @@ export function HomeHero() {
 
         <Reveal delay={0.35}>
           <div className="home-hero-ctas">
-            <Link href="/app" className="landing-btn-hero-solid">
+            <Link href="/app?mode=debugger" className="landing-btn-hero-solid">
               <span>Open Debugger</span>
               <ArrowRight size={15} />
             </Link>
+            <Link href="/app?mode=generation&demo=hello-world&tour=1" className="landing-btn-hero-text-link">Try a recorded demo</Link>
             <a
               href="https://github.com/Sudharsanselvaraj/Token-Print"
               target="_blank"

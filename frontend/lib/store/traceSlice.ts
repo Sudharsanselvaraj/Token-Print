@@ -1,11 +1,13 @@
 import type { StateCreator } from "zustand";
-import { downloadTrace as apiDownloadTrace } from "../api";
+import { downloadJSON } from "../experiments";
 import type { StoreState, TraceSlice } from "./types";
 
-export const createTraceSlice: StateCreator<StoreState, [], [], TraceSlice> = (set) => ({
+export const createTraceSlice: StateCreator<StoreState, [], [], TraceSlice> = (set, get) => ({
   traceSource: null,
   downloadTrace: async () => {
-    await apiDownloadTrace();
+    const s = get();
+    if (!s.genMeta || !s.genFrames.length) return;
+    downloadJSON({ trace_version: 1, created_at: new Date().toISOString(), model: s.genMeta.model, meta: s.genMeta, frames: s.genFrames, done: s.genDone, architecture_data: s.arch ?? undefined, analysis: s.data ?? undefined }, "tokenprint-trace.json");
   },
   breakpoints: new Set<number>(),
   toggleBreakpoint: (opIndex) => set((state) => {

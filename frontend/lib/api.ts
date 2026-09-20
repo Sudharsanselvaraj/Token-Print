@@ -1,3 +1,4 @@
+import { validateTrace, MAX_TRACE_BYTES } from "./traceValidation";
 import type {
   AnalyzeResponse,
   ArchitectureData,
@@ -199,41 +200,20 @@ export async function downloadTrace(): Promise<boolean> {
 
 /**
  * Parse a .tokenprint.json file (drag-and-dropped or opened via file picker)
- * into a validated Trace object.  Sends the raw JSON to the backend for
- * validation, or parses it client-side if the backend is unreachable.
+ * into a validated Trace object locally, including when no backend is running.
  */
 export async function loadTraceFile(file: File | Trace | string): Promise<Trace> {
   let raw: unknown;
   if (typeof file === "string") {
     raw = JSON.parse(file);
   } else if (file && typeof file === "object" && "text" in file && typeof (file as File).text === "function") {
+    if ((file as File).size > MAX_TRACE_BYTES) throw new Error("Trace exceeds the 32 MB import limit.");
     const text = await (file as File).text();
     raw = JSON.parse(text);
   } else {
     raw = file;
   }
-  // Try backend validation first.
-  try {
-    const res = await fetch(`${API_URL}/trace/replay`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(raw),
-    });
-    if (res.ok) return res.json();
-  } catch {
-    // Backend unavailable — fall through to client-side validation.
-  }
-  // Client-side fallback: basic shape check.
-  const r = raw as Record<string, unknown>;
-  if (
-    typeof r.trace_version !== "number" ||
-    r.trace_version < 1 ||
-    !r.meta ||
-    !Array.isArray(r.frames)
-  ) {
-    throw new Error("Invalid trace file: missing required fields");
-  }
-  return raw as Trace;
+  return validateTrace(raw);
 }
 
 // --------------------------------------------------------------------------- //

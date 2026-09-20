@@ -9929,3 +9929,29 @@ html:has(.app.embed) .global-nav {
   }
 }
 
+
+/* First-use tour stays inside the workspace, below the navigation. */
+.replay-guide { position: fixed; top: 72px; left: 318px; z-index: 80; width: min(440px, calc(100vw - 700px)); padding: 12px 16px; border: 1px solid #3c3c42; border-radius: 10px; background: rgba(19,20,24,.96); color: #d4d4d8; font-size: 12px; box-shadow: 0 8px 28px #0008; }
+.replay-guide-heading { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.replay-badge { color: #a8d9cf; font: 10px ui-monospace, monospace; letter-spacing: .08em; }
+.replay-guide p { line-height: 1.6; margin: 6px 0 10px; }
+.replay-guide button, .workspace-action { padding: 6px 10px; margin-right: 8px; border: 1px solid #52525b; border-radius: 5px; background: #27272a; color: #fafafa; cursor: pointer; }
+.replay-guide button:focus-visible, .workspace-action:focus-visible { outline: 2px solid #99caff; outline-offset: 3px; }
+.workspace-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px; }
+.workspace-grid h2 { font:12px monospace; letter-spacing:.12em; color:#a1a1aa; }
+.workspace-card { display:flex; flex-direction:column; gap:8px; width:100%; text-align:left; padding:16px; margin:8px 0; border:1px solid #303036; border-radius:8px; background:#121216; color:#f4f4f5; cursor:pointer; }
+.workspace-card:hover { border-color:#808088; }
+.workspace-card span,.workspace-empty p,.workspace-analysis p { color:#a1a1aa; line-height:1.6; }
+.workspace-empty { padding:24px; }
+.workspace-empty a { color:#a5b4fc; }
+.workspace-analysis { margin-top:24px; padding:16px; border:1px solid #303036; border-radius:8px; }
+.workspace-analysis summary { cursor:pointer; }
+.workspace-analysis input { display:block; width:100%; margin:12px 0; padding:10px; color:#fff; background:#18181b; border:1px solid #444; }
+.mode-debugger .replay-guide { left:auto; right:16px; width:360px; }
+@media(max-width:1000px) { .replay-guide { left:12px; right:12px; top:64px; width:auto; max-width:400px; } }
+.dbg-card .head-grid { max-width:360px; margin-bottom:24px; }
+.dbg-card .head-inspector { max-width:640px; }
+.dbg-card .hi-heatmap { max-width:480px; }
+.experiment-panel pre { font:12px/1.5 monospace; }
+.dbg-card table { border-collapse:collapse; width:100%; }
+.dbg-card th,.dbg-card td { padding:8px; text-align:left; border-bottom:1px solid #303036; }

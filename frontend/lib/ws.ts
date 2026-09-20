@@ -24,6 +24,7 @@ export interface GenOptions {
   // live backend WebSocket (default); "local" routes through the in-browser
   // engine seam (5.2b/5.2c). Not serialized to the server.
   source?: "ws" | "local";
+  browserDevice?: "webgpu" | "wasm";
 }
 
 /**

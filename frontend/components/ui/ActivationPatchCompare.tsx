@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useStore } from "@/lib/store";
+import { backendIdentity, captureIntervention } from "@/lib/experiments";
 import { patchAnalyze } from "@/lib/api";
 import type { PatchResponse, AnalyzeResponse } from "@/lib/types";
 
@@ -27,20 +28,22 @@ export default function ActivationPatchCompare() {
       .split(",")
       .map((s) => parseInt(s.trim(), 10))
       .filter((n) => !isNaN(n));
-    if (!layers.length) {
+    if (!layers.length || layers.some(layer => layer < 0 || layer >= (data?.num_layers ?? 0))) {
       setError("Enter at least one layer index (e.g. 8,12).");
       setLoading(false);
       return;
     }
     try {
+      const identity = await backendIdentity();
       const res = await patchAnalyze(target, source, layers);
+      await captureIntervention("patch", { prompt: target, source_sentence: source, patch_layers: layers }, res, identity);
       setResult(res);
     } catch (e: any) {
       setError(e.message ?? "Activation patching failed");
     } finally {
       setLoading(false);
     }
-  }, [target, source, layersCsv]);
+  }, [target, source, layersCsv, data?.num_layers]);
 
   // Trajectory: top prediction at the last position by layer depth.
   const trajectory = useCallback((d: AnalyzeResponse | null) => {
@@ -74,6 +77,7 @@ export default function ActivationPatchCompare() {
   return (
     <div className="act-patch">
       <div className="ap-title">Activation Patching</div>
+      <p>Completed runs appear in the Experiments workspace for export and verification.</p>
       <div className="ap-desc">
         Captures the source prompt&apos;s residual stream at the chosen layers and injects it
         into the target prompt&apos;s forward pass. Layers after the patch process the source&apos;s

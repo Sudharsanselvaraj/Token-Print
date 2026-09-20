@@ -37,6 +37,12 @@ Every other LLM visualizer gives you one of two things: a static architecture di
 rotations, and the residual stream move in real 3D — every value traced back to
 `named_parameters()`, a real forward pass, or the GGUF binary header itself.
 
+## Start locally
+
+Run `python3 scripts/start.py` with Python 3.11/3.12 and Node 20.9+. The launcher installs dependencies, downloads the model with progress, and checks both services. For an immediate offline example, choose **Try a recorded demo** on the home page.
+
+[Setup and troubleshooting](docs/local-setup.md) · [Browser GPT-2 and capabilities](docs/browser-inference.md) · [Reproducible experiments](docs/experiments.md) · [Contributor examples](docs/contributor-examples.md)
+
 ## Why it hits different
 
 -  **Every number is real.** No `Math.random`, no placeholder tensors — a build-time script

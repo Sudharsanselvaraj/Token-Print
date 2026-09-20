@@ -82,7 +82,7 @@ export default function Scene({
       }}
     >
       <color attach="background" args={["#000000"]} />
-      <fog attach="fog" args={["#000000", 100, 500]} />
+
 
       {/* 3-Point Studio Lighting Rig for Premium Scientific Model */}
       <ambientLight intensity={0.85} />

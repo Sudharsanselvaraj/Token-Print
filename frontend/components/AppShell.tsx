@@ -5,6 +5,8 @@ import { useStore, restoreFromUrl } from "@/lib/store";
 import { useSearchParams } from "next/navigation";
 import { assetUrl } from "@/lib/assets";
 import { normalizeModeParam } from "@/lib/routeMode";
+import { fetchDemo } from "@/lib/demo";
+import ReplayGuide from "./ui/ReplayGuide";
 import SceneLoader from "./SceneLoader";
 import PlaybackEngine from "./PlaybackEngine";
 import ModeSidebar from "./ui/ModeSidebar";
@@ -47,6 +49,29 @@ export default function AppShell() {
   const searchParams = useSearchParams();
   const mode = normalizeModeParam(searchParams?.get("mode"));
 
+  const demoId = searchParams?.get("demo");
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
+  const [demoAttempt, setDemoAttempt] = useState(0);
+  useEffect(() => {
+    if (!demoId) return;
+    const controller = new AbortController();
+    setDemoLoading(true);
+    setDemoError(null);
+    fetchDemo(demoId, controller.signal).then(async (trace) => {
+      if (controller.signal.aborted) return;
+      await useStore.getState().loadTrace(trace);
+      const error = useStore.getState().genError;
+      if (error) throw new Error(error);
+      useStore.setState({ isPlaying: true, opPlaying: true });
+    }).catch((error) => {
+      if (!controller.signal.aborted) setDemoError(error.message);
+    }).finally(() => {
+      if (!controller.signal.aborted) setDemoLoading(false);
+    });
+    return () => controller.abort();
+  }, [demoId, demoAttempt]);
+
   // store.mode remains a read-only mirror so the many sub-components that
   // still read it historically stay consistent. Self-heal any divergence from
   // the URL BEFORE paint: legacy data actions must never be able to pick the
@@ -75,7 +100,7 @@ export default function AppShell() {
     // Read live state so mount effects and StrictMode do not duplicate requests
     // or silently retry a failure that should remain visible to the user.
     const initial = useStore.getState();
-    if (!initial.arch && !initial.archLoading && !initial.archError) loadArchitecture();
+    if (!demoId && initial.traceSource !== "file" && !initial.arch && !initial.archLoading && !initial.archError) loadArchitecture();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -119,6 +144,7 @@ export default function AppShell() {
       style={gridStyle}
     >
       <PlaybackEngine />
+      <ReplayGuide guided={searchParams?.get("tour") === "1"} loading={demoLoading} error={demoError} onRetry={() => setDemoAttempt((n) => n + 1)} />
       {showSidebars && (
         <ModeSidebar
           collapsed={leftCollapsed}

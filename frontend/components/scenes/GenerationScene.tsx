@@ -20,7 +20,8 @@ const KV_CAP = 40;
 
 export default function GenerationScene() {
   const meta = useStore((s) => s.genMeta);
-  const archMeta = useStore((s) => s.arch?.metadata);
+  const loadedArch = useStore((s) => s.arch?.metadata);
+  const archMeta = meta?.model_dimensions ?? loadedArch;
   const opIndex = useStore((s) => s.opIndex);
   const setOpIndex = useStore((s) => s.setOpIndex);
   const enterInspectMode = useStore((s) => s.enterInspectMode);

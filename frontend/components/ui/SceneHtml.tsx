@@ -1,28 +1,65 @@
 "use client";
-
 import { Html } from "@react-three/drei";
-import type { ComponentProps } from "react";
+import { useEffect, useRef, type ComponentProps } from "react";
 import { SCENE_OVERLAY_Z } from "@/lib/layers";
 
-type SceneHtmlProps = ComponentProps<typeof Html>;
-
-/**
- * SceneHtml — the only sanctioned way to project DOM overlays inside the 3D
- * scene.
- *
- * drei's <Html> defaults to zIndexRange=[16_777_271, 0]: near-camera labels
- * get inline z-indexes in the millions, painting them *above* every modal in
- * the app (HF picker 10500, trace gallery 10000, contributor drawer 99999).
- * We clamp the entire class of scene-owned overlays below the global modal
- * layer so no scene label can ever escape above a dialog.
- *
- * Callers may still pass an explicit zIndexRange top; it is clamped to
- * SCENE_OVERLAY_Z at most. The bottom is always 0 so nearer labels still
- * stack above farther ones.
- */
-export function SceneHtml({ zIndexRange, ...props }: SceneHtmlProps) {
-  const top = zIndexRange
-    ? Math.min(zIndexRange[0], SCENE_OVERLAY_Z)
-    : SCENE_OVERLAY_Z;
-  return <Html zIndexRange={[top, 0]} {...props} />;
+type SceneHtmlProps = ComponentProps<typeof Html> & { labelPriority?: number };
+const labels = new Map<HTMLElement, number>();
+let animation = 0;
+function arrange() {
+  const occupied: DOMRect[] = [];
+  for (const [node] of [...labels].sort((a, b) => b[1] - a[1])) {
+    const box = node.getBoundingClientRect();
+    const visible =
+      box.width > 0 &&
+      box.height > 0 &&
+      box.right > 0 &&
+      box.bottom > 0 &&
+      box.left < innerWidth &&
+      box.top < innerHeight;
+    const overlap = occupied.some(
+      (r) =>
+        box.left < r.right + 6 &&
+        box.right > r.left - 6 &&
+        box.top < r.bottom + 6 &&
+        box.bottom > r.top - 6,
+    );
+    node.style.visibility = visible && !overlap ? "visible" : "hidden";
+    if (visible && !overlap) occupied.push(box);
+  }
+  animation = requestAnimationFrame(arrange);
+}
+/** All scene DOM remains below dialogs. Passive labels share collision handling. */
+export function SceneHtml({
+  zIndexRange,
+  labelPriority = 0,
+  children,
+  ...props
+}: SceneHtmlProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const passive = props.style?.pointerEvents === "none" || labelPriority > 0;
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || !passive) return;
+    labels.set(node, labelPriority);
+    if (!animation) animation = requestAnimationFrame(arrange);
+    return () => {
+      labels.delete(node);
+      if (!labels.size) {
+        cancelAnimationFrame(animation);
+        animation = 0;
+      }
+    };
+  }, [passive, labelPriority]);
+  return (
+    <Html
+      zIndexRange={[
+        Math.min(zIndexRange?.[0] ?? SCENE_OVERLAY_Z, SCENE_OVERLAY_Z),
+        0,
+      ]}
+      {...props}
+    >
+      <div ref={ref}>{children}</div>
+    </Html>
+  );
 }

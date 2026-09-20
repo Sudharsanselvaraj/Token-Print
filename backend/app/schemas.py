@@ -254,6 +254,8 @@ class RagAnalyzeResponse(AnalyzeResponse):
 
 
 class ModelInfo(BaseModel):
+    model_revision: str | None = None
+    runtime_version: str | None = None
     model: str
     device: str
     mode: str = ""

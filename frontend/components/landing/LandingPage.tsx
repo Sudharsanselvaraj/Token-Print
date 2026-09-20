@@ -84,9 +84,10 @@ export function LandingPage() {
 
           <Reveal delay={0.3}>
             <div className="landing-hero-actions">
-              <Link href="/app" className="landing-btn-hero-solid">
+              <Link href="/app?mode=debugger" className="landing-btn-hero-solid">
                 <span>Open Debugger</span>
               </Link>
+              <Link href="/app?mode=generation&demo=hello-world&tour=1" className="landing-btn-hero-text-link">Try a recorded demo</Link>
               <a
                 href="https://github.com/Sudharsanselvaraj/Token-Print"
                 target="_blank"

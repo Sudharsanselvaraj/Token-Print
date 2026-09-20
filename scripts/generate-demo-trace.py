@@ -1,92 +1,107 @@
-"""Generate a curated demo trace for the static hosted demo.
+"""Capture a complete, real offline demo from a running TokenPrint backend.
 
-Requires the backend to be running (for the WebSocket + trace endpoint).
-
-Usage:
-    python scripts/generate-demo-trace.py
-
-Generates all demo traces defined in DEMOS and saves them to
-frontend/public/demo/.
+backend/.venv/bin/python scripts/generate-demo-trace.py --force
 """
+
+import argparse
+import asyncio
 import json
+import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
-import requests
-
-DEMO_DIR = Path(__file__).resolve().parent.parent / "frontend/public/demo"
-
-DEMOS = [
-    {
-        "id": "neural-networks",
-        "title": "Neural Networks",
-        "prompt": "Neural networks are",
-        "description": "Short generation: how attention patterns form.",
-    },
-    {
-        "id": "transformer",
-        "title": "Transformer",
-        "prompt": "A transformer model works by",
-        "description": "Layer-by-layer walk of a technical description.",
-    },
-    {
-        "id": "hello-world",
-        "title": "Hello World",
-        "prompt": "Hello world! The meaning of life is",
-        "description": "Classic coding prompt step by step.",
-    },
-]
-
-BASE = "http://localhost:8000"
+import websockets
 
 
-def run_generation(prompt: str) -> dict:
-    """Start a WebSocket generation and wait for completion, then GET /trace."""
-    import asyncio
-
-    async def _run():
-        import websockets
-
-        uri = f"ws://localhost:8000/ws/generate"
-        async with websockets.connect(uri) as ws:
-            await ws.send(json.dumps({
-                "type": "start",
-                "prompt": prompt,
-                "top_k": 20,
-                "record_trace": True,
-            }))
+async def capture(base, prompt, max_tokens):
+    meta = None
+    frames = []
+    done = None
+    async with websockets.connect(
+        base.replace("http", "ws", 1) + "/ws/generate", max_size=32 * 1024 * 1024
+    ) as ws:
+        await ws.send(
+            json.dumps(
+                {
+                    "prompt": prompt,
+                    "max_new_tokens": max_tokens,
+                    "top_k": 10,
+                    "trace": True,
+                    "record_trace": True,
+                    "seed": 0,
+                }
+            )
+        )
+        async with asyncio.timeout(180):
             while True:
-                msg = await ws.recv()
-                data = json.loads(msg)
-                if data.get("type") == "done":
+                item = json.loads(await ws.recv())
+                if item["type"] == "error":
+                    raise RuntimeError(item.get("message"))
+                if item["type"] == "meta":
+                    meta = item
+                elif item["type"] == "token":
+                    frames.append(item)
+                elif item["type"] == "done":
+                    done = item
                     break
+    if not meta or not frames or not meta.get("op_catalog"):
+        raise RuntimeError("The backend did not provide a complete instrumented trace.")
 
-    asyncio.run(_run())
-    resp = requests.get(f"{BASE}/trace")
-    resp.raise_for_status()
-    trace = resp.json()
-    # Strip the op_catalog for portability (the frontend rebuilds it).
-    if "meta" in trace and trace["meta"]:
-        trace["meta"]["op_catalog"] = None
-    return trace
+    def request(path, body=None):
+        req = urllib.request.Request(
+            base + path,
+            data=json.dumps(body).encode() if body else None,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=120) as response:
+            return json.load(response)
+
+    identity = request("/model-info")
+    if not identity.get("model_revision"):
+        raise RuntimeError(
+            "Restart the current backend to capture its resolved model revision."
+        )
+    meta.update(
+        prompt=prompt,
+        model_revision=identity["model_revision"],
+        runtime_version=identity.get("runtime_version"),
+    )
+    return {
+        "trace_version": 1,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "model": meta["model"],
+        "meta": meta,
+        "frames": frames,
+        "done": done,
+        "architecture_data": request("/architecture"),
+        "analysis": request("/analyze", {"sentence": prompt}),
+    }
 
 
-def generate_all():
-    DEMO_DIR.mkdir(parents=True, exist_ok=True)
-    for demo in DEMOS:
-        out = DEMO_DIR / f"{demo['id']}.json"
-        if out.exists():
-            print(f"  Skip {demo['id']} (exists)")
-            continue
-        print(f"  Generating {demo['id']}...")
-        try:
-            trace = run_generation(demo["prompt"])
-            out.write_text(json.dumps(trace, indent=2))
-            n_frames = len(trace.get("frames", []))
-            print(f"    -> {out} ({n_frames} frames, {out.stat().st_size} bytes)")
-        except Exception as e:
-            print(f"    ERROR: {e}")
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--backend", default="http://localhost:8000")
+    parser.add_argument(
+        "--prompt", default="Explain why the sky is blue in one sentence."
+    )
+    parser.add_argument("--max-tokens", type=int, default=16)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path(__file__).resolve().parents[1]
+        / "frontend/public/demo/hello-world.json",
+    )
+    parser.add_argument("--force", action="store_true")
+    args = parser.parse_args()
+    if args.output.exists() and not args.force:
+        parser.error("Output exists; use --force to replace it.")
+    trace = asyncio.run(capture(args.backend.rstrip("/"), args.prompt, args.max_tokens))
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(trace, separators=(",", ":")) + "\n")
+    print(
+        f"Saved {len(trace['frames'])} real frames and {len(trace['meta']['op_catalog'])} operations to {args.output}"
+    )
 
 
 if __name__ == "__main__":
-    generate_all()
-
+    main()

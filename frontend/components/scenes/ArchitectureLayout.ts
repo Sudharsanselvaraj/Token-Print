@@ -155,42 +155,17 @@ export function cameraOverview(numLayers = 24): {
 export function cameraOverviewForMode(
   mode: string,
   numLayers = 24,
-  fovDeg = 48
+  fovDeg = 48,
+  aspect = 1
 ): {
   position: [number, number, number];
   target: [number, number, number];
 } {
-  if (mode === "generation") {
-    const gap = 2.6;
-    const topY = 4.0;
-    const botY = -(numLayers + 1.5) * gap;
-    const height = topY - botY;
-    const midY = (topY + botY) / 2;
-    const fovRad = (fovDeg * Math.PI) / 180;
-    const distance = Math.max(35, (height / (2 * 0.60)) / Math.tan(fovRad / 2));
-    return {
-      position: [distance * 0.08, midY + height * 0.04, distance],
-      target: [0, midY, 0],
-    };
-  } else if (mode === "walkthrough") {
-    const gap = 3.4;
-    const topY = 5.0;
-    const botY = -(numLayers + 1) * gap;
-    const height = topY - botY;
-    const midY = (topY + botY) / 2;
-    const fovRad = (fovDeg * Math.PI) / 180;
-    const distance = Math.max(35, (height / (2 * 0.60)) / Math.tan(fovRad / 2));
-    return {
-      position: [distance * 0.08, midY + height * 0.04, distance],
-      target: [0, midY, 0],
-    };
-  } else {
-    // Explorer mode: bring camera much closer (Z = 62, target Y = -32) so the
-    // 3D model, components, labels, and connections are immediately readable
-    // without the user having to search deep into the void.
-    return {
-      position: [14, -20, 62],
-      target: [0, -32, 0],
-    };
-  }
+  const layers = Math.max(1, numLayers);
+  const gap = mode === "explorer" ? LAYOUT.LAYER_HEIGHT : mode === "generation" ? 2.6 : 3.4;
+  const top = mode === "explorer" ? LAYOUT.EMBED_Y + 3 : 6;
+  const bottom = mode === "explorer" ? -(layers - 1) * gap - 14 : -(layers + 2) * gap;
+  const middle = (top + bottom) / 2;
+  const distance = Math.max((top - bottom) / 0.72, 26 / Math.max(aspect, 0.3)) / (2 * Math.tan(fovDeg * Math.PI / 360));
+  return { position: [0, middle, distance], target: [0, middle, 0] };
 }

@@ -255,7 +255,9 @@ class ModelEngine:
         # Detect the model family up front (issue #87): decoder-only causal
         # LMs, encoder-only embedding models, and vision transformers load
         # through the appropriate Auto class and run through matching pipelines.
-        probe_cfg = AutoConfig.from_pretrained(model_id)
+        requested_revision = os.environ.get("TOKENPRINT_REVISION") or None
+        probe_cfg = AutoConfig.from_pretrained(model_id, revision=requested_revision)
+        self.revision = getattr(probe_cfg, "_commit_hash", None) or requested_revision
         self.model_type: str = str(getattr(probe_cfg, "model_type", "unknown"))
         self.mode: str = _classify_model_type(self.model_type)
         self.adapter = get_model_adapter(self.mode)
@@ -263,9 +265,10 @@ class ModelEngine:
         self.tokenizer: AutoTokenizer | None = None
         self.image_processor = None
         if self.mode == "encoder":
-            self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_id, revision=self.revision)
             self.model = AutoModel.from_pretrained(
                 model_id,
+                revision=self.revision,
                 attn_implementation=self.attn_implementation,
                 torch_dtype=torch.float32,
             )
@@ -274,13 +277,15 @@ class ModelEngine:
             # is built lazily on first use (it can encode user-provided images).
             self.model = AutoModel.from_pretrained(
                 model_id,
+                revision=self.revision,
                 attn_implementation=self.attn_implementation,
                 torch_dtype=torch.float32,
             )
         else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_id, revision=self.revision)
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_id,
+                revision=self.revision,
                 attn_implementation=self.attn_implementation,  # REQUIRED for real attentions
                 torch_dtype=torch.float32,
             )
@@ -551,6 +556,8 @@ class ModelEngine:
         return {
             "sentence": sentence,
             "model": self.model_id,
+            "model_revision": getattr(self, "revision", None),
+            "runtime_version": f"torch@{torch.__version__}",
             "device": self.device,
             "mode": self.mode,
             "model_type": self.model_type,
@@ -619,6 +626,8 @@ class ModelEngine:
         return {
             "sentence": sentence,
             "model": self.model_id,
+            "model_revision": getattr(self, "revision", None),
+            "runtime_version": f"torch@{torch.__version__}",
             "device": self.device,
             "mode": self.mode,
             "model_type": self.model_type,
@@ -651,7 +660,7 @@ class ModelEngine:
         if self.image_processor is None:
             from transformers import AutoImageProcessor
 
-            self.image_processor = AutoImageProcessor.from_pretrained(self.model_id)
+            self.image_processor = AutoImageProcessor.from_pretrained(self.model_id, revision=self.revision)
         return self.image_processor
 
     @staticmethod
@@ -804,6 +813,8 @@ class ModelEngine:
         return {
             "sentence": f"image → {grid_n}×{grid_n} patches",
             "model": self.model_id,
+            "model_revision": getattr(self, "revision", None),
+            "runtime_version": f"torch@{torch.__version__}",
             "device": self.device,
             "mode": self.mode,
             "model_type": self.model_type,
@@ -1115,6 +1126,9 @@ class ModelEngine:
             meta = {
                 "type": "meta",
                 "model": self.model_id,
+                "model_revision": getattr(self, "revision", None),
+                "runtime_version": f"torch@{torch.__version__}",
+                "prompt": prompt,
                 "device": self.device,
                 "architecture": getattr(self.model.config, "model_type", "unknown"),
                 # num_layers+1 stat values per step (embeddings + each layer).
@@ -1129,9 +1143,10 @@ class ModelEngine:
                     "window_size": window_size,
                     "draft_gamma": draft_gamma,
                     "needle": needle or None,
-                    "temperature": round(float(temperature), 3),
+                    "seed": seed,
+                    "temperature": float(temperature),
                     "top_k": top_k,
-                    "top_p": round(float(top_p), 3),
+                    "top_p": float(top_p),
                 },
                 # This decode loop genuinely uses a KV cache (use_cache=True with
                 # past_key_values threaded step to step), so the frontend may show
@@ -1631,6 +1646,8 @@ class ModelEngine:
     def info(self) -> dict:
         return {
             "model": self.model_id,
+            "model_revision": getattr(self, "revision", None),
+            "runtime_version": f"torch@{torch.__version__}",
             "device": self.device,
             "mode": self.mode,
             "model_type": self.model_type,

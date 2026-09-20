@@ -87,7 +87,7 @@ export function OperationLabel() {
       <SceneHtml
         position={[0, 0, 0]}
         center
-        distanceFactor={22}
+        labelPriority={100}
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
         <div

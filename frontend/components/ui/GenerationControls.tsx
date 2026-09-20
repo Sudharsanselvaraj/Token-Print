@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useStore } from "@/lib/store";
+import { registerLocalEngine } from "@/lib/generation";
+import { browserEngine, useBrowserProgress } from "@/lib/browser/engine";
 import { Button, TOKENS } from "./primitives";
 
 const DEFAULT_PROMPT = "Name one primary color. Answer in one word.";
@@ -63,6 +65,7 @@ function SliderRow({
     <div style={{ ...rowStyle, opacity: disabled ? 0.45 : 1 }}>
       <span style={labelStyle}>{label}</span>
       <input
+        aria-label={label}
         type="range"
         min={min}
         max={max}
@@ -78,6 +81,11 @@ function SliderRow({
 }
 
 export default function GenerationControls() {
+  const [engine, setEngine] = useState<"ws" | "webgpu" | "wasm">("ws");
+  const genError = useStore(s => s.genError);
+  const genMeta = useStore(s => s.genMeta);
+  const downloadTrace = useStore(s => s.downloadTrace);
+  const progress = useBrowserProgress(s => s.message);
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [mode, setMode] = useState<"greedy" | "sampling">("greedy");
   const [advanced, setAdvanced] = useState<"sliding_window" | "speculative" | null>(null);
@@ -97,7 +105,7 @@ export default function GenerationControls() {
   const activeGguf = useStore((s) => s.activeGguf);
 
   const streaming = status === "streaming";
-  const canGenerate = modelMode === "" || modelMode === "causal_lm";
+  const canGenerate = engine !== "ws" || modelMode === "" || modelMode === "causal_lm";
   const sampling = mode === "sampling" && !advanced;
   const isGGUF = !!activeGguf;
 
@@ -106,6 +114,11 @@ export default function GenerationControls() {
   const run = () => {
     const p = prompt.trim();
     if (!p || streaming) return;
+    if (engine !== "ws") {
+      registerLocalEngine(browserEngine);
+      start(p, { source: "local", browserDevice: engine, decodingMode: "greedy", maxNewTokens: Math.min(maxTokens, 32), topK });
+      return;
+    }
     start(p, {
       decodingMode,
       gguf: isGGUF ? activeGguf : undefined,
@@ -121,6 +134,16 @@ export default function GenerationControls() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+      <label style={{ fontSize: 12 }}>Inference engine
+        <select aria-label="Inference engine" value={engine} disabled={streaming} onChange={e => setEngine(e.target.value as typeof engine)} style={{ width: "100%", padding: 6, background: "#18181b", color: "white" }}>
+          <option value="ws">Python backend</option><option value="webgpu">Browser GPT-2 · WebGPU</option><option value="wasm">Browser GPT-2 · CPU (WASM)</option>
+        </select>
+      </label>
+      {engine !== "ws" && <p style={{ fontSize: 11, color: "#a1a1aa" }}>Greedy decoding · max 32 new tokens · ~500 MB cached download. Final logits only; attention and interventions need Python. <a href="https://github.com/Sudharsanselvaraj/Token-Print/blob/main/docs/browser-inference.md">Capabilities</a></p>}
+      {genMeta?.source === "browser" && <strong className="replay-badge">BROWSER · {genMeta.device.toUpperCase()} · GPT-2</strong>}
+      {status === "done" && <button className="chip-btn" onClick={downloadTrace}>Export trace</button>}
+      {genError && <p role="alert">{genError}</p>}
+      {progress && <p role="status" style={{ fontSize: 11 }}>{progress}</p>}
       <textarea
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
@@ -153,7 +176,7 @@ export default function GenerationControls() {
             <Button
               key={m}
               variant={mode === m && !advanced ? "primary" : "ghost"}
-              disabled={streaming}
+              disabled={streaming || engine !== "ws"}
               onClick={() => {
                 setAdvanced(null);
                 setMode(m);
@@ -201,9 +224,10 @@ export default function GenerationControls() {
       <div style={rowStyle}>
         <span style={labelStyle}>MAX TOKENS</span>
         <input
+          aria-label="Maximum new tokens"
           type="number"
           min={1}
-          max={64}
+          max={engine === "ws" ? 64 : 32}
           value={maxTokens}
           disabled={streaming}
           onChange={(e) => setMaxTokens(Math.max(1, Math.min(64, Number(e.target.value) || 40)))}
@@ -276,7 +300,7 @@ export default function GenerationControls() {
                 type="radio"
                 name="advanced-mode"
                 checked={advanced === a}
-                disabled={streaming}
+                disabled={streaming || engine !== "ws"}
                 onChange={() => setAdvanced(a)}
               />
               {a === "sliding_window" ? "Sliding-window" : "Speculative"}
@@ -291,7 +315,7 @@ export default function GenerationControls() {
                 max={4096}
                 step={16}
                 value={windowSize}
-                disabled={streaming}
+                disabled={streaming || engine !== "ws"}
                 onChange={(e) => setWindowSize(Number(e.target.value) || 512)}
                 style={{
                   ...monoVal,
@@ -312,7 +336,7 @@ export default function GenerationControls() {
                 min={1}
                 max={8}
                 value={draftGamma}
-                disabled={streaming}
+                disabled={streaming || engine !== "ws"}
                 onChange={(e) => setDraftGamma(Number(e.target.value) || 4)}
                 style={{
                   ...monoVal,
@@ -341,7 +365,7 @@ export default function GenerationControls() {
             <input
               type="checkbox"
               checked={needleEnabled}
-              disabled={streaming}
+              disabled={streaming || engine !== "ws"}
               onChange={(e) => setNeedleEnabled(e.target.checked)}
             />
             Needle (long-context recall probe)
@@ -350,7 +374,7 @@ export default function GenerationControls() {
             <input
               type="text"
               value={needle}
-              disabled={streaming}
+              disabled={streaming || engine !== "ws"}
               onChange={(e) => setNeedle(e.target.value)}
               placeholder="Memory fact to test recall of…"
               spellCheck={false}
@@ -385,7 +409,7 @@ export default function GenerationControls() {
           marginTop: "6px",
         }}
       >
-        Streams a real decode over WebSocket — one message per token with real
+        Streams a real decode from the selected engine — one message per token with real
         top-k probabilities.
         {sampling && " Sampling draws from the true temperature/top-k/top-p distribution."}
         {!sampling && !advanced && " Greedy picks the argmax token each step."}

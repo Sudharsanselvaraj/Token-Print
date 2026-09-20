@@ -1,5 +1,8 @@
 # TokenPrint Roadmap
 
+> Usability upgrade: offline guided replay, focused debugger workspaces, a supported launcher, portable experiments, contributor examples, and pinned browser GPT-2 are implemented. Browser support is scoped by the [capability matrix](docs/browser-inference.md); browser GGUF execution and additional models remain follow-up work.
+
+
 > **Status as of 2026-09-16 — most of this document is now shipped.**
 >
 > All six original milestones (**v0.2 → v0.6**) are complete, as are design-review

@@ -122,6 +122,8 @@ app.add_middleware(
     allow_origins=[
         # Local dev
         "http://localhost:3000",
+        f"http://localhost:{os.getenv('TOKENPRINT_FRONTEND_PORT', '3000')}",
+        f"http://127.0.0.1:{os.getenv('TOKENPRINT_FRONTEND_PORT', '3000')}",
         "http://127.0.0.1:3000",
         # Deployed frontend (GitHub Pages + custom domain)
         "https://sudharsanselvaraj.github.io",
@@ -756,7 +758,7 @@ async def ws_generate(ws: WebSocket) -> None:
     top_p = _to_float(req.get("top_p"), 1.0)
     draft_gamma = _to_int(req.get("draft_gamma"), 4)
     window_size = _to_int(req.get("window_size"), 512)
-    seed = req.get("seed") or None
+    seed = req.get("seed")
     use_chat_template = bool(req.get("use_chat_template", True))
     include_catalog = bool(req.get("trace", False))
     record_trace = bool(req.get("record_trace", False))
@@ -849,7 +851,7 @@ async def ws_generate(ws: WebSocket) -> None:
             )
         try:
             await ws.close()  # graceful close frame after the stream ends
-        except RuntimeError:
+        except (RuntimeError, WebSocketDisconnect):
             logger.debug("WebSocket already closed.")
 
 

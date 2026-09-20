@@ -16,11 +16,15 @@ export const createArchitectureSlice: StateCreator<StoreState, [], [], Architect
   archLoading: false,
   archError: null,
   loadArchitecture: async (modelId?: string) => {
+    const replayAtStart = get().traceSource;
+    const metaAtStart = get().genMeta;
     set({ archLoading: true, archError: null });
     try {
       const raw = await fetchArchitecture(modelId);
+      if (get().traceSource !== replayAtStart || (get().genMeta !== metaAtStart && (get().genMeta?.source === "browser" || get().traceSource === "file"))) { set({ archLoading: false }); return; }
       set({ arch: { ...raw, tensors: annotateTensors(raw.tensors) }, archLoading: false, archError: null });
     } catch (e) {
+      if (get().traceSource !== replayAtStart || (get().genMeta !== metaAtStart && (get().genMeta?.source === "browser" || get().traceSource === "file"))) { set({ archLoading: false }); return; }
       set({ archLoading: false, archError: e instanceof Error ? e.message : "Failed to load architecture" });
     }
   },

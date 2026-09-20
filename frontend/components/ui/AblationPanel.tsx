@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useStore } from "@/lib/store";
+import { backendIdentity, captureIntervention } from "@/lib/experiments";
 import { fetchDebugSnapshot, type DebugAnalyzeResponse } from "@/lib/api";
 
 export default function AblationPanel() {
@@ -42,6 +43,7 @@ export default function AblationPanel() {
     setLoading(true);
     setError(null);
     try {
+      const identity = await backendIdentity();
       const normalRes = await fetchDebugSnapshot(sentence);
       const zeroHeads: Record<string, number[]> = {};
       for (const [k, v] of Object.entries(heads)) {
@@ -58,6 +60,7 @@ export default function AblationPanel() {
       });
       if (!ablatedRes.ok) throw new Error(`Ablation failed (${ablatedRes.status})`);
       const ablatedData = await ablatedRes.json();
+      await captureIntervention("ablation", { prompt: sentence, zero_heads: zeroHeads, zero_layers: [...layers] }, { baseline: normalRes, ablated: ablatedData }, identity);
       setNormal(normalRes);
       setAblated(ablatedData);
     } catch (e: any) {

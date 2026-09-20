@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import { CHAPTERS } from "@/lib/walkthrough";
 import { useStore } from "@/lib/store";
 import {
   cameraOverviewForMode,
@@ -19,13 +20,15 @@ export function GlobalCameraController({
 }: {
   controlsRef: React.RefObject<OrbitControlsImpl | null>;
 }) {
-  const { camera } = useThree();
+  const { camera, size, scene } = useThree();
+  const aspect = size.width / Math.max(size.height, 1);
+  const archLayers = useStore(s => s.arch?.metadata.num_layers);
+  const dataLayers = useStore(s => s.data?.num_layers);
 
   const mode = useStore((s) => s.mode);
   const navMode = useStore((s) => s.navMode);
   const cameraMode = useStore((s) => s.cameraMode);
   const userOrbiting = useStore((s) => s.userOrbiting);
-  const setUserOrbiting = useStore((s) => s.setUserOrbiting);
   const inspectingComponentId = useStore((s) => s.inspectingComponentId);
 
   // Architecture mode state
@@ -47,7 +50,7 @@ export function GlobalCameraController({
   const wtChapter = useStore((s) => s.wtChapter);
   const wtPlaying = useStore((s) => s.wtPlaying);
 
-  const numLayers = genMeta?.num_layers ?? DEFAULT_LAYERS;
+  const numLayers = (mode === "explorer" ? archLayers ?? dataLayers : genMeta?.num_layers ?? archLayers) ?? DEFAULT_LAYERS;
 
   const targetPos = useRef(new THREE.Vector3());
   const targetLook = useRef(new THREE.Vector3());
@@ -56,7 +59,8 @@ export function GlobalCameraController({
 
   // Set initial camera view on mount using mode-specific bounds framing
   useEffect(() => {
-    const { position, target } = cameraOverviewForMode(mode, numLayers, fov);
+    if (useStore.getState().navMode === "MANUAL") return;
+    const { position, target } = cameraOverviewForMode(mode, numLayers, fov, aspect);
     targetPos.current.set(...position);
     targetLook.current.set(...target);
     camera.position.set(...position);
@@ -65,29 +69,43 @@ export function GlobalCameraController({
       controlsRef.current.update();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, numLayers, fov]);
+  }, [mode, numLayers, fov, aspect]);
 
   // Compute transform target based on navMode & mode
   const getTargetTransform = (): { position: [number, number, number]; target: [number, number, number] } => {
     const activeNav = navMode === "MANUAL" ? (cameraMode === "overview" ? "OVERVIEW" : "MANUAL") : navMode;
 
+    if (mode === "walkthrough" && activeNav !== "OVERVIEW" && activeNav !== "MANUAL") {
+      const chapter = CHAPTERS[Math.min(wtChapter, CHAPTERS.length - 1)].scene;
+      const mid = Math.floor(numLayers / 2);
+      const names: Record<string, string> = { tokenizer: "wt_embedding", embedding: "wt_embedding", norm: `wt_norm_${mid}`, attention: `wt_attn_${mid}`, mlp: `wt_mlp_${mid}`, softmax: "wt_output" };
+      const anchor = scene.getObjectByName(activeNav === "LAYER_FOCUS" ? `wt_norm_${selectedLayer}` : names[chapter]);
+      if (anchor) {
+        const p = anchor.getWorldPosition(new THREE.Vector3());
+        const distance = Math.max(activeNav === "LAYER_FOCUS" ? 14 : 10, 9 / aspect);
+        return { position: [p.x + 2, p.y + 2, p.z + distance], target: [p.x, p.y, p.z] };
+      }
+      return cameraOverviewForMode(mode, numLayers, fov, aspect);
+    }
     switch (activeNav) {
       case "OVERVIEW":
-        return cameraOverviewForMode(mode, numLayers, fov);
+        return cameraOverviewForMode(mode, numLayers, fov, aspect);
 
       case "LAYER_FOCUS": {
         let l = 0;
         if (mode === "explorer") {
           l = arch3dLayer >= 0 ? arch3dLayer : selectedLayer;
           l = Math.max(0, Math.min(l, numLayers - 1));
-          return cameraForLayer(l);
+          const view = cameraForLayer(l);
+          view.position[2] *= Math.max(1, 1 / aspect);
+          return view;
         } else if (mode === "generation") {
           const catalogOp = genMeta?.op_catalog?.[opIndex];
           l = catalogOp?.layer ?? selectedLayer;
           l = Math.max(0, Math.min(l, numLayers - 1));
           const ly = -(l + 1) * 2.6;
           return {
-            position: [0, ly + 2.8, 10.5],
+            position: [0, ly + 2.8, 10.5 * Math.max(1, 1 / aspect)],
             target: [0, ly, 0],
           };
         } else {
@@ -110,7 +128,7 @@ export function GlobalCameraController({
           const l = catalogOp?.layer ?? 0;
           const ly = -(l + 1) * 2.6;
           return {
-            position: [0, ly + 2.2, 9.5],
+            position: [0, ly + 2.2, 9.5 * Math.max(1, 1 / aspect)],
             target: [0, ly, 0],
           };
         } else {
@@ -164,18 +182,10 @@ export function GlobalCameraController({
     if (navMode === "MANUAL" || userOrbiting) return;
 
     const { position: pos, target: tgt } = getTargetTransform();
-    const dist = targetLook.current.distanceTo(new THREE.Vector3(...tgt));
 
     targetPos.current.set(...pos);
     targetLook.current.set(...tgt);
 
-    // Snap directly for large jumps (>30 units) if not playing animation
-    if (dist > 30 && controlsRef.current && !arch3dPlaying && !opPlaying && !wtPlaying) {
-      setUserOrbiting(false);
-      camera.position.set(...pos);
-      controlsRef.current.target.set(...tgt);
-      controlsRef.current.update();
-    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     navMode,
@@ -187,6 +197,8 @@ export function GlobalCameraController({
     wtChapter,
     selectedTokenIndex,
     selectedLayer,
+    numLayers,
+    aspect,
   ]);
 
   // Frame update loop
@@ -194,7 +206,7 @@ export function GlobalCameraController({
     if (inspectingComponentId || userOrbiting || !controlsRef.current || navMode === "MANUAL") return;
 
     // Continuous target calculation during active playback in FOLLOW mode
-    if (navMode === "FOLLOW" && (arch3dPlaying || opPlaying || isPlaying || wtPlaying)) {
+    if (mode === "walkthrough" || (navMode === "FOLLOW" && (arch3dPlaying || opPlaying || isPlaying || wtPlaying))) {
       const { position: pos, target: tgt } = getTargetTransform();
       targetPos.current.set(...pos);
       targetLook.current.set(...tgt);
