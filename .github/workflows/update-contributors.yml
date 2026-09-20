@@ -46,7 +46,7 @@ jobs:
 
             const next = readme.replace(new RegExp(`${start}[\\s\\S]*?${end}`), block);
             if (next === readme) {
-            console.log('README contributor wall unchanged; nothing to commit.');
+              console.log('README contributor wall unchanged; nothing to commit.');
               return;
             }
 
@@ -54,7 +54,7 @@ jobs:
             console.log('README.md updated with the contributor wall.');
             core.setOutput('changed', 'true');
 
-      - name: Open PR with updated avatars
+      - name: Open PR with updated contributor wall
         if: steps.update.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.CONTRIBUTORS_TOKEN }}
