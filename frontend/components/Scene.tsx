@@ -7,6 +7,7 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { useStore } from "@/lib/store";
+import { canvasEvents } from "@/lib/canvasEvents";
 import { SpatialArchitectureScene } from "./scenes/SpatialArchitectureScene";
 import GenerationScene from "./scenes/GenerationScene";
 import WalkthroughScene from "./scenes/WalkthroughScene";
@@ -58,6 +59,7 @@ export default function Scene({
 
   return (
     <Canvas
+      events={canvasEvents}
       dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 2, 2)]}
       camera={{ position: initPos, fov: 48, near: 0.1, far: 8000 }}
       gl={{

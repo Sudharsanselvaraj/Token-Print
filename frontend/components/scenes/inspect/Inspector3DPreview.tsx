@@ -16,6 +16,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
+import { canvasEvents } from "@/lib/canvasEvents";
 import { getComponentDefinition } from "./componentDefinitions";
 import { getPreviewComponent } from "./componentPreviewRegistry";
 
@@ -152,6 +153,7 @@ export function Inspector3DPreview({ componentId }: { componentId: string }) {
         }}
       >
         <Canvas
+          events={canvasEvents}
           key={sceneKey}
           camera={{ position: [0, 0, 5.8], fov: 42 }}
           gl={{ antialias: true, alpha: true }}
