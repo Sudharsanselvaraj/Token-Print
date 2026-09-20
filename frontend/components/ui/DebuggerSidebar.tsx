@@ -9,6 +9,29 @@ import {
 import ModelSummaryCard from "./ModelSummaryCard";
 import { Panel, Section, SectionHeader, TOKENS } from "./primitives";
 
+const TILE_FOR_TOOL: Record<string, string> = {
+  overview: "dashboard", tensor_inspector: "tensor_inspector", attention_analysis: "attention_analysis",
+  activation_analysis: "activation_analysis", residual_contributions: "residual_contributions",
+  induction_heads: "induction_heads", logit_lens: "logit_lens", activation_patching: "activation_patching",
+  head_ablation: "head_ablation", layer_ablation: "head_ablation", sampling_playground: "sampling_playground",
+  experiments: "experiments", trace_frames: "trace_frames", operation_timeline: "operation_timeline",
+  token_state: "token_state", kv_cache: "kv_cache", local_checkpoint: "local_checkpoint",
+  gguf_loading: "local_checkpoint", quantization_compare: "quantization_compare",
+};
+
+function focusTile(tool: DebuggerTool) {
+  const target = TILE_FOR_TOOL[tool.id] ?? "dashboard";
+  const element = target === "dashboard"
+    ? document.querySelector(".dbg-dashboard")
+    : document.querySelector(`[data-dbg-tool="${target}"]`);
+  if (!element) return;
+  element.scrollIntoView({ behavior: "smooth", block: "center" });
+  const node = element as HTMLElement;
+  node.classList.remove("dbg-flash");
+  void node.offsetWidth;
+  node.classList.add("dbg-flash");
+}
+
 function ToolRow({
   tool,
   active,
@@ -20,7 +43,7 @@ function ToolRow({
     <button
       onClick={() => {
         useStore.getState().setDebuggerTool(tool.id);
-
+        focusTile(tool);
       }}
       title={tool.purpose}
       style={{

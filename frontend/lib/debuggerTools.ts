@@ -16,7 +16,7 @@ export const DEBUGGER_OVERVIEW: DebuggerTool = {
   id: "overview",
   label: "Overview",
   purpose:
-    "Choose a focused workspace. Each tool explains the data and backend capabilities it needs.",
+    "Full debugger dashboard — every live analysis, intervention, trace and model tool arranged in the workspace.",
 };
 
 export const DEBUGGER_TOOL_GROUPS: DebuggerToolGroup[] = [
