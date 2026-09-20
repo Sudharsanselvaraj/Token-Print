@@ -22,34 +22,21 @@ jobs:
           token: ${{ secrets.CONTRIBUTORS_TOKEN }}
           fetch-depth: 0
 
-      - name: Regenerate contributor avatars
+      - name: Keep the contributor wall embedded in the README
         id: update
         uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
 
-            const { data: contributors } = await github.rest.repos.listContributors({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 100,
-              anon: false,
-            });
-
-            const avatars = contributors
-              .filter((c) => c.type === 'User' && !c.login.endsWith('[bot]'))
-              .map(
-                (c) =>
-                  `<a href="https://github.com/${c.login}">` +
-                  `<img src="https://github.com/${c.login}.png?size=96" ` +
-                  `alt="${c.login}" title="${c.login}" width="48" height="48" align="top" />` +
-                  `</a>`
-              )
-              .join('\n');
-
             const start = '<!-- CONTRIBUTORS:START -->';
             const end = '<!-- CONTRIBUTORS:END -->';
-            const block = `${start}\n<div align="center">\n${avatars}\n</div>\n${end}`;
+            // The SVG is generated from GitHub's live contributor list, so it
+            // stays current without maintaining a manual avatar roster here.
+            const block = `${start}\n<div align="center">\n` +
+              `  <a href="https://github.com/${context.repo.owner}/${context.repo.repo}/graphs/contributors">\n` +
+              `    <img src="https://contributors-img.firebaseapp.com/image?repo=${context.repo.owner}/${context.repo.repo}" alt="${context.repo.repo} contributors" />\n` +
+              `  </a>\n  <br />\n  <sub>Every person who has contributed to ${context.repo.repo}. Thank you.</sub>\n</div>\n${end}`;
 
             let readme = fs.readFileSync('README.md', 'utf8');
             if (!readme.includes(start)) {
@@ -59,12 +46,12 @@ jobs:
 
             const next = readme.replace(new RegExp(`${start}[\\s\\S]*?${end}`), block);
             if (next === readme) {
-              console.log('README contributor avatars unchanged; nothing to commit.');
+            console.log('README contributor wall unchanged; nothing to commit.');
               return;
             }
 
             fs.writeFileSync('README.md', next);
-            console.log('README.md updated with fresh contributor avatars.');
+            console.log('README.md updated with the contributor wall.');
             core.setOutput('changed', 'true');
 
       - name: Open PR with updated avatars
