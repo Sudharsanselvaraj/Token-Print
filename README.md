@@ -126,10 +126,10 @@ send a PR. First-timers genuinely welcome.
 <!-- CONTRIBUTORS:START -->
 <div align="center">
   <a href="https://github.com/Sudharsanselvaraj/Token-Print/graphs/contributors">
-    <img src="https://contributors-img.firebaseapp.com/image?repo=Sudharsanselvaraj/Token-Print" alt="TokenPrint contributors" />
+    <img src="https://contributors-img.firebaseapp.com/image?repo=Sudharsanselvaraj/Token-Print" alt="Token-Print contributors" />
   </a>
   <br />
-  <sub>Every person who has contributed to TokenPrint. Thank you.</sub>
+  <sub>Every person who has contributed to Token-Print. Thank you.</sub>
 </div>
 <!-- CONTRIBUTORS:END -->
 
