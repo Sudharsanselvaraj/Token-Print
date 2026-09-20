@@ -82,6 +82,18 @@ export function GlobalCameraController({
       const anchor = scene.getObjectByName(activeNav === "LAYER_FOCUS" ? `wt_norm_${selectedLayer}` : names[chapter]);
       if (anchor) {
         const p = anchor.getWorldPosition(new THREE.Vector3());
+        if (activeNav !== "LAYER_FOCUS" && (chapter === "tokenizer" || chapter === "embedding")) {
+          // Include both the embedding volume and the token row below it. A fixed
+          // close-up clips them when the sidebars leave a narrow canvas.
+          const bounds = new THREE.Box3().setFromObject(anchor);
+          bounds.expandByPoint(new THREE.Vector3(-7, -5.2, 1.6));
+          bounds.expandByPoint(new THREE.Vector3(7, -3.8, 1.6));
+          const center = bounds.getCenter(new THREE.Vector3());
+          const extent = bounds.getSize(new THREE.Vector3());
+          const distance = Math.max(extent.y, extent.x / Math.max(aspect, 0.1)) /
+            (2 * Math.tan(fov * Math.PI / 360) * 0.78) + extent.z / 2;
+          return { position: [center.x, center.y, center.z + distance], target: [center.x, center.y, center.z] };
+        }
         const distance = Math.max(activeNav === "LAYER_FOCUS" ? 14 : 10, 9 / aspect);
         return { position: [p.x + 2, p.y + 2, p.z + distance], target: [p.x, p.y, p.z] };
       }

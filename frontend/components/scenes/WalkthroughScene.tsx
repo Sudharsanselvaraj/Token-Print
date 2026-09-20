@@ -12,6 +12,7 @@ import TransformerStack, {
   type StackDims,
 } from "./TransformerStack";
 import { KIND_COLORS, type OpKind } from "@/lib/sceneColors";
+import { SceneHtml } from "../ui/SceneHtml";
 
 const GAP = 3.4;
 
@@ -148,17 +149,12 @@ export default function WalkthroughScene() {
                     opacity={0.82}
                   />
                 </mesh>
-                <Billboard position={[0, -0.42, 0]}>
-                  <Text
-                    fontSize={0.22}
-                    anchorX="center"
-                    color="#8892a4"
-                    outlineWidth={0.01}
-                    outlineColor="#000000"
-                  >
-                    {lbl.length > 8 ? lbl.slice(0, 7) + "…" : lbl}
-                  </Text>
-                </Billboard>
+                <SceneHtml position={[0, -0.42, 0]} center labelPriority={100}
+                  style={{ pointerEvents: "none", whiteSpace: "nowrap", fontSize: 12, color: "#c8ccd5" }}>
+                  <span title={tok.text} style={{ display: "block", transform: `translateY(${i % 2 ? 16 : 0}px)`, background: "#090b10e8", borderRadius: 3, padding: "2px 4px" }}>
+                    {lbl.length > 12 ? lbl.slice(0, 11) + "…" : lbl}
+                  </span>
+                </SceneHtml>
               </group>
             );
           })}
