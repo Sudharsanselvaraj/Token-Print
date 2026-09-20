@@ -20,6 +20,7 @@ export default function ExperimentPanel() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const controller = useRef<AbortController | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   useEffect(() => () => controller.current?.abort(), []);
   async function action(fn: () => Promise<unknown>) {
     try {
@@ -47,23 +48,32 @@ export default function ExperimentPanel() {
   }
   return (
     <section className="experiment-panel">
-      <h2>Reproducible experiments</h2>
-      <p>
-        Export a portable file containing the exact prompts, model commit,
-        decoding settings, intervention and measured results. The SHA-256
-        checksum detects accidental changes. Keep the downloaded file; the
-        recent list lasts for this session.
-      </p>
-      <button
-        className="chip-btn"
-        disabled={busy}
-        onClick={() => action(saveCurrent)}
-      >
-        Save current generation
-      </button>{" "}
-      <label className="chip-btn">
-        Import experiment
+      <div className="experiment-intro">
+        <h3>Reproducible experiments</h3>
+        <p>
+          Export a portable file containing the exact prompts, model revision,
+          decoding settings, intervention, and measured results. The SHA-256
+          checksum detects accidental changes.
+        </p>
+      </div>
+      <div className="experiment-actions">
+        <button
+          className="chip-btn"
+          disabled={busy}
+          onClick={() => action(saveCurrent)}
+        >
+          Save current generation
+        </button>
+        <button
+          className="chip-btn"
+          disabled={busy}
+          onClick={() => fileInput.current?.click()}
+        >
+          Import experiment
+        </button>
         <input
+          ref={fileInput}
+          className="experiment-file-input"
           aria-label="Import experiment"
           type="file"
           accept=".json"
@@ -82,8 +92,8 @@ export default function ExperimentPanel() {
             e.target.value = "";
           }}
         />
-      </label>
-      <div>
+      </div>
+      <div className="experiment-list">
         {items.map((e, i) => (
           <button
             className="workspace-card"
@@ -100,92 +110,88 @@ export default function ExperimentPanel() {
         ))}
       </div>
       {selected && (
-        <div>
-          <h3>{selected.kind} experiment</h3>
-          <p>
+        <div className="experiment-detail">
+          <h4>{selected.kind} experiment</h4>
+          <p className="experiment-meta">
             Revision: {selected.model.revision || "Not recorded — replay only"}
             <br />
             Runtime: {selected.model.runtime ?? "Not recorded"} ·{" "}
             {selected.model.device}
           </p>
-          <pre style={{ whiteSpace: "pre-wrap" }}>
+          <pre className="experiment-code">
             {JSON.stringify(selected.input, null, 2)}
           </pre>
-          <button
-            className="chip-btn"
-            onClick={() => action(() => exportExperiment(selected))}
-          >
-            Export experiment
-          </button>{" "}
-          <button
-            className="chip-btn"
-            onClick={() =>
-              downloadJSON(selected.results, "experiment-results.json")
-            }
-          >
-            Export results
-          </button>{" "}
-          {selected.trace && (
+          <div className="experiment-actions">
+            <button
+              className="chip-btn"
+              onClick={() => action(() => exportExperiment(selected))}
+            >
+              Export experiment
+            </button>
+            <button
+              className="chip-btn"
+              onClick={() =>
+                downloadJSON(selected.results, "experiment-results.json")
+              }
+            >
+              Export results
+            </button>
+            {selected.trace && (
+              <button
+                className="chip-btn"
+                disabled={busy}
+                onClick={() =>
+                  action(async () => {
+                    await s.loadTrace(selected.trace!);
+                    setMessage(
+                      "Saved results loaded as recorded replay. Open Generation to step through them.",
+                    );
+                  })
+                }
+              >
+                Replay saved results
+              </button>
+            )}
             <button
               className="chip-btn"
               disabled={busy}
               onClick={() =>
                 action(async () => {
-                  await s.loadTrace(selected.trace!);
-                  setMessage(
-                    "Saved results loaded as recorded replay. Open Generation to step through them.",
-                  );
+                  if (s.genStatus === "streaming") s.stopGeneration();
+                  setBusy(true);
+                  setMessage("Re-running the saved experiment…");
+                  controller.current = new AbortController();
+                  registerLocalEngine(browserEngine);
+                  try {
+                    setMessage(
+                      await verifyExperiment(selected, controller.current.signal),
+                    );
+                  } finally {
+                    setBusy(false);
+                  }
                 })
               }
             >
-              Replay saved results
+              Re-run and verify
             </button>
-          )}{" "}
-          <button
-            className="chip-btn"
-            disabled={busy}
-            onClick={() =>
-              action(async () => {
-                if (s.genStatus === "streaming") s.stopGeneration();
-                setBusy(true);
-                setMessage("Re-running the saved experiment…");
-                controller.current = new AbortController();
-                registerLocalEngine(browserEngine);
-                try {
-                  setMessage(
-                    await verifyExperiment(selected, controller.current.signal),
-                  );
-                } finally {
-                  setBusy(false);
-                }
-              })
-            }
-          >
-            Re-run and verify
-          </button>
-          {busy && (
-            <button
-              className="chip-btn"
-              onClick={() => controller.current?.abort()}
-            >
-              Cancel verification
-            </button>
-          )}
-          <details>
+            {busy && (
+              <button
+                className="chip-btn"
+                onClick={() => controller.current?.abort()}
+              >
+                Cancel verification
+              </button>
+            )}
+          </div>
+          <details className="experiment-results">
             <summary>Saved results</summary>
-            <pre
-              style={{
-                maxHeight: 400,
-                overflow: "auto",
-                whiteSpace: "pre-wrap",
-              }}
-            >
+            <pre className="experiment-code experiment-results-code">
               {JSON.stringify(selected.results, null, 2)}
             </pre>
           </details>
         </div>
       )}
-      {message && <p role="status">{message}</p>}
+      {message && <p className="experiment-status" role="status">{message}</p>}
     </section>
   );
 }

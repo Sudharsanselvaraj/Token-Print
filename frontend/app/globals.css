@@ -9955,3 +9955,164 @@ html:has(.app.embed) .global-nav {
 .experiment-panel pre { font:12px/1.5 monospace; }
 .dbg-card table { border-collapse:collapse; width:100%; }
 .dbg-card th,.dbg-card td { padding:8px; text-align:left; border-bottom:1px solid #303036; }
+
+/* Keep the newer debugger workspaces visually aligned with the dashboard. */
+.experiment-panel {
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+
+.experiment-intro h3,
+.experiment-detail h4 {
+  margin: 0 0 4px;
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.experiment-intro p,
+.experiment-meta,
+.experiment-status,
+.act-patch > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.experiment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.experiment-file-input {
+  display: none;
+}
+
+.experiment-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.experiment-panel .workspace-card {
+  gap: 3px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: var(--fs-xs);
+}
+
+.experiment-panel .workspace-card strong {
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.experiment-panel .workspace-card span {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+}
+
+.experiment-detail {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.experiment-code {
+  max-height: 180px;
+  margin: 8px 0 0;
+  padding: 8px;
+  overflow: auto;
+  border: 1px solid var(--panel-border);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.24);
+  color: var(--text);
+  font: var(--fs-xs)/1.45 var(--mono);
+  white-space: pre-wrap;
+}
+
+.experiment-results {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.experiment-results summary {
+  cursor: pointer;
+}
+
+.experiment-results-code {
+  max-height: 260px;
+}
+
+.experiment-status {
+  margin-top: 10px;
+  color: #a8d9cf;
+}
+
+.ap-field {
+  display: grid;
+  gap: 4px;
+  min-width: min(100%, 180px);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.ap-field input {
+  min-width: 0;
+  height: 28px;
+  padding: 4px 7px;
+  border: 1px solid var(--panel-border);
+  border-radius: 5px;
+  outline: none;
+  background: rgba(0, 0, 0, 0.24);
+  color: var(--text);
+  font: var(--fs-xs) var(--mono);
+}
+
+.ap-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.ap-layers {
+  min-width: 88px;
+}
+
+.act-patch > p {
+  margin-bottom: 6px;
+}
+
+.ap-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 6px;
+}
+
+.sp-control input[type=range],
+.dd-control input[type=range] {
+  appearance: none;
+  height: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.sp-control input[type=range]::-webkit-slider-thumb,
+.dd-control input[type=range]::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #151519;
+  border-radius: 50%;
+  background: var(--accent);
+}
