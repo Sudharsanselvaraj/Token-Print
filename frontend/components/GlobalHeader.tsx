@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { assetUrl } from "@/lib/assets";
 import { normalizeModeParam } from "@/lib/routeMode";
 import { GithubIcon } from "./landing/GithubIcon";
+import { StarCount } from "./landing/StarCount";
 
 const APP_MODES: { href: string; label: string; mode: string }[] = [
   { href: "/app?mode=explorer", label: "Architecture", mode: "explorer" },
@@ -77,6 +78,7 @@ function GlobalHeaderInner() {
           >
             <GithubIcon size={14} />
             GitHub
+            <StarCount />
           </a>
         </nav>
 
@@ -131,6 +133,7 @@ function GlobalHeaderInner() {
           >
             <GithubIcon size={14} />
             GitHub
+            <StarCount />
           </a>
         </div>
       )}

@@ -7825,6 +7825,21 @@ body.docs-page-active {
   gap: 7px;
 }
 
+.github-star-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
 .landing-nav-item.active {
   color: #FFFFFF;
 }

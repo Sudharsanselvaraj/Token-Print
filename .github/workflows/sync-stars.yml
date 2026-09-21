@@ -1,0 +1,83 @@
+name: "⭐ Sync GitHub Star Count"
+
+on:
+  schedule:
+    # Nightly refresh so the committed fallback never drifts far from realtime.
+    - cron: "17 3 * * *"
+  watch:
+    # React to star/unstar events immediately.
+    types: [started, subscribed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-stars
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Read the real star count from the API
+        id: count
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          COUNT="$(
+            gh api repos/${{ github.repository }} \
+              --jq '.stargazers_count'
+          )"
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Live star count: $COUNT"
+
+      - name: Update frontend/public/stars.json
+        id: update
+        run: |
+          COUNT="${{ steps.count.outputs.count }}"
+          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          printf '{\n  "stars": %s,\n  "updated_at": "%s"\n}\n' "$COUNT" "$NOW" \
+            > frontend/public/stars.json
+          echo "updated_at=$NOW" >> "$GITHUB_OUTPUT"
+
+      - name: Open PR with updated star count
+        if: steps.count.outputs.count != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/public/stars.json
+          if git diff --cached --quiet; then
+            echo "stars.json unchanged (${{ steps.count.outputs.count }} stars); nothing to do."
+            exit 0
+          fi
+          git commit -m "chore: refresh star count to ${{ steps.count.outputs.count }}"
+
+          # main is a protected branch (PR required), so land the update
+          # through a PR opened from a dedicated branch and let auto-merge
+          # ride it in once the required status checks pass.
+          BRANCH="ci/sync-stars"
+          git push --quiet --force origin "HEAD:$BRANCH"
+          echo "Pushed stars.json update to $BRANCH."
+
+          PR_NUMBER="$(
+            gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty'
+          )"
+          if [ -z "$PR_NUMBER" ]; then
+            gh pr create --base main --head "$BRANCH" \
+              --title "chore: refresh star count to ${{ steps.count.outputs.count }}" \
+              --body "Refreshes the committed star-count fallback (\`frontend/public/stars.json\`) used by the site header. Automated by the star-sync workflow."
+            echo "Opened a new PR."
+          else
+            echo "Reusing existing PR #$PR_NUMBER."
+          fi
+
+          gh pr merge --auto --squash --delete-branch "$BRANCH"
+          echo "Enabled auto-merge; the PR will land once the required checks pass."
