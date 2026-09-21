@@ -18,6 +18,9 @@ TokenPrint defines typed interfaces and explicit flow contracts across the overa
 The frontend (`frontend/`) uses a docked shell (CSS grid) avoiding floating overlays.
 The backend (`backend/`) uses a headless FastAPI app holding a PyTorch model in memory.
 
+### Browser-only path (in-browser inference)
+Since [#329](https://github.com/Sudharsanselvaraj/Token-Print/pull/329), a pinned **GPT-2 ONNX bundle** can run entirely inside the browser (WebGPU or CPU/WASM) through an optional local engine registered into the same store seam as the WebSocket source — no network boundary, no backend. The store is engine-agnostic today: a live WebSocket sink, a recorded trace, or the in-browser engine all feed the same `FrameSink`. Scoped to greedy decoding (<=32 new tokens); attention and interventions still require the Python backend.
+
 ## Diagram
 
 ```mermaid
@@ -30,7 +33,8 @@ flowchart TD
         UI --> Right[Right Panel]
         UI --> Bot[Bottom Bar]
         
-        State[lib/store.ts: Zustand] -.-> UI
+        State[lib/store: Zustand] -.-> UI
+        LocalEngine[lib/browser/engine.ts: ONNX GPT-2] -.-> State
     end
     
     subgraph Network Boundary
@@ -46,6 +50,8 @@ flowchart TD
         Engine <--> Checkpoint[Qwen2.5 Weights]
     end
 ```
+
+The `LocalEngine -- State` edge is the browser-only path: no network, no backend. It exists alongside (not instead of) the WebSocket and recorded-trace sources.
 
 ## Related pages
 - [Frontend](Architecture-Frontend)

@@ -28,12 +28,13 @@ Token-Print/
 ```text
 backend/
 ├── app/
-│   ├── main.py       # FastAPI entrypoint & WebSockets
+│   ├── main.py       # FastAPI entrypoint, WebSockets, GGUF cache & unload endpoints
 │   ├── model.py      # PyTorch ModelEngine (Loads Qwen2.5)
 │   ├── trace.py      # Serialization for Record & Replay
 │   ├── debug.py      # Stepped inspection logic
 │   ├── ablation.py   # Forward hooks for zeroing heads
 │   ├── reduce.py     # PCA and dimensionality reduction
+│   ├── inference/    # Model adapters, GGUF engine, capabilities
 │   └── schemas.py    # Pydantic models for JSON APIs
 ├── scripts/          # Verification scripts (verify_real_data.py)
 └── requirements.txt  # Python dependencies
@@ -49,8 +50,10 @@ frontend/
 │   ├── ui/           # Standard React UI Panels (BottomBar.tsx)
 │   └── SceneLoader.tsx # WebGL Context boundary
 ├── lib/
+│   ├── store/        # Split Zustand domain slices + hooks (architecture/generation/debug)
+│   ├── browser/      # In-browser GPT-2 ONNX engine (WebGPU/WASM worker)
 │   ├── gguf/         # Client-side .gguf parser & dequantization
-│   ├── store.ts      # Zustand State Management
+│   ├── generation.ts # Engine-agnostic FrameSink seam (WS / trace / browser)
 │   ├── formulas.ts   # KaTeX LaTeX strings
 │   ├── playback.ts   # Autoplay pacing and layer logic
 │   └── sceneColors.ts# Canonical color mapping

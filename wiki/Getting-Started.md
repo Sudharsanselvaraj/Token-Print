@@ -10,11 +10,13 @@ Because TokenPrint connects to a real PyTorch backend and renders highly complex
 
 ## How TokenPrint implements it
 
-TokenPrint is split into two lightweight, decoupled services:
-1. **The Backend:** A FastAPI Python application running PyTorch that loads the model into memory and executes inference.
-2. **The Frontend:** A Next.js application with React Three Fiber (R3F) that connects to the backend via REST and WebSockets to render the UI.
+TokenPrint is split into two services, plus a browser-only mode:
 
-This separation means you can run the backend on a powerful machine with a GPU while opening the frontend on a lightweight laptop browser.
+1. **The Backend:** A FastAPI Python application running PyTorch that loads the model into memory and executes inference (full capability: attention, interventions, any model family).
+2. **The Frontend:** A Next.js application with React Three Fiber (R3F) that connects to the backend via REST and WebSockets to render the UI.
+3. **Browser inference (optional):** The same home page can run a pinned **GPT-2 (WebGPU/ONNX, or CPU/WASM)** completely in the browser — no backend, no install — for basic greedy decoding.
+
+This separation means you can run the backend on a powerful machine with a GPU while opening the frontend on a lightweight laptop browser — or run entirely in-browser for the quickstart look.
 
 ## Diagram
 
@@ -41,7 +43,7 @@ flowchart TD
 Follow these pages in order to get up and running:
 
 - **[Installation](Getting-Started-Installation):** Step-by-step instructions for installing dependencies for both the frontend and backend.
-- **[Quick Start](Getting-Started-Quick-Start):** How to boot both servers and verify they are communicating.
+- **[Quick Start](Getting-Started-Quick-Start):** The one-command launcher, or booting the servers individually — plus the browser-only path that needs no servers at all.
 - **[Running your first visualization](Getting-Started-Running-your-first-visualization):** A walkthrough of executing your first live inference or loading your first GGUF file.
 
 > **Tip**

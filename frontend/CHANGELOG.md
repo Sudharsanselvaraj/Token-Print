@@ -6,6 +6,7 @@
 ### Features
 
 * **frontend:** add frame-producer seam for in-browser generation ([#311](https://github.com/Sudharsanselvaraj/Token-Print/issues/311)) ([#315](https://github.com/Sudharsanselvaraj/Token-Print/issues/315)) ([3d30b14](https://github.com/Sudharsanselvaraj/Token-Print/commit/3d30b14741c6356d35ec4cdb1981a6fcb382720e))
+* **frontend:** ship guided replay, reproducible experiments, and in-browser GPT-2 WebGPU/ONNX inference ([#329](https://github.com/Sudharsanselvaraj/Token-Print/issues/329)) ([c5f4917](https://github.com/Sudharsanselvaraj/Token-Print/commit/c5f49173dc2035a6552e22ec2d971b09698328cd))
 * **frontend:** split Zustand store into modular domain slices and hooks (ENG-13) ([77371e4](https://github.com/Sudharsanselvaraj/Token-Print/commit/77371e40008ba854588daa5b9db8781c2a91e09d))
 * **frontend:** add Vitest unit test suite for formulas, format, and playback (ENG-07) ([fc732f6](https://github.com/Sudharsanselvaraj/Token-Print/commit/fc732f61db2e5fb85a98aa5a0bb81d5627c0e42c))
 * **frontend:** build interactive Provenance Inspector panel (DESIGN-05) ([#257](https://github.com/Sudharsanselvaraj/Token-Print/issues/257)) ([d3c4558](https://github.com/Sudharsanselvaraj/Token-Print/commit/d3c4558eb879e7673350916664d5e3d568d687c7))
@@ -18,6 +19,11 @@
 ### Bug Fixes
 
 * **frontend:** resolve explorer/replay bug backlog ([#272](https://github.com/Sudharsanselvaraj/Token-Print/issues/272) [#274](https://github.com/Sudharsanselvaraj/Token-Print/issues/274) [#275](https://github.com/Sudharsanselvaraj/Token-Print/issues/275) [#276](https://github.com/Sudharsanselvaraj/Token-Print/issues/276) [#282](https://github.com/Sudharsanselvaraj/Token-Print/issues/282)) ([#308](https://github.com/Sudharsanselvaraj/Token-Print/issues/308)) ([8cb67a0](https://github.com/Sudharsanselvaraj/Token-Print/commit/8cb67a0f8ed9f0d1cf33339863fd6ed301da2134))
+* **frontend:** support raw Trace objects in loadTraceFile for autodemo ([#319](https://github.com/Sudharsanselvaraj/Token-Print/issues/319)) ([fc8b63b](https://github.com/Sudharsanselvaraj/Token-Print/commit/fc8b63b5eac3991d9aab35689791a7b19ff53b41))
+* **frontend:** modal-over-scene layering — clamp scene labels and portal modals ([#316](https://github.com/Sudharsanselvaraj/Token-Print/issues/316)) ([646bfa5](https://github.com/Sudharsanselvaraj/Token-Print/commit/646bfa5ad239f35439a73595da915296e52eba2b))
+* **frontend:** avoid border shorthand/longhand mix in rerendered styles ([#317](https://github.com/Sudharsanselvaraj/Token-Print/issues/317)) ([d4ba325](https://github.com/Sudharsanselvaraj/Token-Print/commit/d4ba325a206cb82bec231d1ac3c383b49f4cceed))
+* **frontend:** align debugger workspace controls ([#333](https://github.com/Sudharsanselvaraj/Token-Print/issues/333)) ([6c9effb](https://github.com/Sudharsanselvaraj/Token-Print/commit/6c9effbc357c3f5372b5fd975d3f31fd59a47ac4))
+* **hf:** use fetched revision SHA instead of hardcoded raw/main in explorer ([#323](https://github.com/Sudharsanselvaraj/Token-Print/issues/323)) ([5ad7cad](https://github.com/Sudharsanselvaraj/Token-Print/commit/5ad7cad4294aa50c33477e528baa0ac1e825b735))
 * **frontend:** use proper ‹error› marker for throwing watch expressions ([#307](https://github.com/Sudharsanselvaraj/Token-Print/issues/307)) ([7a1923e](https://github.com/Sudharsanselvaraj/Token-Print/commit/7a1923ed34f5b6a7792557e016379c69c8540cd8))
 * **hf:** explain GGUF weights-only repos in model explorer ([#306](https://github.com/Sudharsanselvaraj/Token-Print/issues/306)) ([a041be3](https://github.com/Sudharsanselvaraj/Token-Print/commit/a041be39014e1394e50899c77f578b9df503c5e3))
 * **hf:** distinguish gated repos from missing ones when inspecting ([#305](https://github.com/Sudharsanselvaraj/Token-Print/issues/305)) ([711c88a](https://github.com/Sudharsanselvaraj/Token-Print/commit/711c88a23407923a52617005b868af0374e56708))

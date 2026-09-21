@@ -7,12 +7,23 @@ This guide covers setup, development workflows, architecture principles, and tes
 ## 1. Prerequisites
 
 - **Python**: 3.11+
-- **Node.js**: 18.0+
+- **Node.js**: 20.9+ (checked by `scripts/start.py`)
 - **Hardware**: Any modern macOS (Apple Silicon / Intel), Linux, or Windows machine. CUDA GPU, Apple Silicon MPS, or CPU fallback.
 
 ---
 
 ## 2. Environment Setup
+
+### One-command launcher (recommended)
+
+```bash
+python3 scripts/start.py
+```
+
+The launcher creates `backend/.venv`, installs declared Python dependencies and
+the frontend lockfile, downloads the default Qwen model with progress, boots the
+backend, waits for model readiness, and opens the frontend at
+`http://localhost:3000`. Ctrl+C stops both services.
 
 ### Backend Setup (FastAPI + PyTorch)
 
@@ -41,7 +52,7 @@ npm install
 npm run dev
 ```
 
-Navigate to `http://localhost:3000`. The frontend automatically connects to the backend at `http://localhost:8000`.
+Navigate to `http://localhost:3000`. The frontend automatically connects to the backend at `http://localhost:8000`. For a backend-free first look, the home page can also run **browser GPT-2** (WebGPU/ONNX) directly — see [browser-inference.md](browser-inference.md).
 
 ---
 
@@ -50,11 +61,15 @@ Navigate to `http://localhost:3000`. The frontend automatically connects to the 
 TokenPrint strictly enforces a **"real data only"** policy. Before opening a PR, run verification commands:
 
 ```bash
-# 1. Frontend Build & Data Integrity Check
+# 1. Frontend Typecheck & Data Integrity Check
 cd frontend
-npm run build
+npx tsc --noEmit          # type gate (next lint is unavailable)
+npm run build             # runs scripts/verify-data.sh (fails on Math.random)
 
-# 2. Backend Data Verification Scripts
+# 2. Visual + unit regression suite
+npx playwright test       # tests/visual (chromium + unit projects)
+
+# 3. Backend Data Verification Scripts
 cd backend
 python3 scripts/verify_real_data.py
 python3 scripts/verify_trace.py
@@ -67,13 +82,14 @@ python3 scripts/verify_trace.py
 ## 4. Pull Request Conventions
 
 - **Branch Naming**: `feat/short-description`, `fix/issue-number`, `docs/update-guide`.
-- **Commit Messages**: Use conventional commits (`feat(ui): add provenance badge`, `fix(backend): correct head ablation math`).
-- **PR Scope**: Keep PRs focused on single issues.
+- **Commit Messages**: Use conventional commits (`feat(ui): add provenance badge`, `fix(backend): correct head ablation math`). Commitlint is enforced on PRs.
+- **PR Scope**: Keep PRs focused on single issues. `main` is protected — always open a PR (auto-merge is configured for bot-maintained files like contributors and star counts).
 
 ---
 
 ## 5. Additional Documentation
 
-- [Architecture Guide](ARCHITECTURE.md) — System layout & data flow.
+- [Architecture Guide](architecture.md) — System layout & data flow.
 - [Good First Issues](../GOOD_FIRST_ISSUES.md) — Curated beginner tasks.
 - [GGUF Format Specification](gguf-format.md) — In-browser binary parser details.
+- [Playwright / visual regressions](local-setup.md) — snapshot baselines (linux committed, darwin gitignored) and regeneration.

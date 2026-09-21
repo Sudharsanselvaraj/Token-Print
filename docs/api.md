@@ -1,7 +1,10 @@
 # API reference
 
 Base URL (dev): `http://localhost:8000`. All responses are JSON. CORS is
-restricted to `http://localhost:3000`.
+restricted to the local dev origin (`http://localhost:3000` — configurable via
+`TOKENPRINT_FRONTEND_PORT`) and the deployed frontend origins
+(`https://sudharsanselvaraj.github.io`, `https://tokenprint.in`, and
+subdomains).
 
 ---
 
@@ -233,3 +236,24 @@ This works on **raw architectural components** — any head, any block, on whate
 model is loaded — with no sparse autoencoder, transcoder, or other pre-trained
 artifact required. That is the deliberate difference from feature-level
 intervention tools.
+
+---
+
+## GGUF engine (`/gguf/*`)
+
+The backend can host a resident `.gguf` execution engine (see
+[`backend/requirements-gguf.txt`](../backend/requirements-gguf.txt)). Models are
+held in an **LRU cache with explicit memory reclamation** so repeated loads are
+fast without leaking memory.
+
+- `GET /gguf/list` — available GGUF files in the watched directory.
+- `POST /gguf/upload` — upload a `.gguf` file for the engine.
+- `POST /gguf/open` — load (or return from the LRU cache) a resident model.
+- `POST /gguf/unload` — **explicitly unload** a resident engine and release its
+  memory. Body: `{ "path": "/abs/path/to/model.gguf" }`. Returns
+  `{ "ok": true, "name": ..., "unloaded": true|false }`.
+- `GET /gguf/cache` — resident cache statistics, limits, and eviction counters
+  (from the LRU state).
+
+See [GGUF format](gguf-format.md) for what the *client-side* parser reads and
+the capability boundary between the two paths.

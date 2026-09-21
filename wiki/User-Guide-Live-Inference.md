@@ -15,6 +15,8 @@ When you enter a prompt and start generation, TokenPrint opens a WebSocket conne
 2. It then streams frames containing the chosen token, top-k probabilities, and per-layer activation statistics.
 3. The frontend's `PlaybackEngine` normalizes this stream and animates the `TransformerStack` scene.
 
+**No-backend alternative:** the same generation panel can run a pinned **GPT-2 model fully in the browser** (WebGPU/ONNX, or CPU/WASM fallback) for greedy decoding — distinct from the PyTorch path only in that attention arcs, interventions, and GGUF drop-in remain Python-only capabilities. See [Browser inference](../docs/browser-inference.md) for the capability matrix.
+
 **Geometry represents data:**
 - **Attention Blades:** One blade per real query head.
 - **SwiGLU Funnel:** Sized according to the real `ffn_size / hidden_size` ratio.

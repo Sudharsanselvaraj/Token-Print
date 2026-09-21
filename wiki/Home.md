@@ -31,6 +31,8 @@ The deep learning community suffers from a visualization gap. We have excellent 
 | ------- | ----------- |
 | **Architecture Explorer** | A 3D point cloud of every real tensor, searchable and categorized, backed by real parameter counts. |
 | **Live Inference** | Token-by-token streamed generation rendering per-operation geometry (e.g., one blade per attention head). |
+| **Browser GPT-2** | Run a pinned GPT-2 fully in-browser (WebGPU/ONNX or CPU/WASM) for greedy decoding — no backend needed. |
+| **Guided Replay** | Step-by-step guided tour (`?tour=1`) plus portable, reproducible experiments shareable as `.tokenprint.json` files. |
 | **Tensor Inspector** | Hover and click to inspect shapes, dtypes, and exact weight slices. |
 | **Data-Driven Geometry** | A SwiGLU funnel is sized exactly by the real FFN ratio; attention heads are clustered for GQA. |
 | **Local GGUF Parsing** | Drag and drop multi-GB `.gguf` files; parsing happens instantly in the browser without uploading. |
@@ -67,13 +69,16 @@ The deep learning community suffers from a visualization gap. We have excellent 
 
 ```mermaid
 flowchart LR
-    Browser["Frontend (Next.js + R3F)"]
+    subgraph Browser["Frontend (Next.js + R3F)"]
+        GPT2["GPT-2 ONNX (WebGPU/WASM)"]
+    end
     Backend["Backend (FastAPI + PyTorch)"]
     GGUF["Local .gguf File"]
     
     Browser -- "GET /architecture" --> Backend
     Browser -- "WS /ws/generate" --> Backend
     Browser -. "Client-side Parsing" .-> GGUF
+    GPT2 -. "No backend needed" .-> Browser
     
     Backend -- "Real Model Tensors" --> Browser
 ```

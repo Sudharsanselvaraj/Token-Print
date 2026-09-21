@@ -14,19 +14,24 @@ No niceties. Redesign anything weak.
 
 ---
 
-## Current status (updated 2026-09-16)
+## Current status (updated 2026-09-21)
 
-**Phases 0, 1, and 2 are complete (36/36). Phase 3 is 10/11, Phase 4 is 11/12.**
+**Phases 0, 1, and 2 are complete (36/36). Phase 3 is 11/11 and Phase 4 is 12/12.**
 **Phase 5 has started: 5.2 (in-browser WebGPU/ONNX inference) is the active Stage B
 work**, tracked under [#295](https://github.com/Sudharsanselvaraj/Token-Print/issues/295)
 with sub-issues [#311](https://github.com/Sudharsanselvaraj/Token-Print/issues/311)
 (frame-producer seam — shipped in [#315](https://github.com/Sudharsanselvaraj/Token-Print/pull/315)),
-[#312](https://github.com/Sudharsanselvaraj/Token-Print/issues/312) (GPT-2 WebGPU forward pass),
+[#312](https://github.com/Sudharsanselvaraj/Token-Print/issues/312) (GPT-2 WebGPU forward pass —
+shipped in [#329](https://github.com/Sudharsanselvaraj/Token-Print/pull/329)),
 [#313](https://github.com/Sudharsanselvaraj/Token-Print/issues/313) (in-browser GGUF execution),
 and [#314](https://github.com/Sudharsanselvaraj/Token-Print/issues/314) (browser-vs-backend
-verification harness). A batch of backend robustness fixes also landed since the last
-update: WebSocket live-lock and null-param crash fixes, SSRF redirect/CGNAT blocking,
-`hf/inspect` 404/401 surfacing, and sliding-window `cache_len` reporting.
+verification harness). A batch of backend and frontend robustness fixes also landed since the
+last update: WebSocket live-lock and null-param crash fixes, SSRF redirect/CGNAT blocking,
+`hf/inspect` 404/401 surfacing, sliding-window `cache_len` reporting, GGUF LRU cache
+eviction ([#326](https://github.com/Sudharsanselvaraj/Token-Print/issues/326)), HF revision-SHA
+resolution ([#323](https://github.com/Sudharsanselvaraj/Token-Print/issues/323)), modal-over-scene
+layering ([#316](https://github.com/Sudharsanselvaraj/Token-Print/issues/316)), and raw-Trace
+autodemo loading ([#319](https://github.com/Sudharsanselvaraj/Token-Print/issues/319)).
 
 What shipped before this phase (Phases 0–4 recap):
 
@@ -667,12 +672,12 @@ ablate it, resume, and diff the result — like stepping through code.
 
 ### Phase 5 — Platform & flagship visuals (6+ months)
 
-**Started. 5.2 is the active Stage B milestone** (umbrella [#295](https://github.com/Sudharsanselvaraj/Token-Print/issues/295)): the frame-producer seam shipped in [#315](https://github.com/Sudharsanselvaraj/Token-Print/pull/315); GPT-2 WebGPU forward pass, in-browser GGUF execution, and the browser-vs-backend verification harness are tracked in [#311](https://github.com/Sudharsanselvaraj/Token-Print/issues/311)–[#314](https://github.com/Sudharsanselvaraj/Token-Print/issues/314).
+**Started. 5.2 (Stage B) is the active milestone** (umbrella [#295](https://github.com/Sudharsanselvaraj/Token-Print/issues/295)): the frame-producer seam shipped in [#315](https://github.com/Sudharsanselvaraj/Token-Print/pull/315) and the **browser GPT-2 WebGPU/ONNX forward pass shipped in [#329](https://github.com/Sudharsanselvaraj/Token-Print/pull/329)** (with guided replay and reproducible experiments). In-browser GGUF execution and the browser-vs-backend verification harness remain tracked in [#313](https://github.com/Sudharsanselvaraj/Token-Print/issues/313)–[#314](https://github.com/Sudharsanselvaraj/Token-Print/issues/314).
 
 | # | Work | Type | Why |
 |---|---|---|---|
 | 5.1 | MoE routing visualization (expert lanes lighting up) | 🆕 | Highest wow/novelty; almost nobody does it well |
-| 5.2 | In-browser WebGPU/ONNX inference | 🔧 **active (Stage B)** | Fuses the demo and the product; TS GGUF parser is the seed; 5.2a seam shipped (#315) |
+| 5.2 | In-browser WebGPU/ONNX inference | 🔧 **browser GPT-2 shipped (#329)** | Fuses the demo and the product; TS GGUF parser is the seed; remaining scope = browser GGUF execution + extra models |
 | 5.3 | Real quantized GGUF execution (llama.cpp) | 🆕 | Closes the honesty gap: generation still runs on full-precision PyTorch |
 | 5.4 | Speculative-decoding, sliding-window, long-context "needle" modes | 🆕 | Research depth; distinct flagship visuals |
 | 5.5 | Vision-transformer & embedding-model modes | 🆕 | Audience expansion beyond causal LMs |

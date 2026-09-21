@@ -20,6 +20,7 @@ The HUD is built with standard HTML/CSS placed inside the `AppShell` grid, posit
 
 ### 2. Live Stats (Top Bar)
 - Displays global information such as the loaded model name, execution device (`mps`/`cuda`), and total layers.
+- When running in-browser inference, the model badge instead reads **BROWSER · WEBGPU · GPT-2** (or `WASM`) and the summary card shows the ONNX float32 dtype.
 
 ### 3. KV Phase Readout (Bottom Bar)
 - Indicates whether the current step is a **Prefill** (processing the prompt) or a **Decode** (generating a new token).

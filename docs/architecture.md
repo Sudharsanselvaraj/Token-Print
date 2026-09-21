@@ -18,26 +18,38 @@ TokenPrint is an interactive 3D visual debugger for transformer language models.
 │  • Forward Pass Hooks            │   │  • Header Slice Read       │
 │  • Logit Lens / PCA / Ablation   │   │  • Dequantization (TS)     │
 │  • WebSocket Streaming           │   │  • Tensor Metadata         │
+│  • GGUF engine LRU cache (/gguf)*│   │                            │
 └─────────────────┬────────────────┘   └────────────┬───────────────┘
                   │                                 │
-                  └─────────────────┬───────────────┘
-                                    │
-                                    ▼
-┌───────────────────────────────────────────────────────────────────┐
-│                       Zustand Application Store                   │
-│      • Mode selection (Explorer, Generation, Walkthrough, Debug)   │
-│      • Playback ticker & op-catalog index                         │
-│      • Active trace frames & selection state                      │
-└──────────────────────────────────┬────────────────────────────────┘
-                                   │
-                                   ▼
+        ┌─────────┴───────────────┬─────────────────┘
+        │                         │
+        ▼                         ▼
+┌───────────────────────┐   ┌────────────────────────────┐
+│   In-Browser GPT-2    │   │   Zustand Application Store │
+│   ONNX Engine (5.2b)  │   │  • Engine-agnostic FrameSink│
+│   • WebGPU / CPU(WASM)│   │  • Mode selection │ Playback│
+│   • Greedy ≤ 32 tokens│   │  • Active trace & selection │
+│   (frame-producer seam│   │  (sources are interchangeable)│
+│    registered into    │   │                            │
+│    the same FrameSink)│   └────────────┬───────────────┘
+└───────────┬───────────┘                │
+            │ frames (local engine)      │ frames (WS / replay / local)
+            └─────────────┬──────────────┘
+                          ▼
 ┌───────────────────────────────────────────────────────────────────┐
 │                    React Three Fiber 3D Canvas                    │
-│   • TransformerStack (Spine, SwiGLU Funnel, RMSNorm Waist, GQA)   │
+│   • TransformerStack (Spine, SwiGLU Funnel, RMSNorm Collar, GQA)  │
 │   • TensorCloud (Points layout)                                   │
 │   • Annotations & Provenance Overlays                             │
 └───────────────────────────────────────────────────────────────────┘
 ```
+
+`*` The FastAPI engine's GGUF path keeps resident models in an LRU cache with
+explicit unload (`POST /gguf/unload`) and stats (`GET /gguf/cache`) endpoints
+(see [api.md](api.md)). The in-browser GPT-2 engine is described in
+[browser-inference.md](browser-inference.md); it feeds the same store seam as the
+live WebSocket, so replay, browser, and backend sources are interchangeable
+without store changes.
 
 ---
 

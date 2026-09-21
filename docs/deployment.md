@@ -17,9 +17,11 @@ whole app points at a hosted backend.
 ## Option A — frontend only (fastest)
 
 Deploy just the Next.js app. Works standalone for the **Architecture Explorer via
-`.gguf` drag-and-drop** (parsed client-side, no backend). "Use live Qwen model",
-Generation, and Walkthrough will show "Failed to fetch" until a backend is
-reachable.
+`.gguf` drag-and-drop** (parsed client-side, no backend) and, since
+[#329](https://github.com/Sudharsanselvaraj/Token-Print/pull/329), for
+**browser GPT-2 generation** (WebGPU/ONNX or CPU/WASM, greedy ≤ 32 new tokens).
+"Use live Qwen model", attention, and Walkthrough will show "Failed to fetch"
+until a backend is reachable (see the [capability matrix](browser-inference.md)).
 
 ### Vercel
 
@@ -49,13 +51,16 @@ Notes:
 
 ### 2. CORS
 
-The backend restricts origins in `backend/app/main.py`. Add your deployed
+The backend restricts origins in `backend/app/main.py` (locals plus
+`sudharsanselvaraj.github.io`, `tokenprint.in` and subdomains). Add your deployed
 frontend origin:
 
 ```python
 allow_origins=[
     "http://localhost:3000",
     "https://your-app.vercel.app",   # <- your deployed frontend
+    "https://sudharsanselvaraj.github.io",
+    "https://tokenprint.in",
 ],
 ```
 

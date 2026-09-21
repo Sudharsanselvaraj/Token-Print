@@ -11,7 +11,7 @@
     <a href="https://github.com/Sudharsanselvaraj/Token-Print/stargazers"><img src="https://img.shields.io/github/stars/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a&label=stars" alt="Stars" /></a>
     <a href="https://github.com/Sudharsanselvaraj/Token-Print/commits/main"><img src="https://img.shields.io/github/last-commit/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a&label=last%20commit" alt="Last commit" /></a>
     <img src="https://img.shields.io/badge/data-100%25%20real%20forward%20pass-0a0a0a.svg?style=flat" alt="Real data only" />
-    <a href="GOOD_FIRST_ISSUES.md"><img src="https://img.shields.io/badge/good%20first%20issues-26-orange.svg?style=flat" alt="26 good first issues" /></a>
+    <a href="GOOD_FIRST_ISSUES.md"><img src="https://img.shields.io/badge/good%20first%20issues-1-orange.svg?style=flat" alt="1 good first issue" /></a>
   </p>
 
   <p>
@@ -101,7 +101,7 @@ falls on that not happening.
 
 ## Contributing
 
-[**26 curated issues**](GOOD_FIRST_ISSUES.md) across 🟢 Easy → 🔬 Research, each with the
+[**Curated beginner tasks**](GOOD_FIRST_ISSUES.md) across 🟢 Easy → 🔬 Research, each with the
 files to touch and how to verify your fix. Read [CONTRIBUTING.md](CONTRIBUTING.md), pick one,
 send a PR. First-timers genuinely welcome.
 

@@ -19,6 +19,8 @@ It walks through the `op_catalog` (the ordered list of operations) layer-by-laye
 - **Step Back/Forward (`J` / `K`):** Manually advance or reverse one operation (e.g., from Pre-LayerNorm to Self-Attention).
 - **Speed Multiplier:** A dropdown (e.g., 0.5x, 1x, 2x) that normalizes the pacing of the autoplay ticker. It does *not* fabricate frames; it simply changes the delay between rendering real operations.
 - **Token Strip:** A horizontal list of tokens. The prompt tokens are displayed first, followed by generated tokens. Clicking a token scrubs the timeline to the exact frame that generated it.
+- **Guided Replay (optional):** Booting with `?tour=1` shows step-by-step guidance over the playback controls from the recorded demo. 
+- **Portable experiments:** The Debugger's Experiments panel (and the shared trace gallery on the home page) can save and restore exact runs — prompt, model, settings, and full frame stream — via portable `.tokenprint.json` files.
 
 > **Note**
 > Pacing is strictly normalized. TokenPrint never fabricates in-between frames or synthetic data to smooth out the playback.

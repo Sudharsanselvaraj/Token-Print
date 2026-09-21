@@ -10,7 +10,9 @@ Navigating a 24-layer transformer stack manually via scrolling is tedious and di
 
 ## How TokenPrint implements it
 
-TokenPrint uses the R3F `<PerspectiveCamera>` paired with `drei`'s `<OrbitControls>`.
+TokenPrint uses the R3F `<PerspectiveCamera>` paired with `drei`'s `<OrbitControls>`, driven by a **unified camera control bar** shared across Architecture, Generation, Walkthrough, and Debugger modes (with camera bookmarks for quick framing).
+
+> **Desktop gate:** the interactive 3D workspace is gated behind a desktop-only check (min ~1024px width). On smaller screens, panels and debug views still work but the 3D viewport is replaced with a friendly notice.
 
 ### The Glider
 During Live Inference and Walkthrough chapters, the camera relies on a custom easing function.

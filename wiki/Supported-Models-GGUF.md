@@ -22,6 +22,12 @@ When you drag and drop a `.gguf` file onto TokenPrint:
 
 If you want to view the actual numbers inside a tensor, TokenPrint uses a custom `dequant.ts` module. When you open the Tensor Inspector, it seeks to the exact byte offset of that tensor in the local file, reads a small chunk, and dequantizes it (e.g., converting Q4_K back to float32) to show you an 8x8 weight preview.
 
+## Backend GGUF engine & LRU cache
+
+When GGUF execution is enabled, the resident engine holds recent models in an **LRU cache with explicit memory reclamation** ([#326](https://github.com/Sudharsanselvaraj/Token-Print/issues/326)). Two control endpoints manage it:
+- `POST /gguf/unload` — explicitly unload a resident GGUF engine and release its memory.
+- `GET /gguf/cache` — return resident engine cache statistics, limits, and eviction counters.
+
 > **Warning**
 > GGUF models are only supported for **Architecture Explorer** and **Tensor Inspector** modes. Because the backend PyTorch engine requires unquantized weights to capture exact intermediate activations (like softmax attention probabilities), TokenPrint cannot currently run Live Inference directly on a quantized GGUF file.
 

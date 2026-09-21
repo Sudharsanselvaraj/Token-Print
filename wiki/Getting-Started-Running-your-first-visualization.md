@@ -2,7 +2,7 @@
 
 ## Overview
 
-With both servers running, it's time to actually visualize a Transformer Layer. This guide will walk you through interacting with the Architecture Explorer and running a Live Inference trace.
+With the app running (backend + frontend, or the browser-only path), it's time to actually visualize a Transformer Layer. This guide will walk you through interacting with the Architecture Explorer and running a Live Inference trace.
 
 ## Why it matters
 
@@ -10,7 +10,7 @@ Understanding how to trigger visualizations and read the resulting 3D geometry i
 
 ## How TokenPrint implements it
 
-TokenPrint utilizes different visualization "Modes" available in the Top Bar. Switching modes unmounts the current 3D scene and mounts a new one, fetching entirely new datasets from the backend.
+TokenPrint utilizes different visualization "Modes" available in the Top Bar. Switching modes unmounts the current 3D scene and mounts a new one, fetching entirely new datasets from the backend — except the browser-only path, which runs a pinned GPT-2 in the browser with no backend needed (see [Quick Start](Getting-Started-Quick-Start)).
 
 ## 1. The Architecture Explorer
 
@@ -43,8 +43,12 @@ Let's watch the model think in real-time.
 4. Press **Enter** or click **Generate**.
 5. TokenPrint will open a WebSocket stream (`WS /ws/generate`) with `trace: true`.
 6. Watch as the 3D scene constructs a Transformer Stack. 
-7. The camera will follow the execution layer-by-layer. You will see Attention blades, the SwiGLU funnel, and LayerNorm waists light up as data passes through them.
+7. The camera will follow the execution layer-by-layer. You will see Attention blades, the SwiGLU funnel, and LayerNorm collars light up as data passes through them.
 8. At the top of the stack, watch the **Top-k Skyline** render the actual probability distributions for the next token.
+
+### Browser-only generation (no backend)
+
+For a quick look with no servers, switch the generation source to **Browser GPT-2 · WebGPU** (or **· CPU (WASM)**). Greedy decoding only, at most 32 new tokens, ~500 MB one-time download cached by the browser. Attention arcs, interventions, and GGUF drop-in need the Python backend — see the [capability matrix](../docs/browser-inference.md).
 
 ## Diagram
 

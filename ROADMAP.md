@@ -3,14 +3,22 @@
 > Usability upgrade: offline guided replay, focused debugger workspaces, a supported launcher, portable experiments, contributor examples, and pinned browser GPT-2 are implemented. Browser support is scoped by the [capability matrix](docs/browser-inference.md); browser GGUF execution and additional models remain follow-up work.
 
 
-> **Status as of 2026-09-16 — most of this document is now shipped.**
+> **Status as of 2026-09-21 — most of this document is now shipped.**
 >
 > All six original milestones (**v0.2 → v0.6**) are complete, as are design-review
-> **Phases 0–2** (credibility triage, docked shell, scientific corrections). Phase 3
-> (debugger) is 10/11 and Phase 4 (depth features) is 11/12. **Phase 5 has started**:
-> 5.2 (in-browser WebGPU/ONNX inference) is the active **Stage B** work — its frame-producer
-> seam shipped in [#315](https://github.com/Sudharsanselvaraj/Token-Print/pull/315),
-> tracked via [#311](https://github.com/Sudharsanselvaraj/Token-Print/issues/311)–
+> **Phases 0–4**. Phase 3 (debugger) is 11/11 and Phase 4 (depth features) is 12/12; the
+> one remaining depth item, Phase 4.1 non-Latin tokenization
+> ([#293](https://github.com/Sudharsanselvaraj/Token-Print/issues/293)), stays open as a
+> `good first issue`. **Phase 5 (Stage B)** is the active work — the in-browser
+> **GPT-2 WebGPU/ONNX forward pass** ships with a frame-producer seam decoupling the store
+> from the WebSocket source
+> ([#329](https://github.com/Sudharsanselvaraj/Token-Print/pull/329),
+> [#315](https://github.com/Sudharsanselvaraj/Token-Print/pull/315)); guided replay,
+> reproducible experiments, portable share/load, GGUF LRU cache eviction, HF revision-
+> SHA resolution, and the modal-over-scene layering contract are all merged. Remaining
+> Stage B follow-up (browser GGUF execution, additional in-browser models, and a
+> browser-vs-backend verification harness) is tracked via
+> [#312](https://github.com/Sudharsanselvaraj/Token-Print/issues/312)–
 > [#314](https://github.com/Sudharsanselvaraj/Token-Print/issues/314) under
 > [#295](https://github.com/Sudharsanselvaraj/Token-Print/issues/295).
 >
@@ -18,9 +26,9 @@
 > | --- | --- |
 > | v0.2 Record & Replay · v0.25 Quantization Diff · v0.3 Logit Lens · v0.4 Debugger · v0.5 Interventions · v0.6 Surface features | ✅ complete |
 > | Phase 0 Credibility triage · Phase 1 Instrument · Phase 2 Correct the science | ✅ complete |
-> | Phase 3 The debugger complete | 10/11 |
-> | Phase 4 Depth & audience | 11/12 |
-> | Phase 5 Platform & flagship | **in progress — 5.2 (Stage B) active** |
+> | Phase 3 The debugger complete | 11/11 ✅ |
+> | Phase 4 Depth & audience | 12/12 ✅ |
+> | Phase 5 Platform & flagship | **in progress — 5.2 (Stage B): browser GPT-2 shipped** |
 >
 > Live tracking: [milestones](https://github.com/Sudharsanselvaraj/Token-Print/milestones).
 > The sections below are kept as the **reasoning record** — why each thing was built and in
@@ -453,7 +461,7 @@ second resident model, an audience we don't have yet, or a research artifact
 
 | Idea | Why parked |
 | --- | --- |
-| **In-browser inference (WebGPU/ONNX)** | **No longer parked** — now Phase 5.2 (Stage B), the active milestone: the frame-producer seam for in-browser generation shipped in [#315](https://github.com/Sudharsanselvaraj/Token-Print/pull/315); GPT-2 WebGPU forward pass, in-browser GGUF execution, and a browser-vs-backend verification harness are tracked in [#312](https://github.com/Sudharsanselvaraj/Token-Print/issues/312)–[#314](https://github.com/Sudharsanselvaraj/Token-Print/issues/314). Our TS GGUF parser remains the execution seed. |
+| **In-browser inference (WebGPU/ONNX)** | **No longer parked** — now Phase 5.2 (Stage B), the active milestone: the frame-producer seam for in-browser generation shipped in [#315](https://github.com/Sudharsanselvaraj/Token-Print/pull/315) and the **browser GPT-2 WebGPU/ONNX forward pass shipped in [#329](https://github.com/Sudharsanselvaraj/Token-Print/pull/329)** (guided replay + reproducible experiments landed in the same PR). In-browser GGUF execution and a browser-vs-backend verification harness remain tracked in [#313](https://github.com/Sudharsanselvaraj/Token-Print/issues/313)–[#314](https://github.com/Sudharsanselvaraj/Token-Print/issues/314). Our TS GGUF parser remains the execution seed. |
 | **Real quantized GGUF execution (llama.cpp integration)** | Still requires a second inference engine and true quantized execution — a rewrite-sized dependency. Note this is now a *sharper* gap than when first parked: v0.25 proves we can honestly show quantization's effect on weights without this, but generation itself still only runs on full-precision PyTorch weights. Do this when we're ready to close that specific honesty note in §1.1, not before. |
 | **Side-by-side live model comparison (two resident models simultaneously)** | Two resident models, doubled VRAM, synchronized streams. Trace-diff (v0.5) and config-diff (v0.5, smaller) deliver most of the value at a fraction of the cost first. |
 | **Full memory-byte profiling / flame-graph profiler** | Per-layer ms lands in v0.4; the lighter KV-cache *position* timeline lands in v0.6. A DevTools-grade byte-level memory profiler is a different product. |
