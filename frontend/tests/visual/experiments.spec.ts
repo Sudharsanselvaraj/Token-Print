@@ -66,14 +66,15 @@ test("real activation patch saves its parameters and verifies its layer predicti
     process.env.TOKENPRINT_LIVE_EXPERIMENTS !== "1",
     "Requires the updated live backend",
   );
-  await page.goto("/app?mode=debugger");
-  await page
-    .getByText("Connect backend / capture analysis", { exact: true })
-    .click();
-  await page.getByRole("button", { name: "Run analysis", exact: true }).click();
+  // The classic debugger dashboard has no "connect backend / capture analysis"
+  // form — analysis data is produced by the Walkthrough's auto-run /analyze.
+  await page.goto("/app?mode=walkthrough");
   await expect(
-    page.getByRole("button", { name: "Run analysis", exact: true }),
-  ).toBeEnabled();
+    page.locator(".rp-inspector .rp-section-title").first(),
+  ).toHaveText(/OVERVIEW/i, { timeout: 60_000 });
+
+  await page.locator(".landing-nav-item", { hasText: "Debugger" }).click();
+  await expect(page.locator(".dbg-dashboard")).toBeVisible({ timeout: 60_000 });
   await page
     .getByRole("button", {
       name: "Activation Patching activation_patching",

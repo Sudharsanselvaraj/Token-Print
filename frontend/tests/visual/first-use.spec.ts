@@ -31,22 +31,25 @@ test("recorded demo works with no backend and completes the guided tour", async 
   expect(backendRequests).toBe(0);
   await page.screenshot({ path: "/tmp/tokenprint-recorded-demo.png" });
 });
-test("recorded interventions show a requirement instead of making live requests", async ({
+test("recorded interventions render from captured data without making live requests", async ({
   page,
 }) => {
-  await page.route("http://localhost:8000/**", (route) => route.abort());
+  let backendRequests = 0;
+  await page.route("http://localhost:8000/**", (route) => {
+    backendRequests++;
+    return route.abort();
+  });
   await page.goto("/app?mode=generation&demo=hello-world");
   await expect(
     page.getByText("RECORDED REPLAY", { exact: true }),
   ).toBeVisible();
   await page.locator(".landing-nav-item", { hasText: "Debugger" }).click();
+  await expect(page.locator(".dbg-dashboard")).toBeVisible();
   await page
     .getByRole("button", { name: "Head Ablation head_ablation", exact: true })
     .click();
   await expect(
-    page.getByText("This tool runs a new instrumented forward pass.", {
-      exact: false,
-    }),
+    page.locator('[data-dbg-tool="head_ablation"]'),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: /^Run \(/ })).toHaveCount(0);
+  expect(backendRequests).toBe(0);
 });
