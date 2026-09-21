@@ -17,8 +17,26 @@ export default function QuickStartPage() {
       <p className="docs-meta">Getting Started</p>
 
       <p>
-        Get TokenPrint running with a real model trace in under five minutes. This guide assumes
-        you have already completed <a href="/docs/installation">Installation</a>.
+        Get TokenPrint running with a real model trace in under five minutes.
+      </p>
+
+      <DocsCallout variant="tip">
+        <p>
+          <strong>No backend available?</strong> Open the frontend anyway and use{" "}
+          <a href="/docs/using/browser-inference">Browser GPT-2</a> for generation or drag a{" "}
+          <code>.gguf</code> file onto the canvas for Architecture mode. Both run client-side.
+        </p>
+      </DocsCallout>
+
+      <hr />
+
+      <h2 id="step-0">Step 0 — One-command launcher (optional)</h2>
+
+      <p>
+        Instead of the manual steps below, run <code>python3 scripts/start.py</code> from the repo
+        root. It checks prerequisites (Python 3.11/3.12, Node 20.9+), provisions the Python
+        environment, installs frontend dependencies, downloads the model, and starts both services.
+        Skip to Step 3 once it reports ready.
       </p>
 
       <hr />

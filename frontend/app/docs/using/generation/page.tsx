@@ -16,18 +16,67 @@ export default function GenerationPage() {
       <p className="docs-meta">Using TokenPrint</p>
 
       <p>
-        Generation mode runs a real autoregressive forward pass via <code>WS /ws/generate</code>{" "}
-        and replays the result as a 3D animation. Each operation in the computation graph lights
-        up the corresponding 3D component as it executes.
+        Generation mode runs a real autoregressive forward pass and replays the result as a 3D
+        animation. Each operation in the computation graph lights up the corresponding 3D
+        component as it executes.
       </p>
+
+      <p>
+        Three engine options are available, selected via the{" "}
+        <strong>Inference engine</strong> dropdown:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Engine</th>
+            <th>Source</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Python backend</code></td>
+            <td>Streams over <code>WS /ws/generate</code></td>
+            <td>
+              Full capabilities — attention, hidden states, logit lens, KV cache. Decoding modes
+              dependent on the backend.
+            </td>
+          </tr>
+          <tr>
+            <td><code>Browser GPT-2 · WebGPU</code></td>
+            <td>Runs fully client-side in a Web Worker</td>
+            <td>
+              Greedy only, ≤ 32 new tokens, ~500 MB cached download. See{" "}
+              <a href="/docs/using/browser-inference">Browser GPT-2</a>.
+            </td>
+          </tr>
+          <tr>
+            <td><code>Browser GPT-2 · CPU (WASM)</code></td>
+            <td>Runs fully client-side in a Web Worker</td>
+            <td>Same as WebGPU, but CPU compute — an explicit choice, never an automatic fallback.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <DocsCallout variant="tip">
+        <p>
+          The browser engine requires no backend at all. To export a run for reproducible
+          verification, use the <a href="/docs/using/experiments">Experiments</a> panel in Debugger
+          mode, or hit the <a href="/docs/api-reference">API reference</a> directly for defaults.
+        </p>
+      </DocsCallout>
 
       <hr />
 
       <h2 id="op-catalog">Op catalog</h2>
 
       <p>
-        Before animation begins, the backend sends a complete op catalog describing every operation
-        in the forward pass. For the reference model, the catalog contains <strong>243 ops</strong>:
+        Before animation begins, the backend engine sends a complete op catalog describing every
+        operation in the forward pass. The browser GPT-2 engine does not instrument
+        layer-level ops — it streams per-token frames with <code>num_layer_stats: 0</code> and an
+        explicit honesty note. For the reference model, the backend catalog contains{" "}
+        <strong>243 ops</strong>:
       </p>
 
       <ul>
@@ -75,10 +124,23 @@ export default function GenerationPage() {
 
       <DocsCallout variant="note">
         <p>
-          TokenPrint uses greedy decoding by default. The prediction game is deterministic —
-          the same prompt always produces the same token sequence.
+          Capped at 40 new tokens by default. With the browser engine the cap is clamped to 32.
+          TokenPrint uses greedy decoding by default; the prediction game is deterministic — the
+          same prompt always produces the same token sequence for greedy runs.
         </p>
       </DocsCallout>
+
+      <hr />
+
+      <h2 id="decoding-strategies">Decoding strategies</h2>
+
+      <p>
+        Behind the scenes, generation options support four decoding modes — greedy, sampling,
+        sliding window, and speculative — plus temperature, top-k, top-p, and seed. The browser
+        engine is greedy-only. See the{" "}
+        <a href="/docs/concepts/decoding">Decoding Strategies</a> concept page for what each mode
+        does and what its options mean.
+      </p>
 
       <DocsPrevNext slug="using/generation" />
     </>

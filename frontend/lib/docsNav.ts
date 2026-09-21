@@ -37,6 +37,7 @@ export const DOC_SECTIONS: DocSection[] = [
       { title: "Residual Streams", slug: "concepts/residual-streams" },
       { title: "KV Cache", slug: "concepts/kv-cache" },
       { title: "Logits", slug: "concepts/logits" },
+      { title: "Decoding Strategies", slug: "concepts/decoding" },
     ],
   },
   {
@@ -44,8 +45,11 @@ export const DOC_SECTIONS: DocSection[] = [
     pages: [
       { title: "Model Explorer", slug: "using/model-explorer" },
       { title: "3D Architecture", slug: "using/3d-architecture" },
+      { title: "Camera System", slug: "using/camera-system" },
       { title: "Generation", slug: "using/generation" },
+      { title: "Browser GPT-2", slug: "using/browser-inference" },
       { title: "Walkthrough", slug: "using/walkthrough" },
+      { title: "Experiments", slug: "using/experiments" },
       { title: "Debugger", slug: "using/debugger" },
     ],
   },

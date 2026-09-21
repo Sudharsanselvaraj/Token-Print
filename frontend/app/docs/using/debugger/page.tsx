@@ -91,6 +91,14 @@ export default function DebuggerPage() {
               exposed by the standard panels.
             </td>
           </tr>
+          <tr>
+            <td>Experiments</td>
+            <td>
+              Reproducible experiments — save, import, export, replay, and re-verify generation
+              runs as portable JSON with a SHA-256 checksum. See{" "}
+              <a href="/docs/using/experiments">Experiments</a>.
+            </td>
+          </tr>
         </tbody>
       </table>
 

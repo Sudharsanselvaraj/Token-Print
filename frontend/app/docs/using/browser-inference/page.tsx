@@ -1,0 +1,174 @@
+import type { Metadata } from "next";
+import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
+import DocsPrevNext from "@/components/docs/DocsPrevNext";
+import DocsCallout from "@/components/docs/DocsCallout";
+import DocsCode from "@/components/docs/DocsCode";
+
+export const metadata: Metadata = {
+  title: "Browser GPT-2",
+  description: "In-browser GPT-2 inference via WebGPU or WASM — no backend required.",
+};
+
+export default function BrowserInferencePage() {
+  return (
+    <>
+      <DocsBreadcrumb slug="using/browser-inference" title="Browser GPT-2" />
+      <h1>Browser GPT-2</h1>
+      <p className="docs-meta">Using TokenPrint</p>
+
+      <p>
+        TokenPrint can run a real GPT-2 forward pass <strong>entirely in the browser</strong> — no
+        Python backend, no WebSocket. The generation runs in a module Web Worker using
+        Transformers.js, with WebGPU or CPU (WASM) as the compute device.
+      </p>
+
+      <DocsCallout variant="tip">
+        <p>
+          The browser engine is fully client-side and works against the static production export.
+          You can deploy the frontend alone and still run generation.
+        </p>
+      </DocsCallout>
+
+      <hr />
+
+      <h2 id="selecting-the-engine">Selecting the engine</h2>
+
+      <p>
+        In Generation mode, the <strong>Inference engine</strong> selector offers three options:
+      </p>
+
+      <ul>
+        <li><code>Python backend</code> — the default, streams over <code>WS /ws/generate</code>.</li>
+        <li><code>Browser GPT-2 · WebGPU</code> — runs on the GPU via WebGPU.</li>
+        <li><code>Browser GPT-2 · CPU (WASM)</code> — runs on the CPU via WASM.</li>
+      </ul>
+
+      <p>
+        When a browser engine is selected, the helper text notes the constraints: greedy decoding,
+        at most 32 new tokens, and a ~500 MB cached download. The transport bar shows a{" "}
+        <code>BROWSER · WEBGPU · GPT-2</code> badge.
+      </p>
+
+      <hr />
+
+      <h2 id="requirements">Requirements</h2>
+
+      <ul>
+        <li>
+          <strong>WebGPU</strong> requires a browser/device with a working GPU adapter{" "}
+          <strong>and a secure context</strong> (HTTPS or localhost).
+        </li>
+        <li>
+          <strong>CPU (WASM)</strong> is an explicit choice — the app never silently switches data
+          sources. If the selected device cannot execute, generation fails rather than falling back.
+        </li>
+        <li>
+          The first run downloads ~500 MB of model files. Progress is visible;{" "}
+          <strong>Stop</strong> cancels the worker, including an in-progress download.
+        </li>
+      </ul>
+
+      <hr />
+
+      <h2 id="limits">Limits</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Constraint</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Model</td><td><code>Xenova/gpt2</code></td></tr>
+          <tr><td>Revision</td><td><code>bf2c7f02e0b826c60d03af341171bde20893da66</code> (pinned, immutable)</td></tr>
+          <tr><td>Runtime</td><td>Transformers.js 3.8.1, ONNX <code>model.onnx</code>, fp32</td></tr>
+          <tr><td>Decoding</td><td>Greedy only</td></tr>
+          <tr><td>New tokens</td><td>At most 32</td></tr>
+          <tr><td>Total window</td><td>Prompt + output ≤ 128 tokens</td></tr>
+          <tr><td>Download</td><td>~500 MB, cached by the browser</td></tr>
+        </tbody>
+      </table>
+
+      <DocsCallout variant="note">
+        <p>
+          GPT-2 is a base completion model, not an instruction/chat model. Treat it as a small,
+          fast embodiment of the architecture for exploration, not as a chat assistant.
+        </p>
+      </DocsCallout>
+
+      <hr />
+
+      <h2 id="capability-boundary">Capability boundary</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th>Browser GPT-2</th>
+            <th>Python backend</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Real token IDs, final logits, probabilities</td>
+            <td>Yes</td>
+            <td>Yes</td>
+          </tr>
+          <tr><td>Greedy generation</td><td>Yes</td><td>Yes</td></tr>
+          <tr><td>Sampling / advanced decoding</td><td>No</td><td>Backend-dependent</td></tr>
+          <tr>
+            <td>Attention / hidden states / logit lens</td>
+            <td>Not exposed by this ONNX export</td>
+            <td>Model-dependent (capability checked)</td>
+          </tr>
+          <tr><td>KV-cache instrumentation</td><td>No; sequence recomputed</td><td>When supported</td></tr>
+          <tr><td>New ablations / activation patching</td><td>No</td><td>Model-dependent</td></tr>
+          <tr><td>GGUF inference</td><td>Not part of this browser release</td><td>Optional llama.cpp backend</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+        No synthetic activation statistics or operation timings are generated by the browser path.
+        Architecture dimensions come from the pinned model config; they describe the model, not a
+        measured execution trace. The initial release uses full precision because the quantized
+        WebGPU output did not pass the reference check.
+      </p>
+
+      <hr />
+
+      <h2 id="verification">Verification</h2>
+
+      <p>
+        The browser engine is validated against an independent ONNX CPU session via{" "}
+        <code>node frontend/scripts/browser-reference.mjs</code>, which generates the checked-in
+        three-prompt reference. A Playwright test downloads and runs the real model for both
+        devices, checks the pinned revision, selected and top-five token IDs, and requires
+        probability error below <code>1e-4</code>. The test fails if the selected device cannot
+        execute — browser support depends on actual adapter availability.
+      </p>
+
+      <DocsCode
+        lang="bash"
+        filename="terminal"
+        code={`cd frontend
+TOKENPRINT_BROWSER_INFERENCE=1 npx playwright test tests/visual/browser-inference.spec.ts --project=chromium`}
+      />
+
+      <hr />
+
+      <h2 id="how-it-runs">How it runs</h2>
+
+      <p>
+        The engine is registered via <code>registerLocalEngine</code> and executes in a dedicated
+        module Web Worker. Generation is requested with <code>source: "local"</code>, a device
+        (<code>webgpu</code> or <code>wasm</code>), <code>decodingMode: "greedy"</code>, and the
+        new-token cap clamped to 32. Frames flow through the same frame-producer seam as the live
+        WebSocket, so replay, browser, and backend sources are interchangeable without store
+        changes.
+      </p>
+
+      <DocsPrevNext slug="using/browser-inference" />
+    </>
+  );
+}

@@ -80,6 +80,7 @@ export default function IntroductionPage() {
         <li><strong>Grouped Query Attention (GQA):</strong> Efficient multi-head attention where multiple Query heads share key-value heads.</li>
         <li><strong>Rotary Position Embeddings (RoPE):</strong> Complex rotation matrices applied to Queries and Keys to encode position.</li>
         <li><strong>SwiGLU &amp; Logits:</strong> Swish-Gated Linear Units in FFN blocks and final linear output projection.</li>
+        <li><strong>Decoding:</strong> Greedy, sampling, sliding window, and speculative strategies for turning logits into generated tokens.</li>
       </ul>
 
       <hr />

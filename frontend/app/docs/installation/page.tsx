@@ -37,12 +37,12 @@ export default function InstallationPage() {
         <tbody>
           <tr>
             <td>Python</td>
-            <td>3.11+</td>
+            <td>3.11 or 3.12</td>
             <td>Required for the backend</td>
           </tr>
           <tr>
             <td>Node.js</td>
-            <td>18.0+</td>
+            <td>20.9+</td>
             <td>Required for the frontend</td>
           </tr>
           <tr>
@@ -57,6 +57,25 @@ export default function InstallationPage() {
           </tr>
         </tbody>
       </table>
+
+      <hr />
+
+      <h2 id="quick-launcher">Quick start — the launcher</h2>
+
+      <p>
+        The simplest path is the supported launcher, which checks prerequisites, creates the Python
+        environment, installs frontend dependencies, downloads the model, and starts both services:
+      </p>
+
+      <DocsCode
+        lang="bash"
+        code={`python3 scripts/start.py
+# Python 3.11/3.12 · Node 20.9+
+# Optional:  --check (verify prereqs), --smoke (real generation check),
+#            --model MODEL, --revision REVISION, --fresh (reinstall)`}
+      />
+
+      <p>Manual setup is documented below.</p>
 
       <hr />
 
@@ -117,21 +136,35 @@ npm run dev`}
 
       <DocsCallout variant="warning">
         <p>
-          The frontend requires the backend to be running to load model data. Without the backend,
-          the 3D canvas will show a loading state. GGUF drag-and-drop works client-side without the
-          backend.
+          The frontend requires the backend to be running to load PyTorch model data. Without the
+          backend, GGUF drag-and-drop (Architecture mode) and the Browser GPT-2 engine
+          (Generation mode) still work client-side — see{" "}
+          <a href="/docs/using/browser-inference">Browser GPT-2</a>.
         </p>
       </DocsCallout>
 
       <hr />
 
-      <h2 id="gguf-only">GGUF-only mode (no Python required)</h2>
+      <h2 id="no-backend">Frontend-only mode (no Python required)</h2>
 
       <p>
-        You can use the Architecture mode without a running backend by dragging a{" "}
-        <code>.gguf</code> file onto the 3D canvas. The browser parses the binary header
-        client-side using a TypeScript GGUF parser — no server required. Generation, Walkthrough,
-        and Debugger modes require the backend.
+        You can use TokenPrint without any backend at all:
+      </p>
+
+      <ul>
+        <li>
+          <strong>Architecture mode</strong> — drag a <code>.gguf</code> file onto the 3D canvas.
+          The browser parses the binary header client-side using a TypeScript GGUF parser.
+        </li>
+        <li>
+          <strong>Generation</strong> — switch the engine to <em>Browser GPT-2</em>. It downloads
+          a pinned <code>Xenova/gpt2</code> model once (~500 MB, browser-cached) and runs real
+          greedy generation via WebGPU or WASM. No server required.
+        </li>
+      </ul>
+
+      <p>
+        Walkthrough and Debugger modes require the backend with a PyTorch model loaded.
       </p>
 
       <DocsPrevNext slug="installation" />

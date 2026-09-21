@@ -71,11 +71,15 @@ export default function KeyboardShortcutsPage() {
           </tr>
           <tr>
             <td><code>F</code></td>
-            <td>Toggle camera Follow mode on active token node</td>
+            <td>Return the camera to the overview position</td>
           </tr>
           <tr>
             <td><code>R</code></td>
-            <td>Reset 3D camera view to default orientation</td>
+            <td>Reset 3D camera view to the overview orientation</td>
+          </tr>
+          <tr>
+            <td><code>T</code></td>
+            <td>Enable live token-follow — camera tracks the active token</td>
           </tr>
         </tbody>
       </table>

@@ -107,12 +107,22 @@ export default function YourFirstTracePage() {
 
       <hr />
 
-      <h2 id="replay-and-branching">Replay and branching</h2>
+      <h2 id="replay-and-branching">Replay, branching, and experiments</h2>
 
       <p>
         Completed traces are saved and can be replayed from the Debugger mode. The trace branching
         panel lets you re-run a trace with a different prompt or model configuration and compare the
         two side by side.
+      </p>
+
+      <p>
+        For reproducible, shareable runs, the{" "}
+        <a href="/docs/using/experiments">Experiments</a> panel exports the exact prompt, model
+        revision, decoding settings, intervention, and measured results as a JSON file with a
+        SHA-256 checksum — another machine can replay or re-verify the identical run. If you have
+        no backend, the{" "}
+        <a href="/docs/using/browser-inference">Browser GPT-2</a> engine can still produce a real
+        trace entirely client-side.
       </p>
 
       <DocsPrevNext slug="your-first-trace" />

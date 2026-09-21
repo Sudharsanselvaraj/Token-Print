@@ -67,6 +67,17 @@ export default function UnderstandingTheInterfacePage() {
 
       <hr />
 
+      <h2 id="camera-bar">Camera bar</h2>
+
+      <p>
+        A unified camera control bar sits in the bottom transport bar and works identically in all
+        modes: <code>OVERVIEW</code>, <code>LAYER</code>, <code>OP</code>, <code>FOLLOW</code>, a{" "}
+        <code>3D</code>/<code>2D</code> toggle, and <code>TRACE</code>. See{" "}
+        <a href="/docs/using/camera-system">Camera System</a> for the full breakdown.
+      </p>
+
+      <hr />
+
       <h2 id="right-panel">Right panel</h2>
 
       <p>The right panel is context-sensitive:</p>
@@ -104,6 +115,8 @@ export default function UnderstandingTheInterfacePage() {
         <tbody>
           <tr><td><code>Space</code></td><td>Play / pause generation</td></tr>
           <tr><td><code>←</code> / <code>→</code></td><td>Step backward / forward one op</td></tr>
+          <tr><td><code>F</code></td><td>Return the camera to the overview position</td></tr>
+          <tr><td><code>T</code></td><td>Live token-follow camera</td></tr>
           <tr><td><code>1</code>–<code>4</code></td><td>Switch mode (Architecture / Generation / Walkthrough / Debugger)</td></tr>
           <tr><td><code>Esc</code></td><td>Deselect / close modal</td></tr>
           <tr><td><code>R</code></td><td>Reset camera to default position</td></tr>

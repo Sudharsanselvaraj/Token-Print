@@ -37,6 +37,10 @@ import {
   Users,
   Clock,
   X,
+  Dice5,
+  Camera,
+  FlaskConical,
+  ToggleRight,
 } from "lucide-react";
 
 interface DocsNavProps {
@@ -70,11 +74,15 @@ const PAGE_ICONS: Record<string, React.ReactNode> = {
   "concepts/residual-streams": <GitMerge size={15} strokeWidth={1.5} />,
   "concepts/kv-cache":         <Database size={15} strokeWidth={1.5} />,
   "concepts/logits":           <BarChart2 size={15} strokeWidth={1.5} />,
+  "concepts/decoding":         <Dice5 size={15} strokeWidth={1.5} />,
   // Using TokenPrint
   "using/model-explorer":      <Search size={15} strokeWidth={1.5} />,
   "using/3d-architecture":     <Box size={15} strokeWidth={1.5} />,
+  "using/camera-system":       <Camera size={15} strokeWidth={1.5} />,
   "using/generation":          <MessageSquare size={15} strokeWidth={1.5} />,
+  "using/browser-inference":   <ToggleRight size={15} strokeWidth={1.5} />,
   "using/walkthrough":         <Map size={15} strokeWidth={1.5} />,
+  "using/experiments":         <FlaskConical size={15} strokeWidth={1.5} />,
   "using/debugger":            <Bug size={15} strokeWidth={1.5} />,
   // Reference
   "api-reference":             <Code2 size={15} strokeWidth={1.5} />,

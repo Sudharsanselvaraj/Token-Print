@@ -18,7 +18,9 @@ export default function ApiReferencePage() {
 
       <p>
         Base URL (dev): <code>http://localhost:8000</code>. All responses are JSON. CORS is
-        restricted to <code>http://localhost:3000</code>.
+        restricted to the local dev origin (<code>http://localhost:3000</code>, configurable via{" "}
+        <code>TOKENPRINT_FRONTEND_PORT</code>) and the deployed frontend origins (
+        <code>sudharsanselvaraj.github.io</code>, <code>tokenprint.in</code>).
       </p>
 
       <hr />
@@ -179,6 +181,102 @@ export default function ApiReferencePage() {
         <p>
           Traces are versioned (<code>trace_version: 1</code>). Replay code rejects unknown
           versions rather than silently mis-reading them.
+        </p>
+      </DocsCallout>
+
+      <hr />
+
+      <h2 id="api-hf-inspect"><code>GET /api/hf/inspect</code></h2>
+      <p>
+        Returns metadata for a Hugging Face model by ID, fetched at the model&apos;s pinned
+        revision (the resolved commit SHA) rather than a hardcoded <code>main</code>. Returns
+        architecture, parameter count, VRAM estimate, and a capability/compatibility report.
+      </p>
+
+      <DocsCode lang="json" code={`{
+  "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+  "revision": "<resolved commit sha>",
+  "architecture": "qwen2",
+  "parameter_count": 494032768,
+  "estimated_vram_gb": 2.0,
+  "compatibility_level": "full",
+  "capabilities": { /* attention, hidden states, ablation, patching flags */ }
+}`} />
+
+      <hr />
+
+      <h2 id="api-model-capabilities"><code>GET /api/model/capabilities</code></h2>
+      <p>
+        Effective capabilities of the currently loaded model — whether attention capture, hidden
+        states, ablation, and patching are actually available on this hardware/device.
+      </p>
+
+      <hr />
+
+      <h2 id="gguf-engine">GGUF engine (<code>/gguf/*</code>)</h2>
+      <p>
+        Dedicated server-side execution engine for quantized llama.cpp models, held in an{" "}
+        <strong>LRU cache</strong> so resident models are reused without leaking memory. Requires{" "}
+        <code>pip install -r backend/requirements-gguf.txt</code> (<code>llama-cpp-python</code>);
+        without it <code>engine_available</code> is <code>false</code> and <code>/gguf/open</code>{" "}
+        returns 400.
+      </p>
+
+      <DocsCode lang="bash" code={`# Uploaded/resident GGUF files live in backend/data/gguf
+curl http://localhost:8000/gguf/list`} />
+
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>GET /gguf/list</code></td>
+            <td>
+              Lists server-side <code>.gguf</code> files: name, size, quantization guess, and
+              whether each is currently resident.
+            </td>
+          </tr>
+          <tr>
+            <td><code>POST /gguf/upload</code></td>
+            <td>
+              Streams a <code>.gguf</code> upload into <code>data/gguf</code> (8 MB chunks, 10 GB
+              limit, extension-validated).
+            </td>
+          </tr>
+          <tr>
+            <td><code>POST /gguf/open</code></td>
+            <td>
+              Loads (or returns from the LRU cache) a resident model. Body:{" "}
+              <code>{`{ "path": "model.gguf" }`}</code>.
+            </td>
+          </tr>
+          <tr>
+            <td><code>POST /gguf/unload</code></td>
+            <td>
+              Explicitly unloads a resident engine and releases its memory. Body:{" "}
+              <code>{`{ "path": "model.gguf" }`}</code> →{" "}
+              <code>{`{ "ok": true, "name": ..., "unloaded": true }`}</code>.
+            </td>
+          </tr>
+          <tr>
+            <td><code>GET /gguf/cache</code></td>
+            <td>
+              Resident cache statistics and limits:{" "}
+              <code>{`{ "resident_count": ..., "max_engines": ..., "resident_paths": [...] }`}</code>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <DocsCallout variant="note">
+        <p>
+          The LRU cache holds at most <code>MAX_GGUF_ENGINES</code> engines (default 2, min 1).
+          Eviction closes the least-recently-used engine and runs garbage collection before
+          inserting a new one, so repeated loads are fast without leaking memory.
         </p>
       </DocsCallout>
 

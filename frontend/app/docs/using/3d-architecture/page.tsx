@@ -86,10 +86,15 @@ export default function ThreeDArchitecturePage() {
       <h2 id="camera">Camera</h2>
 
       <p>
-        The camera uses an orbit controller with a configurable target. In Generation mode,
-        &ldquo;follow mode&rdquo; automatically recenters the camera on the currently active
-        operation. In Walkthrough mode, each chapter has a preset camera position and target
-        optimized for that chapter&apos;s geometry.
+        The camera uses an orbit controller with a configurable target, plus a unified camera bar
+        (overview / layer / op focus / follow, 3D/2D toggle) shared across all modes. In
+        Generation mode, &ldquo;follow mode&rdquo; automatically recenters the camera on the
+        currently active operation. In Walkthrough mode, each chapter has a dedicated cinematic
+        preset camera position and target optimized for that chapter&apos;s geometry.
+      </p>
+
+      <p>
+        See <a href="/docs/using/camera-system">Camera System</a> for the full control reference.
       </p>
 
       <DocsPrevNext slug="using/3d-architecture" />

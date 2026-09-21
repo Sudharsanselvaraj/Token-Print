@@ -17,8 +17,9 @@ export default function LoadingAModelPage() {
       <p className="docs-meta">Getting Started</p>
 
       <p>
-        TokenPrint supports two model sources: a <strong>PyTorch model</strong> loaded by the
-        backend (via Hugging Face) and a <strong>GGUF binary file</strong> parsed client-side in
+        TokenPrint supports three model paths: a <strong>PyTorch model</strong> loaded by the
+        backend (via Hugging Face), a <strong>GGUF binary file</strong> parsed client-side in the
+        browser, and the <strong>in-browser GPT-2</strong> engine that runs generation entirely in
         the browser.
       </p>
 
@@ -97,10 +98,29 @@ export default function LoadingAModelPage() {
 
       <DocsCallout variant="warning">
         <p>
-          GGUF mode only supports Architecture mode visualization. Generation, Walkthrough, and
+          GGUF mode only supports Architecture visualization (drag-and-drop diff/compare).
+          However, <em>generation</em> without the backend is possible via the in-browser GPT-2
+          engine — see <a href="/docs/using/browser-inference">Browser GPT-2</a>. Walkthrough and
           Debugger modes require the backend with a PyTorch model loaded.
         </p>
       </DocsCallout>
+
+      <hr />
+
+      <h2 id="browser-gpt2">Browser GPT-2 (no backend)</h2>
+
+      <p>
+        Instead of loading a file, you can switch Generation mode to the{" "}
+        <strong>Browser GPT-2</strong> engine (WebGPU or CPU/WASM). It downloads a pinned
+        <code>Xenova/gpt2</code> model (~500 MB, cached) and runs real greedy generation entirely
+        in the browser. No backend is required for this path.
+      </p>
+
+      <p>
+        The backend can also serve a dedicated GGUF execution engine over the{" "}
+        <code>/gguf/*</code> API for running quantized llama.cpp models server-side — see{" "}
+        <a href="/docs/api-reference">API Reference</a>.
+      </p>
 
       <DocsPrevNext slug="loading-a-model" />
     </>
