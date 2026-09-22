@@ -22,7 +22,10 @@ export default defineConfig({
   },
   // Run tests sequentially so the shared backend isn't overwhelmed.
   workers: 1,
-  reporter: [["html", { outputFolder: "playwright-report", open: "never" }]],
+  reporter: [
+    ["html", { outputFolder: "playwright-report", open: "never" }],
+    ["json", { outputFile: "test-results/results.json" }],
+  ],
   use: {
     baseURL: "http://localhost:3000",
     // Bundled Chromium — no local Chrome path needed.
