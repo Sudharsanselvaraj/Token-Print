@@ -136,26 +136,81 @@ jobs:
         with:
           script: |
             if ('${{ steps.playwright.outcome }}' !== 'failure') return;
+            const fs = require('fs');
+            const path = require('path');
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            // Parse the JSON report directly so test titles never get
+            // interpolated into this script (avoids splitting/injection).
+            const reportPath = path.join(
+              process.env.GITHUB_WORKSPACE,
+              'frontend',
+              'test-results',
+              'results.json',
+            );
+            const failedTitles = [];
+            let passed = 0;
+            let failed = 'unknown';
+            let skipped = 0;
+            let hasSnapshotDiff = false;
+
+            if (fs.existsSync(reportPath)) {
+              const data = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+              const stats = data.stats || {};
+              passed = (stats.expected || 0) + (stats.flaky || 0);
+              failed = stats.unexpected ?? 0;
+              skipped = stats.skipped || 0;
+
+              const walk = (suites) => {
+                for (const suite of suites || []) {
+                  walk(suite.suites);
+                  for (const spec of suite.specs || []) {
+                    if (spec.ok === false) {
+                      failedTitles.push(spec.title);
+                      for (const test of spec.tests || []) {
+                        for (const result of test.results || []) {
+                          const msg = (result.error && result.error.message) || '';
+                          const hasDiffAttachment = (result.attachments || []).some(
+                            (a) => /diff|actual_|expected_/.test(a.name || ''),
+                          );
+                          if (
+                            /toHaveScreenshot|snapshot comparison|pixel (?:diff|mismatch)|different from the expected snapshot/i.test(msg) ||
+                            hasDiffAttachment
+                          ) {
+                            hasSnapshotDiff = true;
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              };
+              walk(data.suites);
+            }
+
             const body = [
-              '## ⚠️ Visual regression tests failed',
+              '## ⚠️ Playwright visual regression tests failed',
               '',
-              `The Playwright visual regression suite detected differences in the 3D scenes.`,
+              `**${failed} test(s) failed**, ${passed} passed, ${skipped} skipped.`,
               '',
+              ...(failedTitles.length
+                ? ['Failing tests:', ...failedTitles.map((t) => `- ${t}`), '']
+                : []),
               `**[View the full Playwright report and diff images](${runUrl})**`,
               '',
-              'If the change is intentional, regenerate the baselines and commit them:',
-              '```bash',
-              'gh workflow run "🎨 Visual Regression — 3D scenes" --ref <branch> ' +
-                '--field update_snapshots=true',
-              '```',
+              hasSnapshotDiff
+                ? 'If the change is intentional, regenerate the baselines and commit them:'
+                : '',
+              hasSnapshotDiff
+                ? '```bash\ngh workflow run "🎨 Visual Regression — 3D scenes" --ref <branch> --field update_snapshots=true\n```'
+                : '',
             ].join('\n');
             try {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body,
+                body: body.trim(),
               });
             } catch (err) {
               console.log('Skipping PR comment (fork PR read-only token):', err.message);
