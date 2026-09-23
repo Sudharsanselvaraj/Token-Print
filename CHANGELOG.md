@@ -40,6 +40,14 @@
 * clamp selectedLayer/selectedHead to 0 when num_layers/num_heads is 0 ([#283](https://github.com/Sudharsanselvaraj/Token-Print/issues/283)) ([#284](https://github.com/Sudharsanselvaraj/Token-Print/issues/284)) ([ba12f05](https://github.com/Sudharsanselvaraj/Token-Print/commit/ba12f056f65043117824fad5f4911acd471dbf7f))
 * **scene:** seed pointcloud layout jitter for deterministic visuals ([#100](https://github.com/Sudharsanselvaraj/Token-Print/issues/100)) ([3a8c4ad](https://github.com/Sudharsanselvaraj/Token-Print/commit/3a8c4ad8878deceac7651695b68e2991c497997b))
 
+## [0.4.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-v0.3.0...token-print-v0.4.0) (2026-09-23)
+
+
+### Features
+
+* **a11y:** add keyboard tour navigation and Escape dismissal to ReplayGuide ([#350](https://github.com/Sudharsanselvaraj/Token-Print/issues/350)) ([f4c85c8](https://github.com/Sudharsanselvaraj/Token-Print/commit/f4c85c8998fc8f040751cf908cc4f4148fea579a))
+* **examples:** add accessible sortable columns and announcements to TokenProbabilityPanel ([#352](https://github.com/Sudharsanselvaraj/Token-Print/issues/352)) ([9eace5c](https://github.com/Sudharsanselvaraj/Token-Print/commit/9eace5c1aa35f835787b8977cea852834b1eb7ac))
+
 ## [0.3.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-v0.2.0...token-print-v0.3.0) (2026-09-22)
 
 

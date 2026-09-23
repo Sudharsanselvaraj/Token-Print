@@ -31,6 +31,13 @@
 * **scene:** seed pointcloud layout jitter for deterministic visuals ([#100](https://github.com/Sudharsanselvaraj/Token-Print/issues/100)) ([3a8c4ad](https://github.com/Sudharsanselvaraj/Token-Print/commit/3a8c4ad8878deceac7651695b68e2991c497997b))
 * **fix:** route isolation + HF Model Explorer client-side fallback ([#269](https://github.com/Sudharsanselvaraj/Token-Print/issues/269)) ([f69e2c9](https://github.com/Sudharsanselvaraj/Token-Print/commit/f69e2c9ede97dbe7e72fdb19b40c85a5e1a08618))
 
+## [0.4.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-frontend-v0.3.0...token-print-frontend-v0.4.0) (2026-09-23)
+
+
+### Features
+
+* **a11y:** add keyboard tour navigation and Escape dismissal to ReplayGuide ([#350](https://github.com/Sudharsanselvaraj/Token-Print/issues/350)) ([f4c85c8](https://github.com/Sudharsanselvaraj/Token-Print/commit/f4c85c8998fc8f040751cf908cc4f4148fea579a))
+
 ## [0.3.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-frontend-v0.2.0...token-print-frontend-v0.3.0) (2026-09-22)
 
 
