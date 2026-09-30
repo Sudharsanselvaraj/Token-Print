@@ -1,4 +1,5 @@
 import type { AnalyzeResponse } from "./types";
+import { isByteFallbackToken } from "./prompts";
 
 // Chaptered walkthrough. Each chapter's body is built from a REAL forward pass
 // (the /analyze response) so every number shown is genuine, and each chapter
@@ -48,7 +49,11 @@ export interface ArchMeta {
 }
 
 const tokList = (d: AnalyzeResponse | null) =>
-  d ? d.tokens.map((t) => t.text.trim() || "␣").join(" · ") : "…";
+  d
+    ? d.tokens
+        .map((t) => (t.piece.startsWith("<0x") ? t.piece : (t.text.trim() || t.piece || "␣")))
+        .join(" · ")
+    : "…";
 
 function topAttention(d: AnalyzeResponse | null): string {
   if (!d) return "…";
@@ -123,7 +128,10 @@ export const CHAPTERS: Chapter[] = [
       dimensions: {
         "Tokens": `${d?.tokens.length ?? "?"}`,
         "Vocab size": `${m?.vocab_size?.toLocaleString() ?? "?"}`,
-        "First token": `"${d?.tokens[0]?.text.trim() ?? "?"}" → #${d?.tokens[0]?.id ?? "?"}`,
+        "First token": `"${(d?.tokens[0]?.text.trim() || d?.tokens[0]?.piece) ?? "?"}" → #${d?.tokens[0]?.id ?? "?"}`,
+        ...(d?.tokens && d.tokens.filter(isByteFallbackToken).length > 0
+          ? { "Byte-fallback": `${d.tokens.filter(isByteFallbackToken).length} tokens` }
+          : {}),
       },
       whyItMatters: "Tokenization determines what the model can 'see'. Subword tokenization (BPE) balances vocabulary size with coverage of rare words and multilingual text.",
     }),

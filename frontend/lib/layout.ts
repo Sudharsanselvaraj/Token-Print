@@ -41,8 +41,9 @@ export function waypointFor(district: District, tokenCount: number): Waypoint {
     // Look slightly down the layer stack + skyline from the front.
     return { position: [c[0] + 2, 6, c[2] + 30], target: [c[0], 6, c[2]] };
   }
-  // tokenizer
-  return { position: [c[0], 0, c[2] + 22], target: [c[0], c[1], c[2]] };
+  // tokenizer: scale camera distance with token count so non-Latin byte-fragmented sequences fit without clipping
+  const dist = Math.max(22, ((tokenCount || 7) * 2.6) * 0.65);
+  return { position: [c[0], 0, c[2] + dist], target: [c[0], c[1], c[2]] };
 }
 
 /** Positions of `n` tokens on the ring: index 0 at top, going clockwise. */

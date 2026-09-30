@@ -10,7 +10,9 @@ import { createGenerationSlice } from "../../lib/store/generationSlice";
 import { createTraceSlice } from "../../lib/store/traceSlice";
 import type { StoreState } from "../../lib/store/types";
 import { createUISlice } from "../../lib/store/uiSlice";
-import type { GenDone, GenMeta, TokenFrame } from "../../lib/types";
+import { PRESET_PROMPTS, isByteFallbackToken } from "../../lib/prompts";
+import { CHAPTERS } from "../../lib/walkthrough";
+import type { AnalyzeResponse, GenDone, GenMeta, TokenFrame } from "../../lib/types";
 
 function makeStore() {
   return createStore<StoreState>()((set, get, api) => ({
@@ -202,4 +204,69 @@ test("Phase 5.2a: error frame while streaming flips status to error", () => {
   sink.onError("connection error");
   assert.equal(store.getState().genStatus, "error");
   assert.equal(store.getState().genError, "connection error");
+});
+
+// ─── Phase 4.1 (#293): Non-Latin tokenization view ─────────────────────────
+
+test("Phase 4.1: isByteFallbackToken identifies byte-fallback pieces and high IDs", () => {
+  assert.equal(isByteFallbackToken({ piece: "<0xE0>", id: 100, text: "" }), true);
+  assert.equal(isByteFallbackToken({ piece: "<0xA4>", id: 101, text: "" }), true);
+  assert.equal(isByteFallbackToken({ piece: "<byte_0x89>", id: 102, text: "" }), true);
+  assert.equal(isByteFallbackToken({ piece: "byte:224", id: 103, text: "" }), true);
+  assert.equal(isByteFallbackToken({ piece: "word", id: 151000, text: "word" }), true);
+  assert.equal(isByteFallbackToken({ piece: "word", id: 100, text: "�" }), true);
+  assert.equal(isByteFallbackToken({ piece: "The", id: 785, text: "The" }), false);
+  assert.equal(isByteFallbackToken({ piece: "Ġcat", id: 3797, text: " cat" }), false);
+});
+
+test("Phase 4.1: PRESET_PROMPTS contains non-Latin scripts (Hindi, Tamil, CJK)", () => {
+  const labels = PRESET_PROMPTS.map((p) => p.label);
+  assert.ok(labels.includes("Tamil"), "contains Tamil prompt");
+  assert.ok(labels.includes("Hindi"), "contains Hindi prompt");
+  assert.ok(labels.includes("Chinese"), "contains Chinese prompt");
+  assert.ok(labels.includes("English"), "contains English prompt");
+
+  for (const p of PRESET_PROMPTS) {
+    assert.ok(p.text.length > 0, `${p.label} text should not be empty`);
+    assert.ok(p.note.length > 0, `${p.label} note should not be empty`);
+  }
+});
+
+test("Phase 4.1: Walkthrough tokenizer chapter reports byte-fallback dimensions when present", () => {
+  const tokChapter = CHAPTERS.find((c) => c.id === "tokenizer");
+  assert.ok(tokChapter, "tokenizer chapter exists");
+
+  const mockNonLatinData: AnalyzeResponse = {
+    sentence: "नमस्ते",
+    tokens: [
+      { index: 0, id: 151200, piece: "<0xE0>", text: "", is_special: false },
+      { index: 1, id: 151201, piece: "<0xA4>", text: "", is_special: false },
+      { index: 2, id: 151202, piece: "<0xA8>", text: "", is_special: false },
+    ],
+    hidden_states_3d: {},
+    embeddings_3d: [],
+    embedding_norms: [],
+    attention: [],
+    projection: null,
+    logit_lens: [],
+    device: "cpu",
+    model: "Qwen2.5-0.5B",
+    num_layers: 24,
+    num_heads: 14,
+    hidden_size: 896,
+  };
+
+  const meta = {
+    hidden_size: 896,
+    num_heads: 14,
+    num_kv_heads: 2,
+    head_dim: 64,
+    ffn_size: 4864,
+    vocab_size: 151936,
+    num_layers: 24,
+  };
+
+  const inspector = tokChapter!.inspector(mockNonLatinData, meta);
+  assert.equal(inspector.dimensions["Tokens"], "3");
+  assert.equal(inspector.dimensions["Byte-fallback"], "3 tokens");
 });

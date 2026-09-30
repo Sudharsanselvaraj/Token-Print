@@ -8,6 +8,7 @@ import * as THREE from "three";
 
 import { useStore } from "@/lib/store";
 import { CHAPTERS } from "@/lib/walkthrough";
+import { isByteFallbackToken } from "@/lib/prompts";
 import TransformerStack, {
   type StackDims,
 } from "./TransformerStack";
@@ -138,23 +139,30 @@ export default function WalkthroughScene() {
           {tokens.slice(0, 12).map((tok, i) => {
             const n   = Math.min(tokens.length, 12);
             const x   = (i - (n - 1) / 2) * 1.15;
-            const lbl = tok.text.replace(/\n/g, "⏎").trim() || "␣";
+            const raw = tok.text.replace(/\n/g, "⏎").trim();
+            const lbl = raw && raw !== "" && raw !== "" ? raw : (tok.piece || "␣");
+            const isBf = isByteFallbackToken(tok);
             return (
               <group key={i} position={[x, 0, 0]}>
                 <mesh>
                   <sphereGeometry args={[lbl.length <= 1 ? 0.12 : 0.16, 12, 12]} />
                   <meshBasicMaterial
-                    color={ch.scene === "tokenizer" ? "#bfa8e8" : "#70c4b8"}
+                    color={isBf ? "#f59e0b" : ch.scene === "tokenizer" ? "#bfa8e8" : "#70c4b8"}
                     transparent
                     opacity={0.82}
                   />
                 </mesh>
-                <SceneHtml position={[0, -0.42, 0]} center labelPriority={100}
-                  style={{ pointerEvents: "none", whiteSpace: "nowrap", fontSize: 12, color: "#c8ccd5" }}>
-                  <span title={tok.text} style={{ display: "block", transform: `translateY(${i % 2 ? 16 : 0}px)`, background: "#090b10e8", borderRadius: 3, padding: "2px 4px" }}>
-                    {lbl.length > 12 ? lbl.slice(0, 11) + "…" : lbl}
-                  </span>
-                </SceneHtml>
+                <Billboard position={[0, -0.42, 0]}>
+                  <Text
+                    fontSize={0.22}
+                    anchorX="center"
+                    color={isBf ? "#fbbf24" : "#8892a4"}
+                    outlineWidth={0.01}
+                    outlineColor="#000000"
+                  >
+                    {lbl.length > 8 ? lbl.slice(0, 7) + "…" : lbl}
+                  </Text>
+                </Billboard>
               </group>
             );
           })}

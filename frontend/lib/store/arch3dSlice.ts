@@ -4,7 +4,7 @@ import {
   nextOpId as _nextOpId,
   opById as _opById,
   prevOpId as _prevOpId,
-} from "@/components/scenes/TransformerOperationGraph";
+} from "../../components/scenes/TransformerOperationGraph";
 import type { Arch3dSlice, StoreState } from "./types";
 
 export const createArch3dSlice: StateCreator<StoreState, [], [], Arch3dSlice> = (set) => ({

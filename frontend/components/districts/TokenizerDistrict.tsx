@@ -6,25 +6,29 @@ import { useFrame } from "@react-three/fiber";
 import { Color, Group } from "three";
 
 import { useStore } from "@/lib/store";
+import { PRESET_PROMPTS, isByteFallbackToken } from "@/lib/prompts";
 import type { Token } from "@/lib/types";
 
 const SPACING = 2.6;
 
 function label(t: Token): string {
+  if (t.piece.startsWith("<0x") || t.piece.startsWith("<byte_") || t.piece.startsWith("byte:")) {
+    return t.piece;
+  }
   const s = t.text.replace(/\n/g, "\\n");
   const trimmed = s.trim();
-  return trimmed.length === 0 ? "␣" : trimmed;
+  if (trimmed.length === 0 || trimmed === "") {
+    return t.piece.trim() || "␣";
+  }
+  return trimmed;
 }
 
-/** Detect byte-fallback tokens — fragments from non-Latin script tokenization.
- *  Qwen's BPE emits byte-level pieces like <0xE0>, <0xA4>, <0x89> for characters
- *  outside its main vocabulary. These tokens have piece fields starting with '<0x'. */
 function isByteFallback(t: Token): boolean {
-  return t.piece.startsWith("<0x") || t.id > 150000;
+  return isByteFallbackToken(t);
 }
 
 function chipColor(i: number, bytefallback: boolean): Color {
-  if (bytefallback) return new Color().setHSL(0.08, 0.65, 0.45);
+  if (bytefallback) return new Color().setHSL(0.08, 0.75, 0.5);
   return new Color().setHSL((i * 0.13) % 1, 0.5, 0.55);
 }
 
@@ -32,9 +36,11 @@ function chipColor(i: number, bytefallback: boolean): Color {
  * Tokenizer District: shows the raw input string, then its tokens "breaking
  * apart" into separate chips. The chips start clustered at the center and ease
  * out to their row positions (a simple lerp animation, not physics).
+ * Surrounding chips surface preset prompts in Hindi, Tamil, CJK, and English.
  */
 export default function TokenizerDistrict() {
   const data = useStore((s) => s.data);
+  const analyze = useStore((s) => s.analyze);
   const tokens = data?.tokens ?? [];
   const n = tokens.length;
 
@@ -58,8 +64,50 @@ export default function TokenizerDistrict() {
 
   if (!data) return null;
 
+  const byteFallbackCount = tokens.filter(isByteFallback).length;
+
   return (
     <group>
+      {/* Interactive prompt presets surfaced in the 3D district */}
+      <Billboard position={[0, 6.2, 0]}>
+        <group>
+          {PRESET_PROMPTS.map((p, i) => {
+            const total = PRESET_PROMPTS.length;
+            const x = (i - (total - 1) / 2) * 2.8;
+            const isCurrent = data.sentence === p.text;
+            return (
+              <group
+                key={p.label}
+                position={[x, 0, 0]}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  analyze(p.text);
+                }}
+              >
+                <RoundedBox args={[2.4, 0.65, 0.15]} radius={0.12} smoothness={3}>
+                  <meshStandardMaterial
+                    color={isCurrent ? "#2563eb" : "#181e2b"}
+                    emissive={isCurrent ? "#1d4ed8" : "#0d131f"}
+                    emissiveIntensity={isCurrent ? 0.6 : 0.15}
+                    roughness={0.4}
+                    metalness={0.2}
+                  />
+                </RoundedBox>
+                <Text
+                  position={[0, 0, 0.1]}
+                  fontSize={0.26}
+                  anchorX="center"
+                  anchorY="middle"
+                  color={isCurrent ? "#ffffff" : "#94a3b8"}
+                >
+                  {p.label}
+                </Text>
+              </group>
+            );
+          })}
+        </group>
+      </Billboard>
+
       {/* Raw input string above the tokens. */}
       <Billboard position={[0, 4.4, 0]}>
         <Text
@@ -76,9 +124,7 @@ export default function TokenizerDistrict() {
         </Text>
         <Text position={[0, -0.9, 0]} fontSize={0.28} color="#8a97bd" anchorX="center">
           tokenizer → {n} tokens
-          {tokens.filter(isByteFallback).length > 0 && (
-            ` · ${tokens.filter(isByteFallback).length} byte-fallback`
-          )}
+          {byteFallbackCount > 0 && ` · ${byteFallbackCount} byte-fallback`}
         </Text>
       </Billboard>
 
@@ -98,8 +144,9 @@ export default function TokenizerDistrict() {
             </RoundedBox>
             <Billboard>
               <Text
-                position={[0, 0, 0.24]}
-                fontSize={0.42}
+                position={[0, bf ? 0.12 : 0, 0.24]}
+                fontSize={0.38}
+                maxWidth={1.8}
                 anchorX="center"
                 anchorY="middle"
                 color="#0a0f1c"
@@ -108,11 +155,11 @@ export default function TokenizerDistrict() {
               </Text>
               {bf && (
                 <Text
-                  position={[0, -0.1, 0.24]}
-                  fontSize={0.18}
+                  position={[0, -0.22, 0.24]}
+                  fontSize={0.15}
                   anchorX="center"
-                  anchorY="top"
-                  color="#f5b84a"
+                  anchorY="middle"
+                  color="#7c2d12"
                 >
                   byte-fallback
                 </Text>
@@ -133,3 +180,4 @@ export default function TokenizerDistrict() {
     </group>
   );
 }
+

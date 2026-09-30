@@ -34,3 +34,15 @@ export const PRESET_PROMPTS: PresetPrompt[] = [
     note: "Emoji — multi-byte Unicode that fragments into many byte tokens. A single emoji can be 4–8 byte-fallback tokens.",
   },
 ];
+
+/** Detect byte-fallback tokens — fragments from non-Latin script tokenization. */
+export function isByteFallbackToken(t: { piece?: string; id?: number; text?: string }): boolean {
+  if (!t) return false;
+  if (t.piece && (t.piece.startsWith("<0x") || t.piece.startsWith("<byte_") || t.piece.startsWith("byte:"))) {
+    return true;
+  }
+  if (t.text === "�") return true;
+  if (typeof t.id === "number" && t.id > 150000) return true;
+  return false;
+}
+

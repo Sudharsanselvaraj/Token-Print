@@ -3,6 +3,7 @@
 import { useEffect, useMemo } from "react";
 import { useStore } from "@/lib/store";
 import { CHAPTERS } from "@/lib/walkthrough";
+import { PRESET_PROMPTS, isByteFallbackToken } from "@/lib/prompts";
 import DataProvenanceBadge from "./DataProvenanceBadge";
 import { TOKENS } from "./primitives";
 
@@ -159,6 +160,82 @@ export default function WalkthroughInspector() {
                   <DimRow key={k} label={k} value={v} />
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Non-Latin and Multilingual Tokenization Prompts */}
+          {ch.id === "tokenizer" && (
+            <div className="rp-section">
+              <div
+                style={{
+                  fontSize: "9px",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  color: TOKENS.textMuted,
+                  textTransform: "uppercase",
+                  marginBottom: "8px",
+                }}
+              >
+                TRY OTHER SCRIPTS / LANGUAGES
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
+                {PRESET_PROMPTS.map((p) => {
+                  const isCurrent = data?.sentence === p.text;
+                  return (
+                    <button
+                      key={p.label}
+                      onClick={() => analyze(p.text)}
+                      style={{
+                        padding: "4px 8px",
+                        fontSize: "11px",
+                        fontFamily: TOKENS.fontSans,
+                        borderRadius: TOKENS.radiusSm,
+                        border: `1px solid ${isCurrent ? TOKENS.textPrimary : TOKENS.border}`,
+                        background: isCurrent ? TOKENS.surfaceHover : TOKENS.surfaceRaised,
+                        color: isCurrent ? TOKENS.textPrimary : TOKENS.textSecondary,
+                        cursor: "pointer",
+                        fontWeight: isCurrent ? 600 : 400,
+                      }}
+                      title={p.note}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {(() => {
+                const currentPreset = PRESET_PROMPTS.find((p) => p.text === data?.sentence);
+                const activeNote = currentPreset?.note;
+                const bfCount = data?.tokens.filter(isByteFallbackToken).length ?? 0;
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    {activeNote && (
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "11px",
+                          lineHeight: 1.5,
+                          color: TOKENS.textSecondary,
+                        }}
+                      >
+                        {activeNote}
+                      </p>
+                    )}
+                    {bfCount > 0 && (
+                      <div
+                        style={{
+                          fontSize: "10px",
+                          fontFamily: TOKENS.fontMono,
+                          color: "#f59e0b",
+                          marginTop: "2px",
+                        }}
+                      >
+                        ⚠ {bfCount} byte-fallback token{bfCount > 1 ? "s" : ""} detected
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
