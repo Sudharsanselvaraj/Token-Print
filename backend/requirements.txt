@@ -13,5 +13,5 @@ httpx
 
 # ML stack (pinned to the locally-verified versions)
 torch==2.14.0
-transformers==4.51.3
+transformers==5.18.0
 scikit-learn==1.9.1
