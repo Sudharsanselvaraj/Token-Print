@@ -97,6 +97,7 @@ export interface GenerationSlice {
   view2D: boolean;
   playSpeed: number;
   autoStarted: boolean;
+  generationTimestamp: number;
   setOpIndex: (i: number) => void;
   stepOp: (dir: 1 | -1) => void;
   toggleOpPlay: () => void;
