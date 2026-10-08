@@ -63,7 +63,8 @@ export const useStore = create<StoreState>()((set, get, store) => ({
       opPlaying: false,
       autoStarted: false,
       traceSource: "live",
-      ...(options?.source === "local" ? { arch: null, data: null, archError: null } : {}),
+      data: null,
+      ...(options?.source === "local" ? { arch: null, archError: null } : {}),
       debugSnapshots: {},
       debugSnapshotError: null,
     });
