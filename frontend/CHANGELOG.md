@@ -31,6 +31,21 @@
 * **scene:** seed pointcloud layout jitter for deterministic visuals ([#100](https://github.com/Sudharsanselvaraj/Token-Print/issues/100)) ([3a8c4ad](https://github.com/Sudharsanselvaraj/Token-Print/commit/3a8c4ad8878deceac7651695b68e2991c497997b))
 * **fix:** route isolation + HF Model Explorer client-side fallback ([#269](https://github.com/Sudharsanselvaraj/Token-Print/issues/269)) ([f69e2c9](https://github.com/Sudharsanselvaraj/Token-Print/commit/f69e2c9ede97dbe7e72fdb19b40c85a5e1a08618))
 
+## [0.4.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-frontend-v0.3.0...token-print-frontend-v0.4.0) (2026-10-08)
+
+
+### Features
+
+* **a11y:** add keyboard tour navigation and Escape dismissal to ReplayGuide ([#350](https://github.com/Sudharsanselvaraj/Token-Print/issues/350)) ([f4c85c8](https://github.com/Sudharsanselvaraj/Token-Print/commit/f4c85c8998fc8f040751cf908cc4f4148fea579a))
+* add non-Latin tokenization view ([#293](https://github.com/Sudharsanselvaraj/Token-Print/issues/293)) ([#362](https://github.com/Sudharsanselvaraj/Token-Print/issues/362)) ([4bb5355](https://github.com/Sudharsanselvaraj/Token-Print/commit/4bb535557a50a2c675bea5e44bb156999708c11d))
+
+
+### Bug Fixes
+
+* **debugger:** isolate stale analysis state and render Console REPL once ([#353](https://github.com/Sudharsanselvaraj/Token-Print/issues/353)) ([2c2d571](https://github.com/Sudharsanselvaraj/Token-Print/commit/2c2d571afca3e48e0eb67f052606677b3c0dcd71))
+* **debugger:** prevent stale analysis data updates using generation timestamp ([#353](https://github.com/Sudharsanselvaraj/Token-Print/issues/353)) ([674e083](https://github.com/Sudharsanselvaraj/Token-Print/commit/674e0839f2b5377a69b820f17f3b9b933a164ad0))
+* **test:** add test for ConsoleRepl removal and startGeneration state reset ([#353](https://github.com/Sudharsanselvaraj/Token-Print/issues/353)) ([b9ae66e](https://github.com/Sudharsanselvaraj/Token-Print/commit/b9ae66e5f7643edc83abc38d2400a884153e94a4))
+
 ## [0.3.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-frontend-v0.2.0...token-print-frontend-v0.3.0) (2026-09-22)
 
 
