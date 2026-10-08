@@ -79,7 +79,6 @@ export default function DebuggerPane() {
         <div className="dbg-card"><div className="dbg-card-title">Attention Heads</div><HeadInspector /></div>
         <div className="dbg-card" data-dbg-tool="kv_cache"><div className="dbg-card-title">Layer Timing</div><TimingReadout /></div>
         <div className="dbg-card" data-dbg-tool="activation_analysis"><div className="dbg-card-title">Activation Distribution</div><DistributionPanel /></div>
-        <div className="dbg-card"><div className="dbg-card-title">Console REPL</div><ConsoleRepl /></div>
         <div className="dbg-card" data-dbg-tool="quantization_compare"><div className="dbg-card-title">Quant Explainer</div><QuantExplainer /></div>
         <div className="dbg-card"><div className="dbg-card-title">LoRA Delta</div><LoraDeltaViz /></div>
         <div className="dbg-card" data-dbg-tool="induction_heads"><div className="dbg-card-title">Induction-Head Lab</div><InductionHeadLab /></div>
