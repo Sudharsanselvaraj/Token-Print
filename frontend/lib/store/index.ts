@@ -64,6 +64,7 @@ export const useStore = create<StoreState>()((set, get, store) => ({
       autoStarted: false,
       traceSource: "live",
       data: null,
+      generationTimestamp: Date.now(),
       ...(options?.source === "local" ? { arch: null, archError: null } : {}),
       debugSnapshots: {},
       debugSnapshotError: null,

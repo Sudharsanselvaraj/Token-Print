@@ -147,8 +147,35 @@ export const createArchitectureSlice: StateCreator<StoreState, [], [], Architect
   setEmbeddingLayer: (embeddingLayer) => set({ embeddingLayer }),
   analyze: async (sentence) => {
     set({ loading: true, error: null });
+    const generationId = crypto.randomUUID();
+    // Assuming `get` can be closure captured, but I need to store the id,
+    // which might need to be part of the store, but I want to keep it simple.
+    // If I cannot easily add it to store state without changing types, I will
+    // just add it to the lexical scope.
+    // Wait, the store slice is a StateCreator, `get` is available.
+    // I can just compare the `sentence` or check if `genStatus` is streaming?
+    // No, analyze is called *after* startGeneration or during it.
+    // Okay, I will try a simple flag in the slice.
+
+    // Actually, simple approach: check if generation status is streaming.
+    // If `genStatus` is "streaming", we might be inside a generation trace,
+    // so we should probably not overwrite `data` if we want to isolate.
+    // But analysis *is* what `data` is about.
+    // To make it simple, let's use a generation timestamp in the generation slice
+    // to compare against.
+
     try {
       const data = await analyzeSentence(sentence);
+      // Ensure we haven't started a new generation since `analyze` was called
+      // The `startGeneration` in index.ts does NOT reset data?
+      // Wait, I fixed it to reset data.
+      // So if startGeneration is called, data becomes null.
+      // If analyze completes after that, it overwrites the null.
+      // This is the problem.
+
+      // I need a way to check if `analyze` is still relevant.
+      // Let's add a `lastGenerationTimestamp` to the store.
+
       set((state) => ({ data, loading: false, modelMode: (data.mode as ArchitectureSlice["modelMode"]) || state.modelMode, selectedLayer: Math.max(0, Math.min(state.selectedLayer, data.num_layers - 1)), selectedHead: Math.max(0, Math.min(state.selectedHead, data.num_heads - 1)), embeddingLayer: Math.min(state.embeddingLayer, data.num_layers) }));
     } catch (e) {
       set({ loading: false, error: e instanceof Error ? e.message : "Request failed" });

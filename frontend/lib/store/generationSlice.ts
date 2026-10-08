@@ -33,6 +33,7 @@ export const createGenerationSlice: StateCreator<StoreState, [], [], GenerationS
   view2D: false,
   playSpeed: 0.5,
   autoStarted: false,
+  generationTimestamp: 0,
   setOpIndex: (opIndex) => set((state) => {
     const count = state.genMeta?.op_catalog?.length ?? 0;
     return { opIndex: Math.max(0, Math.min(opIndex, Math.max(0, count - 1))), opPlaying: false };
