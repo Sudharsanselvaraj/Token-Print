@@ -23,7 +23,14 @@ const nextConfig = {
     // (github.io) and at the root (local dev / custom domain) alike.
     NEXT_PUBLIC_ASSET_BASE: repo ? `/${repo}` : "",
   },
-  transpilePackages: ["three", "three-stdlib", "@react-three/fiber", "@react-three/drei"],
+  transpilePackages: [
+    "three",
+    "three-stdlib",
+    "@react-three/fiber",
+    "@react-three/drei",
+    "swiper",
+    "ssr-window",
+  ],
   webpack: (config) => {
     // Prevent server-side bundling of WebGL / three.js internals
     config.externals = config.externals || [];
