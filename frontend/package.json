@@ -18,6 +18,8 @@
     "@react-three/fiber": "^9.7.0",
     "@react-three/postprocessing": "^3.1.1",
     "@types/katex": "^0.16.8",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "framer-motion": "^13.4.0",
     "gsap": "^3.12.5",
     "katex": "^0.18.7",
@@ -25,6 +27,8 @@
     "next": "^15.5.25",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "swiper": "^14.3.0",
+    "tailwind-merge": "^3.7.0",
     "three": "^0.186.0",
     "zustand": "^5.0.15"
   },
@@ -34,7 +38,10 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.186.0",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.29",
     "puppeteer-core": "^25.11.0",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5.7.0"
   },
   "overrides": {

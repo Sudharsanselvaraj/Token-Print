@@ -1,3 +1,16 @@
+@tailwind components;
+@tailwind utilities;
+
+.marshal-showcase-title {
+  font-family: var(--font-sans), 'Inter', system-ui, sans-serif;
+  font-size: clamp(38px, 3.6vw, 46px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: rgb(255, 255, 255);
+  -webkit-font-smoothing: antialiased;
+  margin: 0px 0px 10px;
+}
+
 :root {
   /* UI Tokens — Strictly Monochrome */
   --ui-bg: #050505;
