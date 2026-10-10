@@ -2,10 +2,24 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Play, Code2, Download, Copy, Check, Layers, ExternalLink, Sparkles } from "lucide-react";
+import {
+  Play,
+  Code2,
+  Download,
+  Copy,
+  Check,
+  Layers,
+  ExternalLink,
+  Sparkles,
+  Terminal,
+  MonitorPlay,
+  Eye,
+} from "lucide-react";
 import { DEMO_TRACES } from "@/lib/demo";
 import { assetUrl } from "@/lib/assets";
 import { Reveal } from "./LandingMotion";
+import { CardCarousel, CarouselItem } from "@/components/ui/card-carousel";
+import { Badge } from "@/components/ui/badge";
 
 interface TraceEmbedModalProps {
   traceId: string;
@@ -40,8 +54,8 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        backdropFilter: "blur(6px)",
+        backgroundColor: "rgba(0, 0, 0, 0.82)",
+        backdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -53,18 +67,18 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
         className="trace-modal-box"
         style={{
           width: "100%",
-          maxWidth: "560px",
+          maxWidth: "580px",
           backgroundColor: "#0C0D10",
-          border: "1px solid #26262B",
-          borderRadius: "10px",
-          padding: "24px",
+          border: "1px solid rgba(255, 255, 255, 0.15)",
+          borderRadius: "16px",
+          padding: "26px",
           color: "#F4F4F5",
-          boxShadow: "0 24px 48px rgba(0, 0, 0, 0.8)",
+          boxShadow: "0 28px 60px rgba(0, 0, 0, 0.9)",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
           <div>
-            <h3 id="embed-modal-title" style={{ margin: 0, fontSize: "16px", fontWeight: 600 }}>
+            <h3 id="embed-modal-title" style={{ margin: 0, fontSize: "17px", fontWeight: 600 }}>
               Embed 3D Trace
             </h3>
             <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#A1A1AA" }}>
@@ -88,16 +102,16 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
           </button>
         </div>
 
-        <div style={{ marginBottom: "16px" }}>
+        <div style={{ marginBottom: "18px" }}>
           <div style={{ fontSize: "11px", color: "#71717A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "6px" }}>
-            HTML Embed Code
+            HTML Iframe Snippet
           </div>
           <pre
             style={{
               backgroundColor: "#14151A",
               border: "1px solid #26262B",
-              borderRadius: "6px",
-              padding: "12px",
+              borderRadius: "8px",
+              padding: "14px",
               fontSize: "11px",
               fontFamily: "var(--font-mono, monospace)",
               overflowX: "auto",
@@ -105,6 +119,7 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
               margin: 0,
               whiteSpace: "pre-wrap",
               wordBreak: "break-all",
+              lineHeight: 1.5,
             }}
           >
             {embedCode}
@@ -117,7 +132,7 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
             type="button"
             style={{
               padding: "8px 14px",
-              borderRadius: "6px",
+              borderRadius: "8px",
               border: "1px solid #26262B",
               backgroundColor: "transparent",
               color: "#A1A1AA",
@@ -132,7 +147,7 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
             type="button"
             style={{
               padding: "8px 16px",
-              borderRadius: "6px",
+              borderRadius: "8px",
               border: "1px solid #38BDF8",
               backgroundColor: "#0284C7",
               color: "#FFFFFF",
@@ -155,12 +170,93 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
 
 export function TraceGallerySection() {
   const [embedModalTrace, setEmbedModalTrace] = useState<{ id: string; title: string } | null>(null);
+  const [showLiveEmbedPreview, setShowLiveEmbedPreview] = useState<boolean>(false);
+
+  // Gallery items formatted for the 3D Card Carousel
+  const carouselItems: CarouselItem[] = [
+    {
+      id: "trace-hello-world",
+      src: "/screenshots/generation.png",
+      alt: "Qwen2.5-0.5B Greedy Decode Trace",
+      badge: "QWEN2 · 16 TOKENS",
+      title: "Inside a Real Forward Pass",
+      subtitle: "Qwen/Qwen2.5-0.5B-Instruct",
+      description: "Follow a recorded causal LM generation, inspect its predictions, and explore captured attention patterns in real 3D.",
+      tags: ["recorded", "greedy", "qwen2", "logits"],
+      primaryAction: {
+        label: "Replay in 3D",
+        href: "/app?mode=generation&demo=hello-world&tour=1",
+      },
+      secondaryAction: {
+        title: "Get Embed Code",
+        icon: <Code2 size={13} />,
+        onClick: () => setEmbedModalTrace({ id: "hello-world", title: "Inside a real forward pass" }),
+      },
+    },
+    {
+      id: "trace-architecture-flow",
+      src: "/screenshots/architecture.png",
+      alt: "Attention Heads & Residual Streams",
+      badge: "ATTENTION · 32 HEADS",
+      title: "Attention Heads & Residual Trajectory",
+      subtitle: "Transformer Geometry",
+      description: "Step through multi-head self-attention projections, rotary positional embeddings, and residual stream accumulation.",
+      tags: ["attention", "rope", "residual-stream"],
+      primaryAction: {
+        label: "Inspect 3D Geometry",
+        href: "/app?mode=explorer",
+      },
+      secondaryAction: {
+        title: "Get Embed Code",
+        icon: <Code2 size={13} />,
+        onClick: () => setEmbedModalTrace({ id: "hello-world", title: "Attention Heads & Residual Trajectory" }),
+      },
+    },
+    {
+      id: "trace-matrix-debugger",
+      src: "/screenshots/debugger.png",
+      alt: "Tensor-by-Tensor Matrix Debugger",
+      badge: "DEBUGGER · EXACT TENSORS",
+      title: "Tensor Matrix Inspection",
+      subtitle: "Zero Synthetic Data",
+      description: "Inspect precision logits, hidden states at layer boundaries, and exact activation values across all forward passes.",
+      tags: ["matrix", "activations", "logits"],
+      primaryAction: {
+        label: "Launch Debugger",
+        href: "/app?mode=debugger",
+      },
+      secondaryAction: {
+        title: "Get Embed Code",
+        icon: <Code2 size={13} />,
+        onClick: () => setEmbedModalTrace({ id: "hello-world", title: "Tensor Matrix Inspection" }),
+      },
+    },
+    {
+      id: "trace-guided-walkthrough",
+      src: "/screenshots/walkthrough.png",
+      alt: "Guided Concept Walkthrough",
+      badge: "TUTORIAL · ZERO GPU",
+      title: "Interactive Transformer Walkthrough",
+      subtitle: "Step-by-Step Educational Tour",
+      description: "Explore the computational flow of modern LLMs from input tokenization to final temperature softmax sampling.",
+      tags: ["tutorial", "education", "walkthrough"],
+      primaryAction: {
+        label: "Start Walkthrough",
+        href: "/app?mode=walkthrough",
+      },
+      secondaryAction: {
+        title: "Get Embed Code",
+        icon: <Code2 size={13} />,
+        onClick: () => setEmbedModalTrace({ id: "hello-world", title: "Interactive Transformer Walkthrough" }),
+      },
+    },
+  ];
 
   return (
     <section id="trace-gallery" className="landing-gallery-section" style={{ padding: "80px 0", borderTop: "1px solid #1C1F26" }}>
       <div className="landing-container">
-        {/* Header */}
-        <div style={{ maxWidth: "640px", marginBottom: "40px" }}>
+        {/* Section Header */}
+        <div style={{ maxWidth: "680px", margin: "0 auto 40px", textAlign: "center" }}>
           <Reveal delay={0.05}>
             <div
               style={{
@@ -181,35 +277,166 @@ export function TraceGallerySection() {
           </Reveal>
 
           <Reveal delay={0.1}>
-            <h2
-              style={{
-                fontSize: "32px",
-                fontWeight: 700,
-                color: "#F4F4F5",
-                letterSpacing: "-0.02em",
-                margin: "0 0 12px",
-                lineHeight: 1.2,
-              }}
-            >
+            <h2 className="marshal-showcase-title text-4xl font-light tracking-tight text-white mb-3">
               Community & Curated Trace Gallery
             </h2>
           </Reveal>
 
           <Reveal delay={0.15}>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#A1A1AA",
-                lineHeight: 1.6,
-                margin: 0,
-              }}
-            >
-              Browse verified transformer forward passes. Inspect attention patterns, logits, and residual stream trajectories in real 3D right in your browser — or embed them into course materials.
+            <p className="marshal-showcase-sub">
+              Browse verified transformer forward passes. Inspect attention patterns, logits, and residual stream trajectories in real 3D right in your browser — or embed them directly into course materials.
             </p>
           </Reveal>
         </div>
 
-        {/* Trace Cards Grid */}
+        {/* 1. The 3D Card Carousel for Curated Traces */}
+        <Reveal delay={0.2}>
+          <div style={{ marginBottom: "48px" }}>
+            <CardCarousel
+              badgeText="Curated 3D Traces"
+              badgeIcon={<Sparkles className="fill-[#38BDF8] stroke-1 text-sky-400 mr-1.5" size={14} />}
+              title="Interactive Trace Replays"
+              subtitle="Swipe through verified model passes. Click Replay to inspect in real 3D, or copy embed codes for your documentation."
+              items={carouselItems}
+              autoplayDelay={3000}
+              showPagination={true}
+              showNavigation={true}
+              maxWidth="max-w-5xl"
+            />
+          </div>
+        </Reveal>
+
+        {/* 2. Interactive Embed Player Preview Bar */}
+        <Reveal delay={0.25}>
+          <div
+            style={{
+              backgroundColor: "#0C0D10",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "16px",
+              padding: "20px 24px",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "16px",
+              marginBottom: "36px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+              <div
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "10px",
+                  backgroundColor: "rgba(56, 189, 248, 0.1)",
+                  border: "1px solid rgba(56, 189, 248, 0.25)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#38BDF8",
+                }}
+              >
+                <MonitorPlay size={20} />
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: "15px", fontWeight: 600, color: "#F4F4F5" }}>
+                  Interactive Embed Player (Issue #299)
+                </h4>
+                <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#A1A1AA" }}>
+                  Live embed preview for blog authors, course educators, and documentation maintainers.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <button
+                type="button"
+                onClick={() => setShowLiveEmbedPreview(!showLiveEmbedPreview)}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  backgroundColor: showLiveEmbedPreview ? "#1E293B" : "rgba(255, 255, 255, 0.05)",
+                  color: showLiveEmbedPreview ? "#38BDF8" : "#E4E4E7",
+                  fontSize: "12px",
+                  fontWeight: 500,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  cursor: "pointer",
+                }}
+              >
+                <Eye size={13} />
+                <span>{showLiveEmbedPreview ? "Hide Live Player" : "Preview Live Embed Player"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEmbedModalTrace({ id: "hello-world", title: "Inside a real forward pass" })}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  backgroundColor: "#0284C7",
+                  border: "1px solid #38BDF8",
+                  color: "#FFFFFF",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  cursor: "pointer",
+                }}
+              >
+                <Code2 size={13} />
+                <span>Get Iframe Code</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Collapsible Live Embed Player Box */}
+          {showLiveEmbedPreview && (
+            <div
+              style={{
+                marginBottom: "40px",
+                border: "1px solid rgba(56, 189, 248, 0.3)",
+                borderRadius: "16px",
+                overflow: "hidden",
+                boxShadow: "0 20px 50px rgba(0, 0, 0, 0.8)",
+                backgroundColor: "#050505",
+              }}
+            >
+              <div
+                style={{
+                  padding: "10px 16px",
+                  backgroundColor: "#0C0D10",
+                  borderBottom: "1px solid #26262B",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  fontSize: "12px",
+                  color: "#A1A1AA",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#10B981" }} />
+                  <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#E4E4E7" }}>
+                    &lt;iframe src="/app?mode=generation&demo=hello-world&embed=true" /&gt;
+                  </span>
+                </div>
+                <span>Live Interactive Embed Sandbox</span>
+              </div>
+              <iframe
+                src="/app?mode=generation&demo=hello-world"
+                width="100%"
+                height="560"
+                style={{ border: "none", display: "block" }}
+                title="TokenPrint Live Embed Player"
+              />
+            </div>
+          )}
+        </Reveal>
+
+        {/* 3. Catalog Trace Grid & Contribution Callout */}
         <div
           style={{
             display: "grid",
@@ -223,8 +450,8 @@ export function TraceGallerySection() {
               <div
                 style={{
                   backgroundColor: "#0C0D10",
-                  border: "1px solid #26262B",
-                  borderRadius: "10px",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: "16px",
                   padding: "24px",
                   display: "flex",
                   flexDirection: "column",
@@ -237,22 +464,12 @@ export function TraceGallerySection() {
                 <div>
                   {/* Card badges */}
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "16px" }}>
-                    <span
-                      style={{
-                        padding: "3px 8px",
-                        borderRadius: "4px",
-                        backgroundColor: "rgba(56, 189, 248, 0.1)",
-                        border: "1px solid rgba(56, 189, 248, 0.25)",
-                        color: "#38BDF8",
-                        fontSize: "10px",
-                        fontFamily: "var(--font-mono, monospace)",
-                        fontWeight: 600,
-                        letterSpacing: "0.04em",
-                        textTransform: "uppercase",
-                      }}
+                    <Badge
+                      variant="outline"
+                      className="border-sky-400/30 bg-sky-950/60 text-sky-400 text-[10px] uppercase tracking-wider font-mono px-2 py-0.5"
                     >
                       {trace.architecture}
-                    </span>
+                    </Badge>
 
                     <span
                       style={{
@@ -331,7 +548,7 @@ export function TraceGallerySection() {
                       justifyContent: "center",
                       gap: "6px",
                       padding: "8px 14px",
-                      borderRadius: "6px",
+                      borderRadius: "8px",
                       backgroundColor: "#FFFFFF",
                       color: "#09090B",
                       fontSize: "12px",
@@ -353,7 +570,7 @@ export function TraceGallerySection() {
                       alignItems: "center",
                       justifyContent: "center",
                       padding: "8px 10px",
-                      borderRadius: "6px",
+                      borderRadius: "8px",
                       border: "1px solid #26262B",
                       backgroundColor: "#18181B",
                       color: "#A1A1AA",
@@ -373,7 +590,7 @@ export function TraceGallerySection() {
                       alignItems: "center",
                       justifyContent: "center",
                       padding: "8px 10px",
-                      borderRadius: "6px",
+                      borderRadius: "8px",
                       border: "1px solid #26262B",
                       backgroundColor: "#18181B",
                       color: "#A1A1AA",
@@ -393,8 +610,8 @@ export function TraceGallerySection() {
             <div
               style={{
                 backgroundColor: "rgba(255, 255, 255, 0.015)",
-                border: "1px dashed #26262B",
-                borderRadius: "10px",
+                border: "1px dashed rgba(255, 255, 255, 0.15)",
+                borderRadius: "16px",
                 padding: "24px",
                 display: "flex",
                 flexDirection: "column",
@@ -407,8 +624,8 @@ export function TraceGallerySection() {
             >
               <div
                 style={{
-                  width: "40px",
-                  height: "40px",
+                  width: "44px",
+                  height: "44px",
                   borderRadius: "50%",
                   backgroundColor: "#18181B",
                   display: "flex",
@@ -425,7 +642,7 @@ export function TraceGallerySection() {
                   Record & Contribute a Trace
                 </h4>
                 <p style={{ margin: 0, fontSize: "12px", color: "#71717A", lineHeight: 1.5, maxWidth: "260px" }}>
-                  Capture a real short forward pass with <code style={{ color: "#A1A1AA" }}>scripts/generate-demo-trace.py</code> and submit a PR to add it to the gallery.
+                  Capture a real short forward pass with <code style={{ color: "#38BDF8" }}>scripts/generate-demo-trace.py</code> and submit a PR to add it to the gallery.
                 </p>
               </div>
 

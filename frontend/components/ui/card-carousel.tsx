@@ -1,14 +1,14 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
+import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
 
 import "swiper/css";
 import "swiper/css/effect-coverflow";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
-import { SparklesIcon } from "lucide-react";
+import { SparklesIcon, Play, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Autoplay,
   EffectCoverflow,
@@ -17,108 +17,283 @@ import {
 } from "swiper/modules";
 
 import { Badge } from "@/components/ui/badge";
+import { assetUrl } from "@/lib/assets";
 
-interface CarouselProps {
-  images: { src: string; alt: string }[];
+export interface CarouselItem {
+  id?: string;
+  src: string;
+  alt: string;
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  tags?: string[];
+  primaryAction?: {
+    label: string;
+    href?: string;
+    onClick?: () => void;
+  };
+  secondaryAction?: {
+    label?: string;
+    title?: string;
+    onClick?: () => void;
+    href?: string;
+    icon?: React.ReactNode;
+  };
+}
+
+export interface CardCarouselProps {
+  badgeText?: string;
+  badgeIcon?: React.ReactNode;
+  title?: string;
+  subtitle?: string;
+  items?: CarouselItem[];
+  images?: { src: string; alt: string }[];
   autoplayDelay?: number;
   showPagination?: boolean;
   showNavigation?: boolean;
+  maxWidth?: string;
 }
 
-export const CardCarousel: React.FC<CarouselProps> = ({
+export const CardCarousel: React.FC<CardCarouselProps> = ({
+  badgeText = "Latest component",
+  badgeIcon,
+  title = "Card Carousel",
+  subtitle = "Seamless Images carousel animation.",
+  items,
   images,
-  autoplayDelay = 1500,
+  autoplayDelay = 2500,
   showPagination = true,
   showNavigation = true,
+  maxWidth = "max-w-5xl",
 }) => {
+  // Normalize items from either items or images
+  const slideList: CarouselItem[] = items ?? (images ? images.map((img) => ({
+    src: img.src,
+    alt: img.alt,
+    title: img.alt,
+  })) : []);
+
   const css = `
-  .swiper {
+  .tokenprint-carousel .swiper {
     width: 100%;
-    padding-bottom: 50px;
+    padding-top: 10px;
+    padding-bottom: 52px;
   }
   
-  .swiper-slide {
+  .tokenprint-carousel .swiper-slide {
     background-position: center;
     background-size: cover;
-    width: 300px;
+    width: 340px;
+    max-width: 86vw;
+    transition: transform 0.3s ease, opacity 0.3s ease;
   }
   
-  .swiper-slide img {
-    display: block;
-    width: 100%;
+  .tokenprint-carousel .swiper-3d .swiper-slide-shadow-left,
+  .tokenprint-carousel .swiper-3d .swiper-slide-shadow-right {
+    background-image: none !important;
   }
-  
-  .swiper-3d .swiper-slide-shadow-left {
-    background-image: none;
+
+  .tokenprint-carousel .swiper-pagination-bullet {
+    background: rgba(255, 255, 255, 0.25);
+    opacity: 0.6;
+    width: 8px;
+    height: 8px;
+    transition: all 0.25s ease;
   }
-  .swiper-3d .swiper-slide-shadow-right {
-    background: none;
+
+  .tokenprint-carousel .swiper-pagination-bullet-active {
+    background: #38BDF8;
+    opacity: 1;
+    width: 24px;
+    border-radius: 4px;
+  }
+
+  .tokenprint-carousel .swiper-button-prev,
+  .tokenprint-carousel .swiper-button-next {
+    color: #F4F4F5;
+    background: rgba(20, 21, 26, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+  }
+
+  .tokenprint-carousel .swiper-button-prev:hover,
+  .tokenprint-carousel .swiper-button-next:hover {
+    background: rgba(35, 38, 46, 0.95);
+    border-color: rgba(56, 189, 248, 0.5);
+    color: #38BDF8;
+  }
+
+  .tokenprint-carousel .swiper-button-prev::after,
+  .tokenprint-carousel .swiper-button-next::after {
+    font-size: 14px;
+    font-weight: 700;
   }
   `;
 
   return (
-    <section className="w-full space-y-4">
+    <section className="tokenprint-carousel w-full space-y-4">
       <style>{css}</style>
-      <div className="mx-auto w-full max-w-4xl rounded-[24px] border border-white/10 p-2 shadow-sm md:rounded-t-[44px]">
-        <div className="relative mx-auto flex w-full flex-col rounded-[24px] border border-white/10 bg-neutral-900/40 p-2 shadow-sm md:items-start md:gap-8 md:rounded-b-[20px] md:rounded-t-[40px] md:p-2">
+      <div className={`mx-auto w-full ${maxWidth} rounded-[24px] border border-white/10 p-2 shadow-2xl md:rounded-[44px]`}>
+        <div className="relative mx-auto flex w-full flex-col rounded-[20px] border border-white/10 bg-neutral-900/60 p-4 shadow-sm backdrop-blur-md md:rounded-[40px] md:p-6">
+          {/* Top Badge */}
           <Badge
             variant="outline"
-            className="absolute left-4 top-6 rounded-[14px] border border-white/20 text-base md:left-6 text-white"
+            className="absolute left-4 top-5 rounded-[14px] border border-white/20 bg-black/40 px-3 py-1 text-xs md:text-sm md:left-6 text-white backdrop-blur-sm"
           >
-            <SparklesIcon className="fill-[#EEBDE0] stroke-1 text-white mr-1.5" size={16} />{" "}
-            Latest component
+            {badgeIcon ?? <SparklesIcon className="fill-[#EEBDE0] stroke-1 text-white mr-1.5" size={14} />}
+            <span>{badgeText}</span>
           </Badge>
-          <div className="flex flex-col justify-center pb-2 pl-4 pt-14 md:items-center w-full">
-            <div className="flex gap-2">
-              <div className="text-center md:text-left">
-                <h3 className="marshal-showcase-title text-4xl opacity-95 font-bold tracking-tight">
-                  Card Carousel
-                </h3>
-                <p className="text-neutral-400 text-sm">Seamless Images carousel animation.</p>
-              </div>
-            </div>
+
+          {/* Header Title & Subtitle */}
+          <div className="flex flex-col justify-center pb-4 pl-2 pt-12 md:items-center w-full text-center">
+            <h3 className="marshal-showcase-title text-3xl md:text-4xl opacity-95 font-light tracking-tight">
+              {title}
+            </h3>
+            {subtitle && (
+              <p className="text-neutral-400 text-sm max-w-xl mx-auto leading-relaxed">
+                {subtitle}
+              </p>
+            )}
           </div>
 
-          <div className="flex w-full items-center justify-center gap-4">
+          {/* Carousel Swiper */}
+          <div className="flex w-full items-center justify-center">
             <div className="w-full">
               <Swiper
-                spaceBetween={50}
+                spaceBetween={40}
                 autoplay={{
                   delay: autoplayDelay,
                   disableOnInteraction: false,
+                  pauseOnMouseEnter: true,
                 }}
                 effect={"coverflow"}
                 grabCursor={true}
                 centeredSlides={true}
-                loop={true}
+                loop={slideList.length > 2}
                 slidesPerView={"auto"}
                 coverflowEffect={{
                   rotate: 0,
                   stretch: 0,
-                  depth: 100,
-                  modifier: 2.5,
+                  depth: 120,
+                  modifier: 2.2,
+                  slideShadows: false,
                 }}
-                pagination={showPagination}
-                navigation={
-                  showNavigation
+                pagination={
+                  showPagination
                     ? {
-                        nextEl: ".swiper-button-next",
-                        prevEl: ".swiper-button-prev",
+                        clickable: true,
                       }
-                    : undefined
+                    : false
                 }
+                navigation={showNavigation}
                 modules={[EffectCoverflow, Autoplay, Pagination, Navigation]}
               >
-                {images.map((image, index) => (
-                  <SwiperSlide key={index}>
-                    <div className="w-full h-full rounded-3xl overflow-hidden">
-                      <Image
-                        src={image.src}
-                        width={500}
-                        height={500}
-                        className="w-full h-full rounded-xl object-cover"
-                        alt={image.alt}
-                      />
+                {slideList.map((item, index) => (
+                  <SwiperSlide key={item.id ?? index}>
+                    <div className="group relative flex flex-col overflow-hidden rounded-[20px] border border-white/15 bg-[#0C0D10] shadow-xl transition-all duration-300 hover:border-sky-400/50 hover:shadow-sky-500/10">
+                      {/* Slide Image visual */}
+                      <div className="relative aspect-[16/10] w-full overflow-hidden bg-black/60">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={assetUrl(item.src)}
+                          alt={item.alt}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0C0D10] via-transparent to-black/20" />
+                        
+                        {item.badge && (
+                          <div className="absolute top-3 left-3">
+                            <span className="rounded-md border border-sky-400/30 bg-sky-950/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-300 backdrop-blur-md">
+                              {item.badge}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Slide Card Content */}
+                      <div className="flex flex-col p-5 text-left">
+                        {item.subtitle && (
+                          <span className="font-mono text-[11px] uppercase tracking-wider text-neutral-400">
+                            {item.subtitle}
+                          </span>
+                        )}
+                        {item.title && (
+                          <h4 className="mt-1 text-lg font-semibold text-white tracking-tight group-hover:text-sky-300 transition-colors">
+                            {item.title}
+                          </h4>
+                        )}
+                        {item.description && (
+                          <p className="mt-2 text-xs text-neutral-400 line-clamp-2 leading-relaxed">
+                            {item.description}
+                          </p>
+                        )}
+
+                        {/* Tags */}
+                        {item.tags && item.tags.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-1.5">
+                            {item.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded border border-white/10 bg-neutral-900/90 px-2 py-0.5 text-[10px] text-neutral-400"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Action buttons */}
+                        {(item.primaryAction || item.secondaryAction) && (
+                          <div className="mt-4 flex items-center gap-2 border-t border-white/10 pt-3">
+                            {item.primaryAction && (
+                              item.primaryAction.href ? (
+                                <Link
+                                  href={item.primaryAction.href}
+                                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90"
+                                >
+                                  <Play size={12} fill="currentColor" />
+                                  <span>{item.primaryAction.label}</span>
+                                </Link>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={item.primaryAction.onClick}
+                                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90"
+                                >
+                                  <Play size={12} fill="currentColor" />
+                                  <span>{item.primaryAction.label}</span>
+                                </button>
+                              )
+                            )}
+
+                            {item.secondaryAction && (
+                              item.secondaryAction.href ? (
+                                <Link
+                                  href={item.secondaryAction.href}
+                                  title={item.secondaryAction.title ?? item.secondaryAction.label}
+                                  className="inline-flex items-center justify-center rounded-lg border border-white/15 bg-neutral-900 px-2.5 py-2 text-xs text-neutral-300 transition-colors hover:border-white/30 hover:text-white"
+                                >
+                                  {item.secondaryAction.icon ?? <ExternalLink size={13} />}
+                                </Link>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={item.secondaryAction.onClick}
+                                  title={item.secondaryAction.title ?? item.secondaryAction.label}
+                                  className="inline-flex items-center justify-center rounded-lg border border-white/15 bg-neutral-900 px-2.5 py-2 text-xs text-neutral-300 transition-colors hover:border-white/30 hover:text-white"
+                                >
+                                  {item.secondaryAction.icon ?? <ExternalLink size={13} />}
+                                </button>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </SwiperSlide>
                 ))}
