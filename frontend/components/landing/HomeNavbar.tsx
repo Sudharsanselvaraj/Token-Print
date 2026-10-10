@@ -43,6 +43,9 @@ export function HomeNavbar() {
           <Link href="/app?mode=debugger" className="home-nav-link">
             Debugger
           </Link>
+          <a href="#trace-gallery" className="home-nav-link">
+            Gallery
+          </a>
           <Link href="/docs" className="home-nav-link">
             Docs
           </Link>

@@ -8,6 +8,7 @@ import { Code2, GitBranch, Layers, Play } from "lucide-react";
 import { ComputationalHeroVisual, MicroDotGridVisual, MicroTargetIcon, MicroLightningIcon } from "./LandingVisuals";
 import { Reveal } from "./LandingMotion";
 import { InspectFlowSection } from "./InspectFlowSection";
+import { TraceGallerySection } from "./TraceGallerySection";
 import { GithubIcon } from "./GithubIcon";
 import { ECOSYSTEM_STACK } from "./EcosystemLogos";
 
@@ -312,7 +313,10 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* 4. Final Editorial Statement + Large Computational Wave Visual */}
+      {/* 4. Curated Trace Gallery Showcase (Issue #299) */}
+      <TraceGallerySection />
+
+      {/* 5. Final Editorial Statement + Large Computational Wave Visual */}
       <section className="landing-closing-section">
         <div className="landing-closing-content">
           <h2 className="landing-closing-title">From token to prediction.</h2>
@@ -362,6 +366,7 @@ export function LandingPage() {
                 <li><Link href="/app?mode=generation">Generation</Link></li>
                 <li><Link href="/app?mode=walkthrough">Walkthrough</Link></li>
                 <li><Link href="/app?mode=debugger">Debugger</Link></li>
+                <li><a href="#trace-gallery">Trace Gallery</a></li>
               </ul>
             </div>
 
