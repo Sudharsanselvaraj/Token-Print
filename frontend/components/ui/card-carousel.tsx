@@ -254,19 +254,30 @@ export const CardCarousel: React.FC<CardCarouselProps> = ({
                               item.primaryAction.href ? (
                                 <Link
                                   href={item.primaryAction.href}
-                                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90"
+                                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-opacity hover:opacity-90"
+                                  style={{
+                                    backgroundColor: "#FFFFFF",
+                                    color: "#09090B",
+                                    textDecoration: "none",
+                                  }}
                                 >
-                                  <Play size={12} fill="currentColor" />
-                                  <span>{item.primaryAction.label}</span>
+                                  <Play size={12} fill="#09090B" color="#09090B" />
+                                  <span style={{ color: "#09090B", fontWeight: 700 }}>{item.primaryAction.label}</span>
                                 </Link>
                               ) : (
                                 <button
                                   type="button"
                                   onClick={item.primaryAction.onClick}
-                                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90"
+                                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-opacity hover:opacity-90"
+                                  style={{
+                                    backgroundColor: "#FFFFFF",
+                                    color: "#09090B",
+                                    border: "none",
+                                    cursor: "pointer",
+                                  }}
                                 >
-                                  <Play size={12} fill="currentColor" />
-                                  <span>{item.primaryAction.label}</span>
+                                  <Play size={12} fill="#09090B" color="#09090B" />
+                                  <span style={{ color: "#09090B", fontWeight: 700 }}>{item.primaryAction.label}</span>
                                 </button>
                               )
                             )}
@@ -276,18 +287,20 @@ export const CardCarousel: React.FC<CardCarouselProps> = ({
                                 <Link
                                   href={item.secondaryAction.href}
                                   title={item.secondaryAction.title ?? item.secondaryAction.label}
-                                  className="inline-flex items-center justify-center rounded-lg border border-white/15 bg-neutral-900 px-2.5 py-2 text-xs text-neutral-300 transition-colors hover:border-white/30 hover:text-white"
+                                  className="inline-flex items-center justify-center rounded-lg border border-white/15 bg-neutral-900 px-2.5 py-2 text-xs transition-colors hover:border-white/30 hover:text-white"
+                                  style={{ color: "#E4E4E7" }}
                                 >
-                                  {item.secondaryAction.icon ?? <ExternalLink size={13} />}
+                                  {item.secondaryAction.icon ?? <ExternalLink size={13} color="#E4E4E7" />}
                                 </Link>
                               ) : (
                                 <button
                                   type="button"
                                   onClick={item.secondaryAction.onClick}
                                   title={item.secondaryAction.title ?? item.secondaryAction.label}
-                                  className="inline-flex items-center justify-center rounded-lg border border-white/15 bg-neutral-900 px-2.5 py-2 text-xs text-neutral-300 transition-colors hover:border-white/30 hover:text-white"
+                                  className="inline-flex items-center justify-center rounded-lg border border-white/15 bg-neutral-900 px-2.5 py-2 text-xs transition-colors hover:border-white/30 hover:text-white"
+                                  style={{ color: "#E4E4E7", cursor: "pointer" }}
                                 >
-                                  {item.secondaryAction.icon ?? <ExternalLink size={13} />}
+                                  {item.secondaryAction.icon ?? <ExternalLink size={13} color="#E4E4E7" />}
                                 </button>
                               )
                             )}

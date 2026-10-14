@@ -301,133 +301,137 @@ export function TraceGallerySection() {
           </div>
         </Reveal>
 
-        {/* 2. Interactive Embed Player Preview Bar */}
+        {/* 2. Unified Abstracted Interactive Embed Player Frame */}
         <Reveal delay={0.25}>
-          <div
-            style={{
-              backgroundColor: "#0C0D10",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
-              borderRadius: "16px",
-              padding: "20px 24px",
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "16px",
-              marginBottom: "36px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div style={{ marginBottom: "40px", width: "100%" }}>
+            <FocusFrameBorder
+              duration={2.4}
+              color="var(--color-blue-500, #38BDF8)"
+              className="w-full shadow-[0_0_50px_rgba(56,189,248,0.18)]"
+            >
+              {/* Frame Header Bar */}
               <div
                 style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "10px",
-                  backgroundColor: "rgba(56, 189, 248, 0.1)",
-                  border: "1px solid rgba(56, 189, 248, 0.25)",
+                  backgroundColor: "#0C0D10",
+                  padding: "20px 24px",
                   display: "flex",
+                  flexWrap: "wrap",
                   alignItems: "center",
-                  justifyContent: "center",
-                  color: "#38BDF8",
+                  justifyContent: "space-between",
+                  gap: "16px",
+                  borderBottom: showLiveEmbedPreview ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
                 }}
               >
-                <MonitorPlay size={20} />
+                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <div
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      borderRadius: "10px",
+                      backgroundColor: "rgba(56, 189, 248, 0.1)",
+                      border: "1px solid rgba(56, 189, 248, 0.25)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#38BDF8",
+                    }}
+                  >
+                    <MonitorPlay size={20} />
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "#F4F4F5" }}>
+                      Interactive Embed Player
+                    </h4>
+                    <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#A1A1AA" }}>
+                      Live embed preview for blog authors, course educators, and documentation maintainers.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowLiveEmbedPreview(!showLiveEmbedPreview)}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid rgba(255, 255, 255, 0.18)",
+                      backgroundColor: showLiveEmbedPreview ? "rgba(56, 189, 248, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                      color: showLiveEmbedPreview ? "#38BDF8" : "#F4F4F5",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <Eye size={13} color={showLiveEmbedPreview ? "#38BDF8" : "#F4F4F5"} />
+                    <span style={{ color: showLiveEmbedPreview ? "#38BDF8" : "#F4F4F5", fontWeight: 600 }}>
+                      {showLiveEmbedPreview ? "Hide Live Player" : "Preview Live Embed Player"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEmbedModalTrace({ id: "hello-world", title: "Inside a real forward pass" })}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: "8px",
+                      backgroundColor: "#0284C7",
+                      border: "1px solid #38BDF8",
+                      color: "#FFFFFF",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Code2 size={13} color="#FFFFFF" />
+                    <span style={{ color: "#FFFFFF", fontWeight: 600 }}>Get Iframe Code</span>
+                  </button>
+                </div>
               </div>
-              <div>
-                <h4 style={{ margin: 0, fontSize: "15px", fontWeight: 600, color: "#F4F4F5" }}>
-                  Interactive Embed Player
-                </h4>
-                <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#A1A1AA" }}>
-                  Live embed preview for blog authors, course educators, and documentation maintainers.
-                </p>
-              </div>
-            </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <button
-                type="button"
-                onClick={() => setShowLiveEmbedPreview(!showLiveEmbedPreview)}
-                style={{
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
-                  backgroundColor: showLiveEmbedPreview ? "#1E293B" : "rgba(255, 255, 255, 0.05)",
-                  color: showLiveEmbedPreview ? "#38BDF8" : "#E4E4E7",
-                  fontSize: "12px",
-                  fontWeight: 500,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  cursor: "pointer",
-                }}
-              >
-                <Eye size={13} />
-                <span>{showLiveEmbedPreview ? "Hide Live Player" : "Preview Live Embed Player"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setEmbedModalTrace({ id: "hello-world", title: "Inside a real forward pass" })}
-                style={{
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  backgroundColor: "#0284C7",
-                  border: "1px solid #38BDF8",
-                  color: "#FFFFFF",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  cursor: "pointer",
-                }}
-              >
-                <Code2 size={13} />
-                <span>Get Iframe Code</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Collapsible Live Embed Player Box */}
-          {showLiveEmbedPreview && (
-            <div style={{ marginBottom: "40px", width: "100%" }}>
-              <FocusFrameBorder
-                duration={2.4}
-                color="var(--color-blue-500, #38BDF8)"
-                className="w-full shadow-[0_0_50px_rgba(56,189,248,0.2)]"
-              >
-                <div
-                  style={{
-                    padding: "12px 18px",
-                    backgroundColor: "#0C0D10",
-                    borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    fontSize: "12px",
-                    color: "#A1A1AA",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ width: "9px", height: "9px", borderRadius: "50%", backgroundColor: "#10B981", boxShadow: "0 0 8px #10B981" }} />
-                    <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#38BDF8", fontWeight: 500 }}>
-                      &lt;iframe src="/app?mode=generation&demo=hello-world&embed=true" /&gt;
+              {/* Collapsible Live Embed Player inside the same unified frame */}
+              {showLiveEmbedPreview && (
+                <div style={{ width: "100%", backgroundColor: "#050505" }}>
+                  <div
+                    style={{
+                      padding: "10px 18px",
+                      backgroundColor: "#0A0B0E",
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      fontSize: "12px",
+                      color: "#A1A1AA",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#10B981", boxShadow: "0 0 8px #10B981" }} />
+                      <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#38BDF8", fontSize: "11px", fontWeight: 500 }}>
+                        &lt;iframe src="/app?mode=generation&demo=hello-world&embed=true" /&gt;
+                      </span>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "#71717A", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "var(--font-mono, monospace)" }}>
+                      Live Embed Sandbox
                     </span>
                   </div>
-                  <span style={{ fontSize: "11px", color: "#71717A", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "var(--font-mono, monospace)" }}>
-                    Live Embed Sandbox
-                  </span>
+                  <iframe
+                    src="/app?mode=generation&demo=hello-world"
+                    width="100%"
+                    height="560"
+                    style={{ border: "none", display: "block" }}
+                    title="TokenPrint Live Embed Player"
+                  />
                 </div>
-                <iframe
-                  src="/app?mode=generation&demo=hello-world"
-                  width="100%"
-                  height="560"
-                  style={{ border: "none", display: "block" }}
-                  title="TokenPrint Live Embed Player"
-                />
-              </FocusFrameBorder>
-            </div>
-          )}
+              )}
+            </FocusFrameBorder>
+          </div>
         </Reveal>
 
         {/* 3. Catalog Trace Grid & Contribution Callout */}
@@ -551,8 +555,8 @@ export function TraceGallerySection() {
                       transition: "opacity 0.15s ease",
                     }}
                   >
-                    <Play size={12} fill="currentColor" />
-                    <span>Replay in 3D</span>
+                    <Play size={12} fill="#09090B" color="#09090B" />
+                    <span style={{ color: "#09090B", fontWeight: 700 }}>Replay in 3D</span>
                   </Link>
 
                   <button
