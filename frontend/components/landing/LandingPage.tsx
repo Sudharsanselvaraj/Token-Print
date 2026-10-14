@@ -313,7 +313,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* 4. Curated Trace Gallery Showcase (Issue #299) */}
+      {/* 4. Curated Trace Gallery Showcase */}
       <TraceGallerySection />
 
       {/* 5. Final Editorial Statement + Large Computational Wave Visual */}

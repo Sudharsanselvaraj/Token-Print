@@ -20,6 +20,7 @@ import { assetUrl } from "@/lib/assets";
 import { Reveal } from "./LandingMotion";
 import { CardCarousel, CarouselItem } from "@/components/ui/card-carousel";
 import { Badge } from "@/components/ui/badge";
+import FocusFrameBorder from "@/components/ui/shine-border-06";
 
 interface TraceEmbedModalProps {
   traceId: string;
@@ -63,107 +64,101 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
         padding: "16px",
       }}
     >
-      <div
-        className="trace-modal-box"
-        style={{
-          width: "100%",
-          maxWidth: "580px",
-          backgroundColor: "#0C0D10",
-          border: "1px solid rgba(255, 255, 255, 0.15)",
-          borderRadius: "16px",
-          padding: "26px",
-          color: "#F4F4F5",
-          boxShadow: "0 28px 60px rgba(0, 0, 0, 0.9)",
-        }}
+      <FocusFrameBorder
+        duration={2.4}
+        color="var(--color-blue-500, #38BDF8)"
+        className="trace-modal-box w-full max-w-[580px] shadow-[0_28px_60px_rgba(0,0,0,0.9)]"
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <div>
-            <h3 id="embed-modal-title" style={{ margin: 0, fontSize: "17px", fontWeight: 600 }}>
-              Embed 3D Trace
-            </h3>
-            <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#A1A1AA" }}>
-              Embed this interactive 3D forward pass in your course, blog, or documentation.
-            </p>
+        <div style={{ padding: "26px", color: "#F4F4F5" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+            <div>
+              <h3 id="embed-modal-title" style={{ margin: 0, fontSize: "17px", fontWeight: 600 }}>
+                Embed 3D Trace
+              </h3>
+              <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#A1A1AA" }}>
+                Embed this interactive 3D forward pass in your course, blog, or documentation.
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              type="button"
+              aria-label="Close"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#71717A",
+                fontSize: "18px",
+                cursor: "pointer",
+                padding: "4px",
+              }}
+            >
+              ✕
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            type="button"
-            aria-label="Close"
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#71717A",
-              fontSize: "18px",
-              cursor: "pointer",
-              padding: "4px",
-            }}
-          >
-            ✕
-          </button>
-        </div>
 
-        <div style={{ marginBottom: "18px" }}>
-          <div style={{ fontSize: "11px", color: "#71717A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "6px" }}>
-            HTML Iframe Snippet
+          <div style={{ marginBottom: "18px" }}>
+            <div style={{ fontSize: "11px", color: "#71717A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "6px" }}>
+              HTML Iframe Snippet
+            </div>
+            <pre
+              style={{
+                backgroundColor: "#14151A",
+                border: "1px solid #26262B",
+                borderRadius: "8px",
+                padding: "14px",
+                fontSize: "11px",
+                fontFamily: "var(--font-mono, monospace)",
+                overflowX: "auto",
+                color: "#38BDF8",
+                margin: 0,
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
+                lineHeight: 1.5,
+              }}
+            >
+              {embedCode}
+            </pre>
           </div>
-          <pre
-            style={{
-              backgroundColor: "#14151A",
-              border: "1px solid #26262B",
-              borderRadius: "8px",
-              padding: "14px",
-              fontSize: "11px",
-              fontFamily: "var(--font-mono, monospace)",
-              overflowX: "auto",
-              color: "#38BDF8",
-              margin: 0,
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-all",
-              lineHeight: 1.5,
-            }}
-          >
-            {embedCode}
-          </pre>
-        </div>
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-          <button
-            onClick={onClose}
-            type="button"
-            style={{
-              padding: "8px 14px",
-              borderRadius: "8px",
-              border: "1px solid #26262B",
-              backgroundColor: "transparent",
-              color: "#A1A1AA",
-              fontSize: "12px",
-              cursor: "pointer",
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleCopy}
-            type="button"
-            style={{
-              padding: "8px 16px",
-              borderRadius: "8px",
-              border: "1px solid #38BDF8",
-              backgroundColor: "#0284C7",
-              color: "#FFFFFF",
-              fontSize: "12px",
-              fontWeight: 500,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              cursor: "pointer",
-            }}
-          >
-            {copied ? <Check size={14} /> : <Copy size={14} />}
-            {copied ? "Copied to Clipboard!" : "Copy Embed Code"}
-          </button>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+            <button
+              onClick={onClose}
+              type="button"
+              style={{
+                padding: "8px 14px",
+                borderRadius: "8px",
+                border: "1px solid #26262B",
+                backgroundColor: "transparent",
+                color: "#A1A1AA",
+                fontSize: "12px",
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCopy}
+              type="button"
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                border: "1px solid #38BDF8",
+                backgroundColor: "#0284C7",
+                color: "#FFFFFF",
+                fontSize: "12px",
+                fontWeight: 500,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                cursor: "pointer",
+              }}
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? "Copied to Clipboard!" : "Copy Embed Code"}
+            </button>
+          </div>
         </div>
-      </div>
+      </FocusFrameBorder>
     </div>
   );
 }
@@ -340,7 +335,7 @@ export function TraceGallerySection() {
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: "15px", fontWeight: 600, color: "#F4F4F5" }}>
-                  Interactive Embed Player (Issue #299)
+                  Interactive Embed Player
                 </h4>
                 <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#A1A1AA" }}>
                   Live embed preview for blog authors, course educators, and documentation maintainers.
@@ -395,43 +390,42 @@ export function TraceGallerySection() {
 
           {/* Collapsible Live Embed Player Box */}
           {showLiveEmbedPreview && (
-            <div
-              style={{
-                marginBottom: "40px",
-                border: "1px solid rgba(56, 189, 248, 0.3)",
-                borderRadius: "16px",
-                overflow: "hidden",
-                boxShadow: "0 20px 50px rgba(0, 0, 0, 0.8)",
-                backgroundColor: "#050505",
-              }}
-            >
-              <div
-                style={{
-                  padding: "10px 16px",
-                  backgroundColor: "#0C0D10",
-                  borderBottom: "1px solid #26262B",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  fontSize: "12px",
-                  color: "#A1A1AA",
-                }}
+            <div style={{ marginBottom: "40px", width: "100%" }}>
+              <FocusFrameBorder
+                duration={2.4}
+                color="var(--color-blue-500, #38BDF8)"
+                className="w-full shadow-[0_0_50px_rgba(56,189,248,0.2)]"
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#10B981" }} />
-                  <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#E4E4E7" }}>
-                    &lt;iframe src="/app?mode=generation&demo=hello-world&embed=true" /&gt;
+                <div
+                  style={{
+                    padding: "12px 18px",
+                    backgroundColor: "#0C0D10",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    fontSize: "12px",
+                    color: "#A1A1AA",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ width: "9px", height: "9px", borderRadius: "50%", backgroundColor: "#10B981", boxShadow: "0 0 8px #10B981" }} />
+                    <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#38BDF8", fontWeight: 500 }}>
+                      &lt;iframe src="/app?mode=generation&demo=hello-world&embed=true" /&gt;
+                    </span>
+                  </div>
+                  <span style={{ fontSize: "11px", color: "#71717A", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "var(--font-mono, monospace)" }}>
+                    Live Embed Sandbox
                   </span>
                 </div>
-                <span>Live Interactive Embed Sandbox</span>
-              </div>
-              <iframe
-                src="/app?mode=generation&demo=hello-world"
-                width="100%"
-                height="560"
-                style={{ border: "none", display: "block" }}
-                title="TokenPrint Live Embed Player"
-              />
+                <iframe
+                  src="/app?mode=generation&demo=hello-world"
+                  width="100%"
+                  height="560"
+                  style={{ border: "none", display: "block" }}
+                  title="TokenPrint Live Embed Player"
+                />
+              </FocusFrameBorder>
             </div>
           )}
         </Reveal>
