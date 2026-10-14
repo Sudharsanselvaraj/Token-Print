@@ -66,7 +66,7 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
     >
       <FocusFrameBorder
         duration={2.4}
-        color="var(--color-blue-500, #38BDF8)"
+        color="rgba(255, 255, 255, 0.45)"
         className="trace-modal-box w-full max-w-[580px] shadow-[0_28px_60px_rgba(0,0,0,0.9)]"
       >
         <div style={{ padding: "26px", color: "#F4F4F5" }}>
@@ -109,7 +109,7 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
                 fontSize: "11px",
                 fontFamily: "var(--font-mono, monospace)",
                 overflowX: "auto",
-                color: "#38BDF8",
+                color: "#E2E8F0",
                 margin: 0,
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-all",
@@ -142,18 +142,18 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
               style={{
                 padding: "8px 16px",
                 borderRadius: "8px",
-                border: "1px solid #38BDF8",
-                backgroundColor: "#0284C7",
-                color: "#FFFFFF",
+                border: "1px solid #FFFFFF",
+                backgroundColor: "#FFFFFF",
+                color: "#000000",
                 fontSize: "12px",
-                fontWeight: 500,
+                fontWeight: 600,
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
                 cursor: "pointer",
               }}
             >
-              {copied ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? <Check size={14} color="#000000" /> : <Copy size={14} color="#000000" />}
               {copied ? "Copied to Clipboard!" : "Copy Embed Code"}
             </button>
           </div>
@@ -253,22 +253,9 @@ export function TraceGallerySection() {
         {/* Section Header */}
         <div style={{ maxWidth: "680px", margin: "0 auto 40px", textAlign: "center" }}>
           <Reveal delay={0.05}>
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                fontSize: "11px",
-                fontWeight: 600,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "#38BDF8",
-                marginBottom: "12px",
-              }}
-            >
-              <Sparkles size={13} />
-              <span>Verified Replays · Zero GPU Required</span>
-            </div>
+            <p className="landing-eyebrow">
+              Verified Replays · Zero GPU Required
+            </p>
           </Reveal>
 
           <Reveal delay={0.1}>
@@ -289,7 +276,7 @@ export function TraceGallerySection() {
           <div style={{ marginBottom: "48px" }}>
             <CardCarousel
               badgeText="Curated 3D Traces"
-              badgeIcon={<Sparkles className="fill-[#38BDF8] stroke-1 text-sky-400 mr-1.5" size={14} />}
+              badgeIcon={<Sparkles className="fill-white stroke-1 text-white/80 mr-1.5" size={14} />}
               title="Interactive Trace Replays"
               subtitle="Swipe through verified model passes. Click Replay to inspect in real 3D, or copy embed codes for your documentation."
               items={carouselItems}
@@ -306,8 +293,8 @@ export function TraceGallerySection() {
           <div style={{ marginBottom: "40px", width: "100%" }}>
             <FocusFrameBorder
               duration={2.4}
-              color="var(--color-blue-500, #38BDF8)"
-              className="w-full shadow-[0_0_50px_rgba(56,189,248,0.18)]"
+              color="rgba(255, 255, 255, 0.45)"
+              className="w-full shadow-[0_0_40px_rgba(255,255,255,0.06)]"
             >
               {/* Frame Header Bar */}
               <div
@@ -328,12 +315,12 @@ export function TraceGallerySection() {
                       width: "42px",
                       height: "42px",
                       borderRadius: "10px",
-                      backgroundColor: "rgba(56, 189, 248, 0.1)",
-                      border: "1px solid rgba(56, 189, 248, 0.25)",
+                      backgroundColor: "rgba(255, 255, 255, 0.04)",
+                      border: "1px solid rgba(255, 255, 255, 0.12)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      color: "#38BDF8",
+                      color: "#FFFFFF",
                     }}
                   >
                     <MonitorPlay size={20} />
@@ -354,10 +341,34 @@ export function TraceGallerySection() {
                     onClick={() => setShowLiveEmbedPreview(!showLiveEmbedPreview)}
                     style={{
                       padding: "8px 14px",
-                      borderRadius: "8px",
+                      borderRadius: "6px",
                       border: "1px solid rgba(255, 255, 255, 0.18)",
-                      backgroundColor: showLiveEmbedPreview ? "rgba(56, 189, 248, 0.15)" : "rgba(255, 255, 255, 0.05)",
-                      color: showLiveEmbedPreview ? "#38BDF8" : "#F4F4F5",
+                      backgroundColor: showLiveEmbedPreview ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.03)",
+                      color: "#FFFFFF",
+                      fontSize: "12px",
+                      fontWeight: 500,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <Eye size={13} color="#FFFFFF" />
+                    <span style={{ color: "#FFFFFF", fontWeight: 500 }}>
+                      {showLiveEmbedPreview ? "Hide Live Player" : "Show Live Player"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEmbedModalTrace({ id: "hello-world", title: "Inside a real forward pass" })}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      backgroundColor: "#FFFFFF",
+                      border: "1px solid #FFFFFF",
+                      color: "#000000",
                       fontSize: "12px",
                       fontWeight: 600,
                       display: "inline-flex",
@@ -367,31 +378,8 @@ export function TraceGallerySection() {
                       transition: "all 0.15s ease",
                     }}
                   >
-                    <Eye size={13} color={showLiveEmbedPreview ? "#38BDF8" : "#F4F4F5"} />
-                    <span style={{ color: showLiveEmbedPreview ? "#38BDF8" : "#F4F4F5", fontWeight: 600 }}>
-                      {showLiveEmbedPreview ? "Hide Live Player" : "Show Live Player"}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setEmbedModalTrace({ id: "hello-world", title: "Inside a real forward pass" })}
-                    style={{
-                      padding: "8px 14px",
-                      borderRadius: "8px",
-                      backgroundColor: "#0284C7",
-                      border: "1px solid #38BDF8",
-                      color: "#FFFFFF",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Code2 size={13} color="#FFFFFF" />
-                    <span style={{ color: "#FFFFFF", fontWeight: 600 }}>Get Iframe Code</span>
+                    <Code2 size={13} color="#000000" />
+                    <span style={{ color: "#000000", fontWeight: 600 }}>Get Iframe Code</span>
                   </button>
                 </div>
               </div>
@@ -421,7 +409,7 @@ export function TraceGallerySection() {
                           boxShadow: "0 0 8px #10B981",
                         }}
                       />
-                      <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#38BDF8", fontSize: "11px", fontWeight: 500 }}>
+                      <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#E2E8F0", fontSize: "11px", fontWeight: 500 }}>
                         &lt;iframe src="/app/?mode=generation&demo=hello-world&embed=true&autoplay=true" /&gt;
                       </span>
                     </div>
@@ -476,7 +464,7 @@ export function TraceGallerySection() {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "16px" }}>
                     <Badge
                       variant="outline"
-                      className="border-sky-400/30 bg-sky-950/60 text-sky-400 text-[10px] uppercase tracking-wider font-mono px-2 py-0.5"
+                      className="border-white/15 bg-white/5 text-[#E4E4E7] text-[10px] uppercase tracking-wider font-mono px-2 py-0.5"
                     >
                       {trace.architecture}
                     </Badge>
@@ -637,11 +625,12 @@ export function TraceGallerySection() {
                   width: "44px",
                   height: "44px",
                   borderRadius: "50%",
-                  backgroundColor: "#18181B",
+                  backgroundColor: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#38BDF8",
+                  color: "#FFFFFF",
                 }}
               >
                 <Layers size={18} />
@@ -652,7 +641,7 @@ export function TraceGallerySection() {
                   Record & Contribute a Trace
                 </h4>
                 <p style={{ margin: 0, fontSize: "12px", color: "#71717A", lineHeight: 1.5, maxWidth: "260px" }}>
-                  Capture a real short forward pass with <code style={{ color: "#38BDF8" }}>scripts/generate-demo-trace.py</code> and submit a PR to add it to the gallery.
+                  Capture a real short forward pass with <code style={{ color: "#E2E8F0", backgroundColor: "rgba(255, 255, 255, 0.08)", padding: "2px 6px", borderRadius: "4px", fontFamily: "var(--font-mono, monospace)" }}>scripts/generate-demo-trace.py</code> and submit a PR to add it to the gallery.
                 </p>
               </div>
 
@@ -666,8 +655,8 @@ export function TraceGallerySection() {
                   gap: "6px",
                   fontSize: "11px",
                   fontWeight: 500,
-                  color: "#38BDF8",
-                  textDecoration: "none",
+                  color: "#FFFFFF",
+                  textDecoration: "underline",
                   marginTop: "6px",
                 }}
               >

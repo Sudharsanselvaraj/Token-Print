@@ -37,7 +37,7 @@ const FocusFrameBorder = ({
   children,
   className,
   duration = 2.4,
-  color = "var(--color-blue-500, #38BDF8)",
+  color = "rgba(255, 255, 255, 0.4)",
 }: FocusFrameBorderProps) => {
   return (
     <>

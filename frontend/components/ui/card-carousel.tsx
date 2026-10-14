@@ -103,10 +103,11 @@ export const CardCarousel: React.FC<CardCarouselProps> = ({
   }
 
   .tokenprint-carousel .swiper-pagination-bullet-active {
-    background: #38BDF8;
+    background: #FFFFFF;
     opacity: 1;
     width: 24px;
     border-radius: 4px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
   }
 
   .tokenprint-carousel .swiper-button-prev,
@@ -124,8 +125,8 @@ export const CardCarousel: React.FC<CardCarouselProps> = ({
   .tokenprint-carousel .swiper-button-prev:hover,
   .tokenprint-carousel .swiper-button-next:hover {
     background: rgba(35, 38, 46, 0.95);
-    border-color: rgba(56, 189, 248, 0.5);
-    color: #38BDF8;
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #FFFFFF;
   }
 
   .tokenprint-carousel .swiper-button-prev::after,
@@ -195,7 +196,7 @@ export const CardCarousel: React.FC<CardCarouselProps> = ({
               >
                 {slideList.map((item, index) => (
                   <SwiperSlide key={item.id ?? index}>
-                    <div className="group relative flex flex-col overflow-hidden rounded-[20px] border border-white/15 bg-[#0C0D10] shadow-xl transition-all duration-300 hover:border-sky-400/50 hover:shadow-sky-500/10">
+                    <div className="group relative flex flex-col overflow-hidden rounded-[20px] border border-white/15 bg-[#0C0D10] shadow-xl transition-all duration-300 hover:border-white/35 hover:shadow-[0_8px_30px_rgba(255,255,255,0.06)]">
                       {/* Slide Image visual */}
                       <div className="relative aspect-[16/10] w-full overflow-hidden bg-black/60">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -208,7 +209,7 @@ export const CardCarousel: React.FC<CardCarouselProps> = ({
                         
                         {item.badge && (
                           <div className="absolute top-3 left-3">
-                            <span className="rounded-md border border-sky-400/30 bg-sky-950/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-300 backdrop-blur-md">
+                            <span className="rounded-md border border-white/15 bg-black/75 px-2 py-0.5 text-[10px] font-mono font-medium uppercase tracking-wider text-[#E5E5E5] backdrop-blur-md">
                               {item.badge}
                             </span>
                           </div>
@@ -223,7 +224,7 @@ export const CardCarousel: React.FC<CardCarouselProps> = ({
                           </span>
                         )}
                         {item.title && (
-                          <h4 className="mt-1 text-lg font-semibold text-white tracking-tight group-hover:text-sky-300 transition-colors">
+                          <h4 className="mt-1 text-lg font-semibold text-white tracking-tight group-hover:text-white transition-colors">
                             {item.title}
                           </h4>
                         )}
