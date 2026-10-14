@@ -103,9 +103,21 @@ If you find a wrong number, that is a top-priority bug.
 
 Questions, bug reports, shared traces and feature ideas are all welcome in the Discord.
 
-<p align="center">
-  <a href="https://discord.gg/6Cv4v8x9j"><img src="https://img.shields.io/badge/Join%20the%20TokenPrint%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join the TokenPrint Discord" /></a>
-</p>
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <br />
+        <a href="https://discord.gg/6Cv4v8x9j">
+          <img src="https://cdn.simpleicons.org/discord/5865F2" width="48" alt="Discord" />
+        </a>
+        <h3><a href="https://discord.gg/6Cv4v8x9j">&nbsp;&nbsp;Join the TokenPrint Community&nbsp;&nbsp;</a></h3>
+        <sub>Discord · Q&amp;A · Show and Tell · Shared Traces</sub>
+        <br /><br />
+      </td>
+    </tr>
+  </table>
+</div>
 
 ## Contributing
 
