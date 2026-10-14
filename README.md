@@ -76,27 +76,6 @@ For quantized GGUF execution: `pip install -r backend/requirements-gguf.txt`. To
 - **Cited, not hand-waved.** Click RoPE, SwiGLU, RMSNorm, GQA or an induction-head pair and get the primary source.
 - **Private.** GGUF files are parsed client-side. Nothing is uploaded.
 
-## Four modes
-
-<table>
-  <tr>
-    <td width="50%"><img src="frontend/public/screenshots/architecture.png" alt="Architecture mode" /></td>
-    <td width="50%"><img src="frontend/public/screenshots/generation.png" alt="Generation mode" /></td>
-  </tr>
-  <tr>
-    <td valign="top"><b>Architecture.</b> Every real tensor as a 3D point cloud, plus topology view, tensor list, and a two-GGUF quantization diff with dequantized histograms.</td>
-    <td valign="top"><b>Generation.</b> Real generation walked layer by layer: GQA blades, SwiGLU prongs, RMSNorm collars, RoPE helix, spatial KV cache and a top-k skyline.</td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="frontend/public/screenshots/walkthrough.png" alt="Walkthrough mode" /></td>
-    <td width="50%"><img src="frontend/public/screenshots/debugger.png" alt="Debugger mode" /></td>
-  </tr>
-  <tr>
-    <td valign="top"><b>Walkthrough.</b> A chaptered guided tour gated on real data, including logit lens and multilingual tokenization presets.</td>
-    <td valign="top"><b>Debugger.</b> Flame graph, anomaly sentinels, layer table, head grid, ablation diff, console REPL and portable experiments.</td>
-  </tr>
-</table>
-
 ## Supported models
 
 Qwen 2.5 runs live by default. Llama 2/3/3.2, Gemma, Mistral/Mixtral, DeepSeek (including MoE), Phi and GPT-2/Pythia load as GGUF, and any local `.gguf` works. GPT-2 also runs fully in the browser. Per-family notes are in the [wiki](wiki/Home.md); to add one, see the [developer guide](wiki/Developer-Guide-Adding-a-New-Model.md).
