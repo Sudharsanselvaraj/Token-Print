@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { assetUrl } from "@/lib/assets";
-import { Code2, GitBranch, Layers, Play, Sparkles, ExternalLink } from "lucide-react";
+import { Code2, GitBranch, Layers, Play } from "lucide-react";
 
 import { ComputationalHeroVisual, MicroDotGridVisual, MicroTargetIcon, MicroLightningIcon } from "./LandingVisuals";
 import { Reveal } from "./LandingMotion";
@@ -11,108 +11,58 @@ import { InspectFlowSection } from "./InspectFlowSection";
 import { TraceGallerySection } from "./TraceGallerySection";
 import { GithubIcon } from "./GithubIcon";
 import { ECOSYSTEM_STACK } from "./EcosystemLogos";
-import { CardCarousel, CarouselItem } from "@/components/ui/card-carousel";
 
-
-const SHOWCASE_CAROUSEL_ITEMS: CarouselItem[] = [
+const SHOWCASE_CELLS = [
   {
-    id: "showcase-arch",
-    src: "/screenshots/architecture.png",
+    img: "/backgrounds/col1_arch.png",
     alt: "Understand the architecture",
-    badge: "3D TOPOLOGY",
-    title: "Understand the Architecture",
-    subtitle: "Layers · Hidden States · Tensors",
-    description: "Inspect transformer layers, tensor dimensions, residual streams, and model geometry in real 3D.",
-    tags: ["layers", "topology", "residual-streams"],
-    primaryAction: {
-      label: "Open 3D Model",
-      href: "/app?mode=explorer",
-    },
-    secondaryAction: {
-      title: "Docs: 3D Architecture",
-      href: "/docs/using/3d-architecture",
-      icon: <ExternalLink size={13} />,
-    },
+    imgClass: "arch-img",
+    icon: <Layers size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />,
+    title: "Understand the architecture",
+    desc: "Inspect layers, tensors, residual streams, and model topology.",
+    infoTitle: "Understand the architecture",
+    infoPara:
+      "See how the model is organized from embeddings through transformer layers, residual streams, and the final prediction.",
+    meta: ["LAYERS", "HIDDEN STATE", "MODEL TOPOLOGY"],
   },
   {
-    id: "showcase-attn",
-    src: "/backgrounds/col2_attn.png",
+    img: "/backgrounds/col2_attn.png",
     alt: "See attention unfold",
-    badge: "ATTENTION MAPS",
-    title: "See Attention Unfold",
-    subtitle: "Q · K · V · RoPE Projections",
-    description: "Follow Query, Key, and Value projections, rotary embeddings, attention weights, and multi-head heatmaps.",
-    tags: ["q-k-v", "rope", "attention-weights"],
-    primaryAction: {
-      label: "Inspect Attention",
-      href: "/app?mode=debugger",
-    },
-    secondaryAction: {
-      title: "Docs: Attention Concepts",
-      href: "/docs/concepts/attention",
-      icon: <ExternalLink size={13} />,
-    },
+    imgClass: "attn-img",
+    icon: <GitBranch size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />,
+    title: "See attention unfold",
+    desc: "Follow Q, K, V, attention scores, RoPE, and weighted values.",
+    infoTitle: "See attention unfold",
+    infoPara:
+      "Follow Q, K, and V through attention, from projections and positional encoding to scores, masking, and weighted values.",
+    meta: ["Q / K / V", "ROPE", "ATTENTION WEIGHTS"],
   },
   {
-    id: "showcase-gen",
-    src: "/screenshots/generation.png",
+    img: "/backgrounds/col3_gen.png",
     alt: "Watch generation happen",
-    badge: "AUTOREGRESSIVE DECODE",
-    title: "Watch Generation Happen",
-    subtitle: "Prefill · KV Cache · Next Token",
-    description: "Trace prefill and decode steps as hidden states become logits, KV cache updates, and next tokens are chosen.",
-    tags: ["prefill", "kv-cache", "logits"],
-    primaryAction: {
-      label: "Run Generation Demo",
-      href: "/app?mode=generation&demo=hello-world&tour=1",
-    },
-    secondaryAction: {
-      title: "Docs: Generation",
-      href: "/docs/using/generation",
-      icon: <ExternalLink size={13} />,
-    },
-  },
-  {
-    id: "showcase-dbg",
-    src: "/screenshots/debugger.png",
-    alt: "Precision matrix debugger",
-    badge: "TENSOR DEBUGGER",
-    title: "Every Tensor, Inspectable",
-    subtitle: "Zero Synthetic Data",
-    description: "Step through transformer forward passes forward and backward with matrix inspection of every layer.",
-    tags: ["debugger", "zero-gpu", "exact-tensors"],
-    primaryAction: {
-      label: "Launch Debugger",
-      href: "/app?mode=debugger",
-    },
-    secondaryAction: {
-      title: "Docs: Debugger",
-      href: "/docs/using/debugger",
-      icon: <ExternalLink size={13} />,
-    },
-  },
-  {
-    id: "showcase-walk",
-    src: "/screenshots/walkthrough.png",
-    alt: "Step-by-step tour",
-    badge: "CONCEPT TOUR",
-    title: "Interactive Transformer Walkthrough",
-    subtitle: "Zero Knowledge Required",
-    description: "An annotated tour explaining embeddings, RMSNorm, SwiGLU MLPs, and output heads in plain English.",
-    tags: ["tutorial", "concepts", "walkthrough"],
-    primaryAction: {
-      label: "Start Walkthrough",
-      href: "/app?mode=walkthrough",
-    },
-    secondaryAction: {
-      title: "Docs: Walkthrough",
-      href: "/docs/using/walkthrough",
-      icon: <ExternalLink size={13} />,
-    },
+    imgClass: "gen-img",
+    icon: <Play size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />,
+    title: "Watch generation happen",
+    desc: "Trace prefill, KV cache, decoding, logits, and next-token prediction.",
+    infoTitle: "Watch generation happen",
+    infoPara:
+      "Follow the transition from prefill to decode as hidden states become logits, KV cache state, and the next generated token.",
+    meta: ["PREFILL", "KV CACHE", "NEXT TOKEN"],
   },
 ];
 
 export function LandingPage() {
+  const [showcaseTab, setShowcaseTab] = useState<number>(0);
+  const [showcaseOpen, setShowcaseOpen] = useState<boolean>(false);
+
+  const handleShowcaseSelect = (i: number) => {
+    if (showcaseTab === i && showcaseOpen) {
+      setShowcaseOpen(false);
+    } else {
+      setShowcaseTab(i);
+      setShowcaseOpen(true);
+    }
+  };
 
   return (
     <div className="landing-root">
@@ -294,22 +244,72 @@ export function LandingPage() {
             </div>
           </Reveal>
 
-          {/* 3D Card Carousel for Inspection Modes */}
+          {/* Full-width 3-Tab Rail */}
           <Reveal delay={0.1}>
-            <div style={{ marginTop: "24px", marginBottom: "40px" }}>
-              <CardCarousel
-                badgeText="Interactive Inspection"
-                badgeIcon={<Sparkles className="fill-[#EEBDE0] stroke-1 text-white mr-1.5" size={14} />}
-                title="Transformer Flow Modes"
-                subtitle="Swipe through 3D architecture, multi-head attention maps, autoregressive decoding, and raw tensor matrices."
-                items={SHOWCASE_CAROUSEL_ITEMS}
-                autoplayDelay={3200}
-                showPagination={true}
-                showNavigation={true}
-                maxWidth="max-w-5xl"
-              />
+            <div className="marshal-tab-rail-container">
+              <div className="marshal-tab-rail">
+                <button
+                  type="button"
+                  className={`marshal-tab-rail-item ${showcaseTab === 0 ? "active" : ""}`}
+                  onClick={() => handleShowcaseSelect(0)}
+                >
+                  <span className="tab-num">01</span> — Architecture
+                </button>
+                <button
+                  type="button"
+                  className={`marshal-tab-rail-item ${showcaseTab === 1 ? "active" : ""}`}
+                  onClick={() => handleShowcaseSelect(1)}
+                >
+                  <span className="tab-num">02</span> — Attention
+                </button>
+                <button
+                  type="button"
+                  className={`marshal-tab-rail-item ${showcaseTab === 2 ? "active" : ""}`}
+                  onClick={() => handleShowcaseSelect(2)}
+                >
+                  <span className="tab-num">03</span> — Generation
+                </button>
+              </div>
             </div>
           </Reveal>
+
+          {/* ONE GIANT UNIFIED 3-COLUMN BORDERED COMPOSITION */}
+          <div className="marshal-unified-grid">
+            {SHOWCASE_CELLS.map((c, i) => {
+              const isRevealed = showcaseTab === i && showcaseOpen;
+              return (
+                <div
+                  key={c.title}
+                  className={`marshal-grid-cell ${isRevealed ? "active-cell" : ""}`}
+                  onClick={() => handleShowcaseSelect(i)}
+                >
+                  <div className={`marshal-cell-visual-area ${isRevealed ? "revealed" : ""}`}>
+                    <img
+                      src={assetUrl(c.img)}
+                      alt={c.alt}
+                      className={`marshal-cell-img ${c.imgClass}`}
+                    />
+                    <div className="marshal-cell-info">
+                      <h4 className="marshal-cell-info-title">{c.infoTitle}</h4>
+                      <p className="marshal-cell-info-p">{c.infoPara}</p>
+                      <div className="marshal-cell-info-meta">
+                        {c.meta.map((m, j) => (
+                          <span key={j} className="marshal-cell-meta-item">
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="marshal-cell-text-area">
+                    <div className="marshal-cell-icon-box">{c.icon}</div>
+                    <h3 className="marshal-cell-title">{c.title}</h3>
+                    <p className="marshal-cell-desc">{c.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
