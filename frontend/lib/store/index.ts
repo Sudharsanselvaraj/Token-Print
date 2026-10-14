@@ -168,6 +168,11 @@ export function restoreFromUrl(): Partial<StoreState> {
   if (typeof window === "undefined") return {};
   const params = new URLSearchParams(window.location.search);
   const state: Partial<StoreState> = {};
+  if (params.get("embed") === "true") state.embedMode = true;
+  if (params.get("autoplay") === "true" || params.get("autoplay") === "1") {
+    state.isPlaying = true;
+    state.opPlaying = true;
+  }
   const v = params.get("v");
   if (!v) return state;
   const tokenIndex = params.get("token");
@@ -176,7 +181,6 @@ export function restoreFromUrl(): Partial<StoreState> {
   if (opIndex) state.opIndex = Number(opIndex);
   const chapter = params.get("chapter");
   if (chapter) state.wtChapter = Number(chapter);
-  if (params.get("embed") === "true") state.embedMode = true;
   return state;
 }
 

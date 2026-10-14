@@ -95,7 +95,11 @@ export default function AppShell() {
     if (snapshot.playIndex !== undefined) useStore.getState().setPlayIndex(snapshot.playIndex);
     if (snapshot.opIndex !== undefined) useStore.getState().setOpIndex(snapshot.opIndex);
     if (snapshot.wtChapter !== undefined) useStore.getState().setWtChapter(snapshot.wtChapter);
-    if (snapshot.embedMode) useStore.getState().setEmbedMode(snapshot.embedMode);
+    const isEmbed = snapshot.embedMode || searchParams?.get("embed") === "true";
+    if (isEmbed) useStore.getState().setEmbedMode(true);
+    if (searchParams?.get("autoplay") === "true" || searchParams?.get("autoplay") === "1") {
+      useStore.setState({ isPlaying: true, opPlaying: true });
+    }
     // The debugger's child effect may have already started the initial load.
     // Read live state so mount effects and StrictMode do not duplicate requests
     // or silently retry a failure that should remain visible to the user.

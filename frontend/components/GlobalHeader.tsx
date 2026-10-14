@@ -34,6 +34,8 @@ function GlobalHeaderInner() {
 
   const close = () => setOpen(false);
 
+  if (searchParams?.get("embed") === "true") return null;
+
   return (
     <header
       className={`landing-nav global-nav${scrolled ? " scrolled" : ""}`}

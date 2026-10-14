@@ -34,8 +34,8 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
 
   if (!isOpen) return null;
 
-  const embedUrl = `https://tokenprint.org/app?mode=generation&demo=${encodeURIComponent(traceId)}&embed=true`;
-  const embedCode = `<iframe\n  src="${embedUrl}"\n  width="100%"\n  height="600"\n  frameborder="0"\n  allow="fullscreen"\n  loading="lazy"\n  title="${title} - TokenPrint 3D Inspector"\n></iframe>`;
+  const embedUrl = `https://tokenprint.org/app/?mode=generation&demo=${encodeURIComponent(traceId)}&embed=true&autoplay=true`;
+  const embedCode = `<iframe\n  src="${embedUrl}"\n  width="100%"\n  height="600"\n  frameborder="0"\n  allow="autoplay; fullscreen"\n  loading="lazy"\n  title="${title} - TokenPrint 3D Inspector"\n></iframe>`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(embedCode);
@@ -165,7 +165,7 @@ function TraceEmbedModal({ traceId, title, isOpen, onClose }: TraceEmbedModalPro
 
 export function TraceGallerySection() {
   const [embedModalTrace, setEmbedModalTrace] = useState<{ id: string; title: string } | null>(null);
-  const [showLiveEmbedPreview, setShowLiveEmbedPreview] = useState<boolean>(false);
+  const [showLiveEmbedPreview, setShowLiveEmbedPreview] = useState<boolean>(true);
 
   // Gallery items formatted for the 3D Card Carousel
   const carouselItems: CarouselItem[] = [
@@ -340,10 +340,10 @@ export function TraceGallerySection() {
                   </div>
                   <div>
                     <h4 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "#F4F4F5" }}>
-                      Interactive Embed Player
+                      Interactive 3D Tensor Embed Player
                     </h4>
                     <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#A1A1AA" }}>
-                      Live embed preview for blog authors, course educators, and documentation maintainers.
+                      Live autoplaying embed preview for blog authors, course educators, and documentation maintainers.
                     </p>
                   </div>
                 </div>
@@ -369,7 +369,7 @@ export function TraceGallerySection() {
                   >
                     <Eye size={13} color={showLiveEmbedPreview ? "#38BDF8" : "#F4F4F5"} />
                     <span style={{ color: showLiveEmbedPreview ? "#38BDF8" : "#F4F4F5", fontWeight: 600 }}>
-                      {showLiveEmbedPreview ? "Hide Live Player" : "Preview Live Embed Player"}
+                      {showLiveEmbedPreview ? "Hide Live Player" : "Show Live Player"}
                     </span>
                   </button>
 
@@ -412,21 +412,33 @@ export function TraceGallerySection() {
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#10B981", boxShadow: "0 0 8px #10B981" }} />
+                      <span
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          backgroundColor: "#10B981",
+                          boxShadow: "0 0 8px #10B981",
+                        }}
+                      />
                       <span style={{ fontFamily: "var(--font-mono, monospace)", color: "#38BDF8", fontSize: "11px", fontWeight: 500 }}>
-                        &lt;iframe src="/app?mode=generation&demo=hello-world&embed=true" /&gt;
+                        &lt;iframe src="/app/?mode=generation&demo=hello-world&embed=true&autoplay=true" /&gt;
                       </span>
                     </div>
-                    <span style={{ fontSize: "11px", color: "#71717A", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "var(--font-mono, monospace)" }}>
-                      Live Embed Sandbox
+                    <span style={{ fontSize: "11px", color: "#A1A1AA", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "var(--font-mono, monospace)", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ color: "#10B981", fontWeight: 600 }}>AUTOPLAY</span>
+                      <span>•</span>
+                      <span>Live Embed Sandbox</span>
                     </span>
                   </div>
                   <iframe
-                    src="/app?mode=generation&demo=hello-world"
+                    src="/app/?mode=generation&demo=hello-world&embed=true&autoplay=true"
                     width="100%"
-                    height="560"
+                    height="580"
                     style={{ border: "none", display: "block" }}
-                    title="TokenPrint Live Embed Player"
+                    title="TokenPrint Live 3D Tensor Embed Player"
+                    allow="autoplay; fullscreen"
+                    loading="lazy"
                   />
                 </div>
               )}

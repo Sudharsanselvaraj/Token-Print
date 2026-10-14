@@ -50,7 +50,11 @@ export default function PlaybackEngine() {
       if (s.playIndex < s.genFrames.length - 1) {
         useStore.setState({ playIndex: s.playIndex + 1 });
       } else if (s.genStatus !== "streaming") {
-        useStore.setState({ opPlaying: false });
+        if (s.embedMode) {
+          useStore.setState({ playIndex: 0, opPlaying: true });
+        } else {
+          useStore.setState({ opPlaying: false });
+        }
       }
     }, Math.max(120, GEN_FRAME_MS / playSpeed));
     return () => clearInterval(id);
@@ -83,7 +87,11 @@ export default function PlaybackEngine() {
       } else if (s.playIndex < s.genFrames.length - 1) {
         useStore.setState({ playIndex: s.playIndex + 1, opIndex: 0 });
       } else if (s.genStatus !== "streaming") {
-        useStore.setState({ opPlaying: false });
+        if (s.embedMode) {
+          useStore.setState({ playIndex: 0, opIndex: 0, opPlaying: true });
+        } else {
+          useStore.setState({ opPlaying: false });
+        }
       }
 
       const numLayers = s.genMeta?.num_layers ?? 24;
