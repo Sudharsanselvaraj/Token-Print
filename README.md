@@ -1,67 +1,58 @@
 <a name="top"></a>
-<div align="center">
-  <img src="TokenPrint logo.png" alt="TokenPrint" width="360" />
-
-  <h3>Stop reading architecture diagrams. Watch your model think.</h3>
-  <p><b>A real 3D inspector wired into a real forward pass — not an illustration of one.</b></p>
-
-  <p>
-    <a href="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml"><img src="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e.svg?style=flat" alt="License: MIT" /></a>
-    <a href="https://github.com/Sudharsanselvaraj/Token-Print/stargazers"><img src="https://img.shields.io/github/stars/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a&label=stars" alt="Stars" /></a>
-    <a href="https://github.com/Sudharsanselvaraj/Token-Print/commits/main"><img src="https://img.shields.io/github/last-commit/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a&label=last%20commit" alt="Last commit" /></a>
-    <img src="https://img.shields.io/badge/data-100%25%20real%20forward%20pass-0a0a0a.svg?style=flat" alt="Real data only" />
-    <a href="GOOD_FIRST_ISSUES.md"><img src="https://img.shields.io/badge/good%20first%20issues-1-orange.svg?style=flat" alt="1 good first issue" /></a>
-  </p>
-
-  <p>
-    <a href="#quickstart"><b>Quickstart</b></a> ·
-    <a href="docs/README.md"><b>Docs</b></a> ·
-    <a href="wiki/Home.md"><b>Wiki</b></a> ·
-    <a href="ROADMAP.md"><b>Roadmap</b></a> ·
-    <a href="CONTRIBUTING.md"><b>Contributing</b></a>
-  </p>
-</div>
-
----
-
 <p align="center">
-  <a href=".github/assets/demo.mp4"><img src=".github/assets/demo.gif" alt="TokenPrint — architecture inspection, live generation, guided walkthrough, and debugger" width="1000" /></a>
-  <br />
-  <sub><a href=".github/assets/demo.mp4">▶ Watch the high-quality demo (.mp4)</a></sub>
+  <img src=".github/assets/tokenprint-logo.png" alt="TokenPrint" width="280" />
 </p>
 
-Every other LLM visualizer gives you one of two things: a static architecture diagram, or a
-"visualization" quietly running on fake numbers. **TokenPrint does neither.** Load
-`Qwen2.5-0.5B-Instruct` live or drop in any local `.gguf`, and watch attention heads, RoPE
-rotations, and the residual stream move in real 3D — every value traced back to
-`named_parameters()`, a real forward pass, or the GGUF binary header itself.
+<h3 align="center">Stop reading architecture diagrams. Watch your model think.</h3>
 
-## Start locally
+<p align="center">
+  TokenPrint is a 3D visual debugger for transformers. Load a real model, run a real forward pass,
+  and inspect attention, RoPE, the KV cache and the residual stream as they happen.
+</p>
 
-Run `python3 scripts/start.py` with Python 3.11/3.12 and Node 20.9+. The launcher installs dependencies, downloads the model with progress, and checks both services. For an immediate offline example, choose **Try a recorded demo** on the home page.
+<p align="center">
+  <a href="https://tokenprint.in"><b>Live site</b></a> &nbsp;|&nbsp;
+  <a href="#get-started"><b>Get started</b></a> &nbsp;|&nbsp;
+  <a href="docs/README.md"><b>Docs</b></a> &nbsp;|&nbsp;
+  <a href="wiki/Home.md"><b>Wiki</b></a> &nbsp;|&nbsp;
+  <a href="ROADMAP.md"><b>Roadmap</b></a> &nbsp;|&nbsp;
+  <a href="https://discord.gg/6Cv4v8x9j"><b>Discord</b></a>
+</p>
 
-[Setup and troubleshooting](docs/local-setup.md) · [Browser GPT-2 and capabilities](docs/browser-inference.md) · [Reproducible experiments](docs/experiments.md) · [Contributor examples](docs/contributor-examples.md)
+<p align="center">
+  <a href="https://discord.gg/6Cv4v8x9j"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2F6Cv4v8x9j%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Discord&color=5865F2&suffix=%20members" alt="Discord" /></a>
+  <a href="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml"><img src="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e.svg" alt="MIT License" /></a>
+  <a href="https://github.com/Sudharsanselvaraj/Token-Print/stargazers"><img src="https://img.shields.io/github/stars/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a" alt="Stars" /></a>
+  <a href="https://github.com/Sudharsanselvaraj/Token-Print/commits/main"><img src="https://img.shields.io/github/last-commit/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a" alt="Last commit" /></a>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-22c55e.svg" alt="PRs welcome" /></a>
+</p>
 
-## Why it hits different
+<p align="center">
+  <a href=".github/assets/demo.mp4"><img src=".github/assets/demo.gif" alt="TokenPrint demo: architecture, live generation, walkthrough and debugger" width="900" /></a>
+  <br />
+  <sub><a href=".github/assets/demo.mp4">Watch the full-quality demo (.mp4)</a></sub>
+</p>
 
--  **Every number is real.** No `Math.random`, no placeholder tensors — a build-time script
-  fails CI outright if one sneaks into app code.
--  **GQA you can actually see.** 14 query heads, 2 KV groups — rendered as real geometry
-  clustered exactly that way, not a diagram claiming it.
--  **Four modes, one engine.** Architecture, Generation, Walkthrough, Debugger — pick your
-  depth, from "just show me the model" to breakpoints and activation ablation.
--  **Footnoted like a paper.** Click RoPE, SwiGLU, RMSNorm, GQA, or an induction-head pair
-  and get the real citation — Vaswani, Su, Shazeer, Ainslie, Anthropic's transformer-circuits
-  work — not a vibes-based tooltip.
--  **Broad model support.** Qwen, Llama 2/3/3.2, Gemma, Mistral/Mixtral, DeepSeek/MoE,
-  GPT-2/Pythia, or any local `.gguf` — parsed client-side, nothing uploaded.
--  **Honest about its own gaps.** See [below](#the-parts-we-havent-faked-but-havent-solved-either) — known limitations stated plainly, not buried in an issue tracker.
+## Get started
 
-## Quickstart
+Requires Python 3.11 or 3.12 and Node 20.9+.
 
 ```bash
-# backend — loads Qwen2.5-0.5B-Instruct once (Apple MPS / CPU fallback)
+git clone https://github.com/Sudharsanselvaraj/Token-Print.git
+cd Token-Print
+python3 scripts/start.py
+```
+
+The launcher installs dependencies, downloads `Qwen2.5-0.5B-Instruct` with progress, starts the backend and frontend, and waits until the model is ready. Then open <http://localhost:3000>.
+
+No GPU or no time? Choose **Try a recorded demo** on the home page to replay a real trace offline. Stuck on setup? Ask in the [Discord](https://discord.gg/6Cv4v8x9j) or see [local setup and troubleshooting](docs/local-setup.md).
+
+<details>
+<summary>Manual setup</summary>
+
+```bash
+# backend (Apple MPS, CUDA or CPU fallback)
 cd backend && python3 -m venv .venv --system-site-packages
 source .venv/bin/activate && pip install -r requirements.txt
 python -m uvicorn app.main:app --app-dir . --port 8000
@@ -69,59 +60,79 @@ python -m uvicorn app.main:app --app-dir . --port 8000
 
 ```bash
 # frontend
-cd frontend && npm install && npm run dev   # → http://localhost:3000
+cd frontend && npm install && npm run dev   # http://localhost:3000
 ```
 
-No model file needed for the live view. Want native GGUF execution instead?
-`pip install -r backend/requirements-gguf.txt`.
+For quantized GGUF execution: `pip install -r backend/requirements-gguf.txt`. To force CPU: `TOKENPRINT_DEVICE=cpu`.
 
-## Receipts, not vibes
+</details>
 
-- `GET /architecture` reports **494,032,768** params on live Qwen — the exact sum of all
-  **290** real tensors, every time.
-- The op catalog is real: **243 ops** in true forward order, matching the actual module graph.
-- Provenance is tagged on everything you see — `REAL` / `DERIVED` / `CONCEPTUAL` /
-  `SIMULATION` — so you always know whether a number came from the model or from us filling a
-  gap.
+## Features
 
-Full evidence, five independent verification scripts, and the CI regression gate:
-[`docs/verification.md`](docs/verification.md).
+- **Every number is real.** No `Math.random`, no placeholder tensors. Each value traces to `named_parameters()`, a real forward pass, or the GGUF header, and CI fails if fake data reaches app code. Values are tagged `REAL`, `DERIVED`, `CONCEPTUAL` or `SIMULATION`.
+- **Grouped-query attention you can see.** 14 query heads and 2 KV groups, rendered as geometry clustered exactly that way.
+- **A debugger, not just a viewer.** Breakpoints, watch expressions, activation ablation with before/after diff, logit lens, induction-head lab, and trace record, replay and branching.
+- **Three ways to run.** Python backend, quantized GGUF, or GPT-2 in your browser through WebGPU and ONNX.
+- **Cited, not hand-waved.** Click RoPE, SwiGLU, RMSNorm, GQA or an induction-head pair and get the primary source.
+- **Private.** GGUF files are parsed client-side. Nothing is uploaded.
 
-## The parts we haven't faked, but haven't solved either
+## Four modes
 
-- Quantized GGUF inference is real, but `llama.cpp` doesn't expose per-layer activations —
-  layer lighting is disabled there rather than faked.
-- Attention weight ≠ causal proof. High attention mass is a signal, not evidence the model
-  *needed* that token ([docs/visual-mapping.md](docs/visual-mapping.md#causality-warning)).
-- Per-layer timings are real wall-clock, but unsynchronized on MPS/CUDA — treated as a rough
-  signal, badged `PROXY · NOT MS` when we can't back it, never dressed up as precise ms.
+<table>
+  <tr>
+    <td width="50%"><img src="frontend/public/screenshots/architecture.png" alt="Architecture mode" /></td>
+    <td width="50%"><img src="frontend/public/screenshots/generation.png" alt="Generation mode" /></td>
+  </tr>
+  <tr>
+    <td valign="top"><b>Architecture.</b> Every real tensor as a 3D point cloud, plus topology view, tensor list, and a two-GGUF quantization diff with dequantized histograms.</td>
+    <td valign="top"><b>Generation.</b> Real generation walked layer by layer: GQA blades, SwiGLU prongs, RMSNorm collars, RoPE helix, spatial KV cache and a top-k skyline.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="frontend/public/screenshots/walkthrough.png" alt="Walkthrough mode" /></td>
+    <td width="50%"><img src="frontend/public/screenshots/debugger.png" alt="Debugger mode" /></td>
+  </tr>
+  <tr>
+    <td valign="top"><b>Walkthrough.</b> A chaptered guided tour gated on real data, including logit lens and multilingual tokenization presets.</td>
+    <td valign="top"><b>Debugger.</b> Flame graph, anomaly sentinels, layer table, head grid, ablation diff, console REPL and portable experiments.</td>
+  </tr>
+</table>
 
-Found a number that's wrong? That's not a low-priority bug — the entire project stands or
-falls on that not happening.
+## Supported models
+
+Qwen 2.5 runs live by default. Llama 2/3/3.2, Gemma, Mistral/Mixtral, DeepSeek (including MoE), Phi and GPT-2/Pythia load as GGUF, and any local `.gguf` works. GPT-2 also runs fully in the browser. Per-family notes are in the [wiki](wiki/Home.md); to add one, see the [developer guide](wiki/Developer-Guide-Adding-a-New-Model.md).
+
+## Why you can trust the numbers
+
+- `GET /architecture` reports **494,032,768** parameters on live Qwen, the exact sum of all **290** real tensors.
+- The op catalog lists **243 ops** in true forward order, matching the actual module graph.
+- Five independent verification scripts and a CI regression gate back this up: [docs/verification.md](docs/verification.md).
+
+Known limits, stated plainly:
+
+- Quantized GGUF inference is real, but `llama.cpp` exposes no per-layer activations, so layer lighting is disabled there instead of faked.
+- Attention weight is not causal proof. It is a signal, not evidence the model needed that token ([details](docs/visual-mapping.md#causality-warning)).
+- Per-layer timings are unsynchronized wall-clock on MPS and CUDA, and are badged `PROXY · NOT MS` when unbacked.
+- Browser inference currently covers GPT-2 on desktop WebGPU with greedy decoding.
+
+If you find a wrong number, that is a top-priority bug.
+
+## Documentation
+
+[Architecture](docs/architecture.md) | [API reference](docs/api.md) | [Visual mapping](docs/visual-mapping.md) | [GGUF format](docs/gguf-format.md) | [Browser inference](docs/browser-inference.md) | [Experiments](docs/experiments.md) | [Development](docs/development.md) | [Deployment](docs/deployment.md) | [Roadmap](ROADMAP.md)
+
+## Community
+
+Questions, bug reports, shared traces and feature ideas are all welcome in the Discord.
+
+<p align="center">
+  <a href="https://discord.gg/6Cv4v8x9j"><img src="https://img.shields.io/badge/Join%20the%20TokenPrint%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join the TokenPrint Discord" /></a>
+</p>
 
 ## Contributing
 
-[**Curated beginner tasks**](GOOD_FIRST_ISSUES.md) across 🟢 Easy → 🔬 Research, each with the
-files to touch and how to verify your fix. Read [CONTRIBUTING.md](CONTRIBUTING.md), pick one,
-send a PR. First-timers genuinely welcome.
+First-timers are welcome. Pick a task from [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md) or the [open issues](https://github.com/Sudharsanselvaraj/Token-Print/issues), read [CONTRIBUTING.md](CONTRIBUTING.md), and open a PR. Working examples to copy from are in [docs/contributor-examples.md](docs/contributor-examples.md). Say hello in the [Discord](https://discord.gg/6Cv4v8x9j) first if you want a hand choosing.
 
-<a href="https://buymeacoffee.com/sudharsanselvaraj">
-  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-black.png" alt="Support TokenPrint" height="40">
-</a>
-
-## Creator & contributors
-
-<table>
-<tr>
-<td align="center" width="140">
-  <a href="https://github.com/Sudharsanselvaraj">
-    <img src="https://github.com/Sudharsanselvaraj.png" width="88" alt="Sudharsan Selvaraj" />
-  </a>
-  <br /><b>Sudharsan Selvaraj</b><br /><sub>👑 Creator &amp; Maintainer</sub>
-</td>
-<td valign="middle">Built from scratch as one answer to "what is my model actually doing right now?" Owns the roadmap, reviews every PR, and is the last word on the one rule this whole repo runs on: every number shown must be real.</td>
-</tr>
-</table>
+The one rule for every change: every number shown must be real.
 
 <!-- CONTRIBUTORS:START -->
 <div align="center">
@@ -133,25 +144,14 @@ send a PR. First-timers genuinely welcome.
 </div>
 <!-- CONTRIBUTORS:END -->
 
-## Everything else
-
-[Architecture](docs/architecture.md) · [API](docs/api.md) · [Roadmap](ROADMAP.md) ·
-[Development](docs/development.md) · [Wiki](wiki/Home.md) — every supported model family,
-transformer concepts, deep dives.
-
 ## License
 
-[MIT](LICENSE) © Sudharsan Selvaraj.
+[MIT](LICENSE) &copy; [Sudharsan Selvaraj](https://github.com/Sudharsanselvaraj). If TokenPrint helps you, you can [support the project](https://buymeacoffee.com/sudharsanselvaraj).
 
-<div align="center">
-
-<a href="https://star-history.com/#Sudharsanselvaraj/Token-Print&Date">
-  <img src="https://api.star-history.com/svg?repos=Sudharsanselvaraj/Token-Print&type=Date" alt="Star History Chart" width="600" />
-</a>
-
-If this helped you actually understand a transformer, **star it** ⭐ — that's how the next
-person finds it.
-
-<sub><a href="#top">Back to top ↑</a></sub>
-
-</div>
+<p align="center">
+  <a href="https://star-history.com/#Sudharsanselvaraj/Token-Print&Date">
+    <img src="https://api.star-history.com/svg?repos=Sudharsanselvaraj/Token-Print&type=Date" alt="Star history" width="600" />
+  </a>
+  <br />
+  <sub><a href="#top">Back to top</a></sub>
+</p>
