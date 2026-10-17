@@ -163,6 +163,11 @@ export const useGenerationStore = <T>(selector: (state: StoreState) => T) => use
 export const useTraceStore = <T>(selector: (state: StoreState) => T) => useStore(selector);
 export const useUiStore = <T>(selector: (state: StoreState) => T) => useStore(selector);
 
+// Expose store globally for runtime inspection & capability debugging
+if (typeof window !== "undefined") {
+  (window as any).__TP_STORE__ = useStore;
+}
+
 /** Parse URL search parameters and restore route-local transient state. */
 export function restoreFromUrl(): Partial<StoreState> {
   if (typeof window === "undefined") return {};
