@@ -356,3 +356,37 @@ test("Phase 5.8a: Sonification toggle and math mappings", () => {
   assert.equal(nanFallback.harmonic, 300);
   assert.equal(nanFallback.brightFreq, 450); // fallback spread 0.5 -> 200 * 2.25 = 450
 });
+
+test("Phase 5.8a: computeLayerPitch uses real attention-focus when provided", () => {
+  const { computeLayerPitch } = require("../../lib/sonification");
+
+  // Valid focus at layer 0 (progress=0, layerTint=0):
+  //   attentionFreq = 200 + focus*500; finalFreq = clamp(attentionFreq, 100, 900)
+  assert.equal(computeLayerPitch(0, 24, 0),   200); // min focus -> 200 Hz
+  assert.equal(computeLayerPitch(0, 24, 1.0), 700); // max focus -> 700 Hz
+  assert.equal(computeLayerPitch(0, 24, 0.5), 450); // mid focus -> 450 Hz
+
+  // Valid focus at last layer (progress=1, layerTint=50 Hz):
+  //   finalFreq = clamp(attentionFreq + 50, 100, 900)
+  assert.equal(computeLayerPitch(23, 24, 0),   250); // 200 + 50 tint
+  assert.equal(computeLayerPitch(23, 24, 1.0), 750); // 700 + 50 tint
+  assert.equal(computeLayerPitch(23, 24, 0.5), 500); // 450 + 50 tint
+
+  // Out-of-range focus values are clamped to [0, 1]:
+  assert.equal(computeLayerPitch(0, 24, -1),  200); // clamped to 0 -> 200 Hz
+  assert.equal(computeLayerPitch(0, 24, 2.0), 700); // clamped to 1 -> 700 Hz
+
+  // Missing or NaN focus -> fallback to layer-progression (150-500 Hz):
+  assert.equal(computeLayerPitch(0,  24, undefined), 150); // layer 0 fallback
+  assert.equal(computeLayerPitch(23, 24, undefined), 500); // layer 23 fallback
+  assert.equal(computeLayerPitch(0,  24, NaN),       150); // NaN treated as absent
+  assert.equal(computeLayerPitch(23, 24, NaN),       500); // NaN treated as absent
+
+  // Clamping to [100, 900] is applied to the attention-driven result:
+  // Extreme values stay within bounds (already satisfied by the formula above,
+  // but verify the guard is present):
+  const minPitch = computeLayerPitch(0, 24, 0);
+  const maxPitch = computeLayerPitch(23, 24, 1.0);
+  assert.ok(minPitch >= 100 && minPitch <= 900, `minPitch ${minPitch} out of [100,900]`);
+  assert.ok(maxPitch >= 100 && maxPitch <= 900, `maxPitch ${maxPitch} out of [100,900]`);
+});

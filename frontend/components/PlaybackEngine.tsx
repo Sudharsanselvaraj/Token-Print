@@ -95,9 +95,12 @@ export default function PlaybackEngine() {
       }
 
       const numLayers = s.genMeta?.num_layers ?? 24;
-      sonifyLayerTransition(s.opIndex, numLayers);
-
+      // Phase 5.8a: look up the real per-layer attention focus for the
+      // current anchor position. undefined when not available (GGUF, etc.).
       const frame = s.genFrames[s.playIndex];
+      const layerFocus: number | undefined = frame?.attention_focus?.[pos];
+      sonifyLayerTransition(s.opIndex, numLayers, layerFocus);
+
       if (frame) {
         const topProbs = frame.topk?.map((t) => t.prob) ?? [];
         const maxP = Math.max(...topProbs, 0.001);
