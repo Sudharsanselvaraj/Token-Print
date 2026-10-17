@@ -31,6 +31,31 @@
 * **scene:** seed pointcloud layout jitter for deterministic visuals ([#100](https://github.com/Sudharsanselvaraj/Token-Print/issues/100)) ([3a8c4ad](https://github.com/Sudharsanselvaraj/Token-Print/commit/3a8c4ad8878deceac7651695b68e2991c497997b))
 * **fix:** route isolation + HF Model Explorer client-side fallback ([#269](https://github.com/Sudharsanselvaraj/Token-Print/issues/269)) ([f69e2c9](https://github.com/Sudharsanselvaraj/Token-Print/commit/f69e2c9ede97dbe7e72fdb19b40c85a5e1a08618))
 
+## [0.4.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-frontend-v0.3.0...token-print-frontend-v0.4.0) (2026-10-17)
+
+
+### Features
+
+* **a11y:** add keyboard tour navigation and Escape dismissal to ReplayGuide ([#350](https://github.com/Sudharsanselvaraj/Token-Print/issues/350)) ([f4c85c8](https://github.com/Sudharsanselvaraj/Token-Print/commit/f4c85c8998fc8f040751cf908cc4f4148fea579a))
+* add non-Latin tokenization view ([#293](https://github.com/Sudharsanselvaraj/Token-Print/issues/293)) ([#362](https://github.com/Sudharsanselvaraj/Token-Print/issues/362)) ([4bb5355](https://github.com/Sudharsanselvaraj/Token-Print/commit/4bb535557a50a2c675bea5e44bb156999708c11d))
+* **embed:** add title and autoplay support to interactive 3d sandbox player ([516a75c](https://github.com/Sudharsanselvaraj/Token-Print/commit/516a75c877de136305805dacc3ebb972f46123a9))
+* **gallery:** streamline to Interactive 3D Tensor Sandbox and remove redundant catalog cards ([bc34ff0](https://github.com/Sudharsanselvaraj/Token-Print/commit/bc34ff055febb2a942605a5ce11b7e05b580875b))
+* **landing:** add curated trace gallery and embed player section ([#299](https://github.com/Sudharsanselvaraj/Token-Print/issues/299)) ([94f65a9](https://github.com/Sudharsanselvaraj/Token-Print/commit/94f65a94ebcc1334467e78ff15a96b5f0eacc161))
+* **landing:** integrate 3D Card Carousel into Feature Showcase and Curated Trace Gallery ([4e5e193](https://github.com/Sudharsanselvaraj/Token-Print/commit/4e5e193fc901e3cf1bce5f0255775fe73debc94e))
+* **ui:** add capability-aware UI controls and badges (DESIGN-02) ([58681ec](https://github.com/Sudharsanselvaraj/Token-Print/commit/58681ec7b52322494d57c851433e4cd8c094b960))
+* **ui:** add CardCarousel and Badge components with Tailwind and shadcn support ([d4128d6](https://github.com/Sudharsanselvaraj/Token-Print/commit/d4128d6ba2cbf65271cedd909d1d63fd6548256b))
+* **ui:** add FocusFrameBorder shine border component to embed iframe and modal; remove issue number ([1193406](https://github.com/Sudharsanselvaraj/Token-Print/commit/1193406ed39a25bf961ba6213c92dee2391a0edc))
+
+
+### Bug Fixes
+
+* **debugger:** isolate stale analysis state and render Console REPL once ([#353](https://github.com/Sudharsanselvaraj/Token-Print/issues/353)) ([2c2d571](https://github.com/Sudharsanselvaraj/Token-Print/commit/2c2d571afca3e48e0eb67f052606677b3c0dcd71))
+* **debugger:** prevent stale analysis data updates using generation timestamp ([#353](https://github.com/Sudharsanselvaraj/Token-Print/issues/353)) ([674e083](https://github.com/Sudharsanselvaraj/Token-Print/commit/674e0839f2b5377a69b820f17f3b9b933a164ad0))
+* **frontend:** add swiper and ssr-window to transpilePackages ([2ad3904](https://github.com/Sudharsanselvaraj/Token-Print/commit/2ad3904975b9ac92f2044493bdfef077c62fcb80))
+* **test:** add test for ConsoleRepl removal and startGeneration state reset ([#353](https://github.com/Sudharsanselvaraj/Token-Print/issues/353)) ([b9ae66e](https://github.com/Sudharsanselvaraj/Token-Print/commit/b9ae66e5f7643edc83abc38d2400a884153e94a4))
+* **ui:** add null safety for data.tokens in ActivationPatchCompare ([f2b27d5](https://github.com/Sudharsanselvaraj/Token-Print/commit/f2b27d5d6a08830f0deb69fb56dcf69c4c56372e))
+* **ui:** ensure high contrast button text and abstract embed player into unified focus frame ([218d059](https://github.com/Sudharsanselvaraj/Token-Print/commit/218d059393873da7436a3044a0039c60e9ae7edb))
+
 ## [0.3.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-frontend-v0.2.0...token-print-frontend-v0.3.0) (2026-09-22)
 
 
