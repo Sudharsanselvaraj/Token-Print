@@ -50,6 +50,40 @@ export function anchorPosFor(anchors: number[], opIndex: number): number {
   return pos;
 }
 
+/**
+ * Map an anchor position index to the corresponding transformer layer index.
+ *
+ * Anchors in Token-Print start with the embedding layer (activeLayer = -1)
+ * when an embedding operation is present. This function maps:
+ *   - embedding anchor (or pre-transformer ops) -> -1
+ *   - transformer layers 0 .. numLayers - 1 -> 0 .. numLayers - 1
+ *   - output layer -> numLayers
+ *
+ * @param catalog     The operation catalog.
+ * @param anchors     The anchor op indices from layerAnchors().
+ * @param anchorPos   The current anchor position index from anchorPosFor().
+ * @param numLayers   Total transformer layers.
+ * @returns The transformer layer index (0 .. numLayers - 1), or -1 for embedding / pre-transformer.
+ */
+export function anchorToLayerIndex(
+  catalog: OpCatalogEntry[],
+  anchors: number[],
+  anchorPos: number,
+  numLayers: number,
+): number {
+  if (!anchors.length || anchorPos < 0 || anchorPos >= anchors.length) {
+    return -1;
+  }
+  const opIdx = anchors[anchorPos];
+  const op = catalog[opIdx];
+  if (op) {
+    const al = activeLayerOf(op, numLayers);
+    if (al != null) return al;
+  }
+  const hasEmbedding = anchors.length > numLayers;
+  return hasEmbedding ? anchorPos - 1 : anchorPos;
+}
+
 export type Phase = "prefill" | "decode";
 
 export interface PhaseInfo {

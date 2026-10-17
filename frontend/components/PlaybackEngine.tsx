@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 import { useStore } from "@/lib/store";
-import { layerAnchors, anchorPosFor } from "@/lib/playback";
+import { layerAnchors, anchorPosFor, anchorToLayerIndex } from "@/lib/playback";
 import { CHAPTERS } from "@/lib/walkthrough";
 import { sonifyLayerTransition, sonifyFrame } from "@/lib/sonification";
 
@@ -95,11 +95,18 @@ export default function PlaybackEngine() {
       }
 
       const numLayers = s.genMeta?.num_layers ?? 24;
-      // Phase 5.8a: look up the real per-layer attention focus for the
-      // current anchor position. undefined when not available (GGUF, etc.).
+      const rawLayerIdx = anchorToLayerIndex(cat, anchors, pos, numLayers);
+      const layerIndex = Math.max(0, Math.min(rawLayerIdx >= 0 ? rawLayerIdx : 0, numLayers - 1));
+
+      // Phase 5.8a: look up real per-layer attention focus for this transformer layer.
+      // Embedding (rawLayerIdx < 0) or output (rawLayerIdx >= numLayers) do not have attention matrices.
       const frame = s.genFrames[s.playIndex];
-      const layerFocus: number | undefined = frame?.attention_focus?.[pos];
-      sonifyLayerTransition(s.opIndex, numLayers, layerFocus);
+      const layerFocus: number | undefined =
+        rawLayerIdx >= 0 && rawLayerIdx < numLayers
+          ? frame?.attention_focus?.[rawLayerIdx]
+          : undefined;
+
+      sonifyLayerTransition(layerIndex, numLayers, layerFocus);
 
       if (frame) {
         const topProbs = frame.topk?.map((t) => t.prob) ?? [];

@@ -390,3 +390,62 @@ test("Phase 5.8a: computeLayerPitch uses real attention-focus when provided", ()
   assert.ok(minPitch >= 100 && minPitch <= 900, `minPitch ${minPitch} out of [100,900]`);
   assert.ok(maxPitch >= 100 && maxPitch <= 900, `maxPitch ${maxPitch} out of [100,900]`);
 });
+
+test("Phase 5.8a: anchor positions map to correct attention entries and pitch calculation receives normalized transformer layer index", () => {
+  const { anchorToLayerIndex, layerAnchors } = require("../../lib/playback");
+  const { computeLayerPitch } = require("../../lib/sonification");
+
+  const catalog = [
+    { op_key: "embedding", name: "embed", shape: [100, 10], layer: null },
+    { op_key: "attention", name: "l0_attn", shape: [10, 10], layer: 0 },
+    { op_key: "mlp", name: "l0_mlp", shape: [10, 10], layer: 0 },
+    { op_key: "attention", name: "l1_attn", shape: [10, 10], layer: 1 },
+    { op_key: "output", name: "lm_head", shape: [10, 100], layer: null },
+  ];
+  const numLayers = 2;
+  const anchors = layerAnchors(catalog, numLayers); // [0, 1, 3, 4]
+
+  // 1. Embedding anchor position (pos = 0) must map to -1 (not transformer layer 0)
+  const embedLayerIdx = anchorToLayerIndex(catalog, anchors, 0, numLayers);
+  assert.equal(embedLayerIdx, -1);
+
+  // 2. Transformer layer 0 anchor position (pos = 1) must map to 0
+  const l0LayerIdx = anchorToLayerIndex(catalog, anchors, 1, numLayers);
+  assert.equal(l0LayerIdx, 0);
+
+  // 3. Transformer layer 1 anchor position (pos = 2) must map to 1
+  const l1LayerIdx = anchorToLayerIndex(catalog, anchors, 2, numLayers);
+  assert.equal(l1LayerIdx, 1);
+
+  // 4. Output anchor position (pos = 3) maps to numLayers (2)
+  const outLayerIdx = anchorToLayerIndex(catalog, anchors, 3, numLayers);
+  assert.equal(outLayerIdx, 2);
+
+  // 5. Attention lookup: embedding position must NOT use layer 0's attention focus
+  const mockAttentionFocus = [0.85, 0.40]; // layer 0 focus = 0.85, layer 1 focus = 0.40
+  const getFocus = (rawIdx: number) =>
+    rawIdx >= 0 && rawIdx < numLayers ? mockAttentionFocus[rawIdx] : undefined;
+
+  assert.equal(getFocus(embedLayerIdx), undefined); // embedding -> undefined focus (fallback pitch)
+  assert.equal(getFocus(l0LayerIdx), 0.85);          // layer 0 -> real layer 0 attention focus (0.85)
+  assert.equal(getFocus(l1LayerIdx), 0.40);          // layer 1 -> real layer 1 attention focus (0.40)
+  assert.equal(getFocus(outLayerIdx), undefined);    // output -> undefined focus (fallback pitch)
+
+  // 6. Pitch calculation receives normalized transformer layer index (not s.opIndex):
+  // Layer 0 receives layerIndex = 0, focus = 0.85 -> 200 + 0.85*500 + 0 = 625 Hz
+  const l0Pitch = computeLayerPitch(0, numLayers, getFocus(l0LayerIdx));
+  assert.equal(l0Pitch, 625);
+
+  // Layer 1 receives layerIndex = 1, focus = 0.40 -> 200 + 0.40*500 + 50 = 450 Hz
+  const l1Pitch = computeLayerPitch(1, numLayers, getFocus(l1LayerIdx));
+  assert.equal(l1Pitch, 450);
+
+  // Embedding receives layerIndex = 0, focus = undefined -> fallback 150 Hz
+  const embedPitch = computeLayerPitch(0, numLayers, getFocus(embedLayerIdx));
+  assert.equal(embedPitch, 150);
+
+  // 7. Safety guards: out-of-range anchor positions safely return -1
+  assert.equal(anchorToLayerIndex(catalog, anchors, -1, numLayers), -1);
+  assert.equal(anchorToLayerIndex(catalog, anchors, 999, numLayers), -1);
+  assert.equal(anchorToLayerIndex([], [], 0, numLayers), -1);
+});

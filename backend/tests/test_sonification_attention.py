@@ -70,3 +70,75 @@ def test_gguf_frame_attention_focus_honesty():
     # Even without loaded model, verify that the honesty contract is documented
     # or test the frame structure if mockable
     assert hasattr(engine, "metadata")
+
+
+def test_custom_model_without_output_attentions_generates_successfully():
+    """Verify custom/synthetic models without output_attentions support generate cleanly
+    and emit honest fallback attention_focus: []."""
+    import threading
+    import types
+    from unittest.mock import MagicMock
+    from torch import nn
+    from app.model import ActivationEngine
+
+    class SyntheticNoAttnModel(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.config = types.SimpleNamespace(
+                vocab_size=50,
+                hidden_size=16,
+                is_encoder_decoder=False,
+                model_type="llama",
+            )
+            self.embed = nn.Embedding(50, 16)
+            self.lm_head = nn.Linear(16, 50, bias=False)
+
+        def forward(self, input_ids, past_key_values=None, use_cache=True, output_hidden_states=True):
+            # Model forward signature explicitly does not accept **kwargs or output_attentions
+            x = self.embed(input_ids)
+            logits = self.lm_head(x)
+            return types.SimpleNamespace(
+                logits=logits,
+                past_key_values=past_key_values,
+                hidden_states=(x,),
+            )
+
+    model = SyntheticNoAttnModel()
+    service = ModelEngine.__new__(ModelEngine)
+    service.model = model
+    service.device = "cpu"
+    service.model_id = "test-no-attn"
+    service.mode = "causal_lm"
+    service._lock = threading.Lock()
+    service.num_layers = 1
+    service.num_heads = 1
+    service.hidden_size = 16
+    service.revision = "test-rev"
+    service.activation_engine = ActivationEngine()
+    service._layer_elapsed = {}
+    service._layer_timing_lock = threading.Lock()
+
+    tokenizer = MagicMock()
+    tokenizer.side_effect = lambda prompt, **kw: {"input_ids": torch.tensor([[1, 2, 3]])}
+    tokenizer.encode.return_value = [1, 2, 3]
+    tokenizer.decode.side_effect = lambda ids, **kw: f"tok_{ids[0] if ids else ''}"
+    tokenizer.eos_token_id = 9999
+    service.tokenizer = tokenizer
+    service._catalog = None
+
+    frames = list(
+        service.generate_steps(
+            prompt="test prompt",
+            max_new_tokens=2,
+            top_k=5,
+            use_chat_template=False,
+            include_catalog=False,
+            decoding_mode="greedy",
+        )
+    )
+    token_frames = [f for f in frames if f.get("type") == "token"]
+    assert len(token_frames) == 2
+    for tf in token_frames:
+        assert "attention_focus" in tf
+        # Honest fallback: empty list when model does not support attention extraction
+        assert tf["attention_focus"] == []

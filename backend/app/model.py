@@ -12,6 +12,7 @@ Design decisions (see plan):
 from __future__ import annotations
 
 import functools
+import inspect
 import io
 import logging
 import os
@@ -99,6 +100,21 @@ def _pick_device() -> str:
     if torch.backends.mps.is_available():
         return "mps"
     return "cpu"
+
+
+def _model_accepts_output_attentions(model: torch.nn.Module) -> bool:
+    """Check whether a model's forward method accepts ``output_attentions`` or ``**kwargs``."""
+    try:
+        forward_fn = getattr(model, "forward", None)
+        if forward_fn is None or not callable(forward_fn):
+            return True
+        sig = inspect.signature(forward_fn)
+        params = sig.parameters
+        if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
+            return True
+        return "output_attentions" in params
+    except (ValueError, TypeError):
+        return False
 
 
 class GenerationState:
@@ -1247,6 +1263,7 @@ class ModelEngine:
                     frame.update(extra)
                 return frame
 
+            supports_attentions = _model_accepts_output_attentions(self.model)
             step = 0
             try:
                 while step < max_new_tokens:
@@ -1258,13 +1275,16 @@ class ModelEngine:
                         state.trim_cache(window_size)
                         cache_len_in = window_size  # after trim, the model is fed exactly window_size entries
 
-                    out = self.model(
-                        input_ids=cur,
-                        past_key_values=state.past_key_values,
-                        use_cache=True,
-                        output_hidden_states=True,
-                        output_attentions=True,  # Phase 5.8a: per-layer attention focus
-                    )
+                    forward_kwargs = {
+                        "input_ids": cur,
+                        "past_key_values": state.past_key_values,
+                        "use_cache": True,
+                        "output_hidden_states": True,
+                    }
+                    if supports_attentions:
+                        forward_kwargs["output_attentions"] = True
+
+                    out = self.model(**forward_kwargs)
                     state.past_key_values = out.past_key_values
                     state.positions_done += n_positions
 
@@ -1421,7 +1441,7 @@ class ModelEngine:
                             )
                         yield emit_frame(step, chosen_id, probs, logits, out.hidden_states,
                                          phase, n_positions, cache_len_in, _moe_extra,
-                                         out.attentions)  # Phase 5.8a
+                                         getattr(out, "attentions", None))  # Phase 5.8a
                         step += 1
                         if chosen_id in eos_ids:
                             break
