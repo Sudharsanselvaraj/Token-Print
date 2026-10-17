@@ -17,6 +17,7 @@ import {
   IconButton,
   TOKENS,
 } from "./primitives";
+import { getViewCapability, extractModelCapabilities } from "@/lib/capabilities";
 
 interface LeftSidebarProps {
   collapsed?: boolean;
@@ -28,6 +29,7 @@ export default function LeftSidebar({ collapsed, onToggleCollapse }: LeftSidebar
   const arch = useStore((s) => s.arch);
   const graphViewMode = useStore((s) => s.graphViewMode);
   const setGraphViewMode = useStore((s) => s.setGraphViewMode);
+  const capabilities = extractModelCapabilities(data, arch);
   const selectedTokenIndex = useStore((s) => s.selectedTokenIndex);
   const setSelectedTokenIndex = useStore((s) => s.setSelectedTokenIndex);
   const selectedLayer = useStore((s) => s.selectedLayer);
@@ -92,29 +94,80 @@ export default function LeftSidebar({ collapsed, onToggleCollapse }: LeftSidebar
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             {viewModes.map((v) => {
               const isActive = graphViewMode === v.id;
+              const cap = getViewCapability(v.id, capabilities);
+              const isUnsupported = !cap.supported;
+
               return (
                 <button
                   key={v.id}
-                  onClick={() => setGraphViewMode(v.id)}
+                  onClick={() => {
+                    if (!isUnsupported) {
+                      setGraphViewMode(v.id);
+                    }
+                  }}
+                  disabled={isUnsupported}
+                  aria-disabled={isUnsupported}
+                  title={isUnsupported ? (cap.reason || "Not supported by this model architecture") : undefined}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
                     padding: "7px 10px",
                     borderRadius: TOKENS.radiusSm,
-                    border: `1px solid ${isActive ? TOKENS.borderStrong : TOKENS.border}`,
-                    background: isActive ? TOKENS.surfaceHover : "transparent",
-                    color: isActive ? TOKENS.textPrimary : TOKENS.textSecondary,
+                    border: `1px solid ${
+                      isUnsupported
+                        ? "rgba(255, 255, 255, 0.05)"
+                        : isActive
+                        ? TOKENS.borderStrong
+                        : TOKENS.border
+                    }`,
+                    background: isUnsupported
+                      ? "transparent"
+                      : isActive
+                      ? TOKENS.surfaceHover
+                      : "transparent",
+                    color: isUnsupported
+                      ? TOKENS.textMuted
+                      : isActive
+                      ? TOKENS.textPrimary
+                      : TOKENS.textSecondary,
                     fontFamily: TOKENS.fontSans,
                     fontSize: "12px",
                     fontWeight: isActive ? 600 : 400,
-                    cursor: "pointer",
+                    cursor: isUnsupported ? "not-allowed" : "pointer",
+                    opacity: isUnsupported ? 0.45 : 1,
                     transition: "all 0.15s",
                     textAlign: "left",
                   }}
                 >
-                  <span>{v.label}</span>
-                  <span style={{ fontSize: "10px", fontFamily: TOKENS.fontMono, color: TOKENS.textMuted }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>{v.label}</span>
+                    {isUnsupported && (
+                      <span
+                        style={{
+                          fontSize: "9px",
+                          fontFamily: TOKENS.fontMono,
+                          fontWeight: 600,
+                          padding: "1px 5px",
+                          borderRadius: "3px",
+                          background: "rgba(239, 68, 68, 0.15)",
+                          color: "#f87171",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
+                          letterSpacing: "0.4px",
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        N/A
+                      </span>
+                    )}
+                  </div>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontFamily: TOKENS.fontMono,
+                      color: isUnsupported ? "rgba(255, 255, 255, 0.2)" : TOKENS.textMuted,
+                    }}
+                  >
                     {v.key}
                   </span>
                 </button>
