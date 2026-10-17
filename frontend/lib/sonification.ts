@@ -17,29 +17,51 @@ export function isSonificationEnabled() {
 }
 
 /**
+ * Mathematical frequency mapping functions (Phase 5.8a / #301).
+ *
+ * NOTE ON ATTENTION TELEMETRY:
+ * Full attention weight tensors [layer, head, from, to] are emitted during static
+ * analysis (`/analyze`), but omitted from the streaming generation WebSocket payload
+ * for throughput reasons. Therefore, layer-transition pitch is explicitly documented
+ * as layer-depth progression (150-500 Hz), while chord frequencies are driven by real
+ * output distribution entropy and hidden state activation norm.
+ */
+
+export function computeLayerPitch(layerIndex: number, totalLayers: number): number {
+  const safeTotal = Math.max(Number.isFinite(totalLayers) ? totalLayers : 1, 1);
+  const safeLayer = Math.max(0, Math.min(Number.isFinite(layerIndex) ? layerIndex : 0, safeTotal - 1));
+  const denominator = Math.max(safeTotal - 1, 1);
+  const progress = safeTotal === 1 ? 0 : safeLayer / denominator;
+  return 150 + progress * 350;
+}
+
+export function computeChordFrequencies(entropyNorm: number, norm: number, headSpread = 0.5) {
+  const safeEntropy = Math.max(0, Math.min(1, Number.isFinite(entropyNorm) ? entropyNorm : 0));
+  const safeNorm = Math.max(0, Number.isFinite(norm) ? norm : 0);
+  const safeSpread = Math.max(0, Math.min(1, Number.isFinite(headSpread) ? headSpread : 0.5));
+
+  const baseFreq = 200 + safeEntropy * 600;
+  const normClamped = Math.min(safeNorm / 50, 1);
+  const harmonic = baseFreq * (1.5 + normClamped);
+  const brightFreq = baseFreq * (2 + safeSpread * 0.5);
+  return { baseFreq, harmonic, brightFreq };
+}
+
+/**
  * Sonify a single generation frame.
- * Plays a chord based on the layer statistics available in the frame.
- * @param entropyNorm   0..1 — normalized entropy of the output distribution
- * @param norm          scalar norm of the hidden state (typically 0..50)
- * @param headSpread    0..1 — how spread vs peaked the attention is
+ * Plays a chord based on output entropy and layer activation magnitude.
+ * @param entropyNorm   0..1 — normalized Shannon entropy of the output distribution (real telemetry)
+ * @param norm          scalar norm of the hidden state (real telemetry)
+ * @param headSpread    0..1 — attention spread (approximated when stream omits raw attention matrices)
  */
 export function sonifyFrame(
   entropyNorm: number,
   norm: number,
-  headSpread: number
+  headSpread = 0.5
 ): void {
   if (!sonificationEnabled) return;
 
-  // Map entropy → fundamental frequency (200–800 Hz)
-  // High entropy → higher, more uncertain tone
-  const baseFreq = 200 + entropyNorm * 600;
-
-  // Map hidden norm → overtone harmonic (adds texture based on magnitude)
-  const normClamped = Math.min(norm / 50, 1);
-  const harmonic = baseFreq * (1.5 + normClamped);
-
-  // Map attention spread → chord brightness (wide attention → brighter chord)
-  const brightFreq = baseFreq * (2 + headSpread * 0.5);
+  const { baseFreq, harmonic, brightFreq } = computeChordFrequencies(entropyNorm, norm, headSpread);
 
   playTone(baseFreq, 140, "sine", 0.04);
   playTone(harmonic, 80, "triangle", 0.015);
@@ -47,14 +69,12 @@ export function sonifyFrame(
 }
 
 /**
- * Sonify a layer transition (called when the op advances between layers).
- * Short, directional sweep.
+ * Sonify a layer transition (called as the playback descends through layers).
+ * Directional frequency sweep from 150 Hz to 500 Hz mapped to layer progression.
  */
 export function sonifyLayerTransition(layerIndex: number, totalLayers: number): void {
   if (!sonificationEnabled) return;
-  const progress = layerIndex / Math.max(totalLayers - 1, 1);
-  // Sweep from low → high as we advance through layers
-  const freq = 150 + progress * 350;
+  const freq = computeLayerPitch(layerIndex, totalLayers);
   playTone(freq, 55, "sawtooth", 0.02);
 }
 

@@ -283,3 +283,76 @@ test("Phase 4.1: Walkthrough tokenizer chapter reports byte-fallback dimensions 
   assert.equal(inspector.dimensions["Tokens"], "3");
   assert.equal(inspector.dimensions["Byte-fallback"], "3 tokens");
 });
+
+test("Phase 5.8a: Sonification toggle and math mappings", () => {
+  const store = makeStore();
+  const { computeLayerPitch, computeChordFrequencies, setSonificationEnabled, isSonificationEnabled } = require("../../lib/sonification");
+
+  // 1. Independent toggle states: Sonify never mutates muted, muted never mutates Sonify
+  assert.equal(store.getState().sonificationEnabled, false);
+  assert.equal(store.getState().muted, true);
+
+  // Toggle Sonify ON: muted remains true
+  store.getState().toggleSonification();
+  assert.equal(store.getState().sonificationEnabled, true);
+  assert.equal(store.getState().muted, true);
+
+  // Toggle Sound ON (unmute): sonification remains true
+  store.getState().toggleMuted();
+  assert.equal(store.getState().sonificationEnabled, true);
+  assert.equal(store.getState().muted, false);
+
+  // Toggle Sonify OFF: Sound remains unmuted
+  store.getState().toggleSonification();
+  assert.equal(store.getState().sonificationEnabled, false);
+  assert.equal(store.getState().muted, false);
+
+  // 2. Direct sonification module state
+  setSonificationEnabled(false);
+  assert.equal(isSonificationEnabled(), false);
+  setSonificationEnabled(true);
+  assert.equal(isSonificationEnabled(), true);
+
+  // 3. Layer pitch mapping: 150 Hz at layer 0 to 500 Hz at layer N-1
+  assert.equal(computeLayerPitch(0, 24), 150);
+  assert.equal(computeLayerPitch(23, 24), 500);
+  assert.equal(computeLayerPitch(0, 1), 150);
+
+  // 4. Chord frequencies derived from entropy and norm
+  // Min entropy (0) and min norm (0)
+  const low = computeChordFrequencies(0, 0, 0.5);
+  assert.equal(low.baseFreq, 200);
+  assert.equal(low.harmonic, 300); // 200 * 1.5
+  assert.equal(low.brightFreq, 450); // 200 * (2 + 0.25)
+
+  // Max entropy (1) and max norm (>= 50)
+  const high = computeChordFrequencies(1, 50, 0.5);
+  assert.equal(high.baseFreq, 800);
+  assert.equal(high.harmonic, 2000); // 800 * 2.5
+  assert.equal(high.brightFreq, 1800); // 800 * 2.25
+
+  // 5. Edge cases: totalLayers <= 1, invalid / undefined / negative values
+  assert.equal(computeLayerPitch(0, 1), 150);
+  assert.equal(computeLayerPitch(0, 0), 150);
+  assert.equal(computeLayerPitch(0, -5), 150);
+  assert.equal(computeLayerPitch(NaN, 12), 150);
+  assert.equal(computeLayerPitch(5, NaN), 150);
+  assert.equal(computeLayerPitch(999, 12), 500); // clamps to max layer (N-1)
+  assert.equal(computeLayerPitch(-10, 12), 150); // clamps to min layer (0)
+
+  // 6. Edge cases: entropy out of bounds (<0, >1), NaN, undefined, negative norm
+  const clampedLow = computeChordFrequencies(-2, -10, -1);
+  assert.equal(clampedLow.baseFreq, 200);
+  assert.equal(clampedLow.harmonic, 300);
+  assert.equal(clampedLow.brightFreq, 400); // safeSpread clamped to 0 -> 200 * 2.0 = 400
+
+  const clampedHigh = computeChordFrequencies(5, 500, 10);
+  assert.equal(clampedHigh.baseFreq, 800);
+  assert.equal(clampedHigh.harmonic, 2000); // norm clamped to 50 -> 800 * 2.5 = 2000
+  assert.equal(clampedHigh.brightFreq, 2000); // safeSpread clamped to 1 -> 800 * 2.5 = 2000
+
+  const nanFallback = computeChordFrequencies(NaN, NaN, NaN);
+  assert.equal(nanFallback.baseFreq, 200);
+  assert.equal(nanFallback.harmonic, 300);
+  assert.equal(nanFallback.brightFreq, 450); // fallback spread 0.5 -> 200 * 2.25 = 450
+});
