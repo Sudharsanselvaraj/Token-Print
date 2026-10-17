@@ -13,11 +13,14 @@ from __future__ import annotations
 
 import functools
 import io
+import logging
 import os
 import re
 import threading
 import time
 from typing import ClassVar
+
+logger = logging.getLogger(__name__)
 
 # --- Environment guards (must be set BEFORE torch/transformers import) -------
 # Safety net: if any single op is unimplemented on MPS, fall back to CPU for that
@@ -1190,7 +1193,8 @@ class ModelEngine:
                     )
 
             def emit_frame(step, chosen_id, probs, logits, hidden_states,
-                           phase, n_positions, cache_len_in, extra: dict | None = None):
+                           phase, n_positions, cache_len_in,
+                           extra: dict | None = None, attentions=None):
                 topk = probs.topk(top_k)
                 top_ids = topk.indices[0].tolist()
                 top_probs = topk.values[0].tolist()
@@ -1198,6 +1202,26 @@ class ModelEngine:
                 layer_stats = [
                     round(float(h[0, -1].abs().mean()), 4) for h in hidden_states
                 ]
+                # Phase 5.8a (#301) -- per-layer attention focus for sonification.
+                # For each transformer layer: mean across heads of each head's peak
+                # attention weight for the current query (last position).
+                # Shape per layer: (batch, num_heads, q_len, kv_len).
+                # During KV-cache decode q_len=1; during prefill we take index [-1].
+                # Result is in [0, 1] because softmax attention weights sum to 1.
+                # Empty list when attentions are unavailable (e.g. GGUF backend).
+                attention_focus: list[float] = []
+                if attentions is not None:
+                    try:
+                        for layer_attn in attentions:
+                            if layer_attn is None or layer_attn.ndim != 4:
+                                continue
+                            # (1, num_heads, q_len, kv_len) -> last query position
+                            a = layer_attn[0, :, -1, :].float()  # (num_heads, kv_len)
+                            head_max = a.max(dim=-1).values      # (num_heads,)
+                            attention_focus.append(round(float(head_max.mean()), 4))
+                    except (RuntimeError, IndexError, ValueError, TypeError) as exc:
+                        logger.debug("Failed to extract per-layer attention focus: %s", exc)
+                        attention_focus = []
                 frame = {
                     "type": "token",
                     "step": step,
@@ -1213,6 +1237,7 @@ class ModelEngine:
                     ],
                     "layer_stats": layer_stats,
                     "layer_timings_ms": self._last_layer_timings_ms(),
+                    "attention_focus": attention_focus,  # Phase 5.8a
                     "eos": chosen_id in eos_ids,
                     "phase": phase,
                     "n_positions": n_positions,
@@ -1238,6 +1263,7 @@ class ModelEngine:
                         past_key_values=state.past_key_values,
                         use_cache=True,
                         output_hidden_states=True,
+                        output_attentions=True,  # Phase 5.8a: per-layer attention focus
                     )
                     state.past_key_values = out.past_key_values
                     state.positions_done += n_positions
@@ -1337,6 +1363,7 @@ class ModelEngine:
                                 step, cid, row_probs, row_logits, row_hs,
                                 phase, n_positions, cache_len_in,
                                 frame_extra,
+                                None,  # Phase 5.8a: attention skipped for speculative batch
                             )
                             step += 1
                             cache_len_in += 1
@@ -1393,7 +1420,8 @@ class ModelEngine:
                                 _moe_captured, moe_blocks
                             )
                         yield emit_frame(step, chosen_id, probs, logits, out.hidden_states,
-                                         phase, n_positions, cache_len_in, _moe_extra)
+                                         phase, n_positions, cache_len_in, _moe_extra,
+                                         out.attentions)  # Phase 5.8a
                         step += 1
                         if chosen_id in eos_ids:
                             break
