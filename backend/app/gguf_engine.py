@@ -269,6 +269,7 @@ class GGUFEngine:
                     ],
                     "layer_stats": [],      # honest: llama.cpp exposes no per-layer activations
                     "layer_timings_ms": [],
+                    "attention_focus": [],  # honest: llama.cpp exposes no per-layer attention weights
                     "eos": eos,
                     "phase": "prefill" if step == 0 else "decode",
                     "n_positions": n_positions,

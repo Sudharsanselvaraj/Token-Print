@@ -4,6 +4,7 @@ import React from "react";
 import { useStore } from "@/lib/store";
 import type { NavMode } from "@/lib/store/types";
 import { TOKENS } from "./primitives";
+import { cueDistrict } from "@/lib/sound";
 
 export function CameraControlGroup({
   variant = "bar",
@@ -19,6 +20,10 @@ export function CameraControlGroup({
   const traceSource = useStore((s) => s.traceSource);
   const downloadTrace = useStore((s) => s.downloadTrace);
   const setTraceGalleryOpen = useStore((s) => s.setTraceGalleryOpen);
+  const muted = useStore((s) => s.muted);
+  const toggleMuted = useStore((s) => s.toggleMuted);
+  const sonificationEnabled = useStore((s) => s.sonificationEnabled);
+  const toggleSonification = useStore((s) => s.toggleSonification);
 
   const navButtons: { id: NavMode; label: string; title: string }[] = [
     { id: "OVERVIEW", label: "OVERVIEW", title: "Reset camera to full model view (Overview)" },
@@ -133,6 +138,65 @@ export function CameraControlGroup({
         }}
       >
         TRACE
+      </button>
+
+      <div style={{ width: 1, height: "14px", background: "#252525", margin: "0 2px" }} />
+
+      {/* Sound / Mute Toggle Button */}
+      <button
+        onClick={() => {
+          toggleMuted();
+          if (muted) {
+            cueDistrict();
+          }
+        }}
+        title={muted ? "Sound cues muted (Click to unmute)" : "Sound cues enabled (Click to mute)"}
+        style={{
+          height: variant === "compact" ? "20px" : "22px",
+          padding: "0 7px",
+          fontSize: "10px",
+          fontWeight: !muted ? 600 : 500,
+          fontFamily: TOKENS.fontSans,
+          letterSpacing: "0.02em",
+          borderRadius: "3px",
+          border: "none",
+          cursor: "pointer",
+          transition: "all 0.12s ease",
+          background: !muted ? "#ffffff" : "transparent",
+          color: !muted ? "#000000" : "#a3a3a3",
+          whiteSpace: "nowrap",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+        }}
+        aria-label={muted ? "Sound muted" : "Sound enabled"}
+      >
+        <span>{!muted ? "🔊" : "🔇"}</span>
+        <span>{!muted ? "SOUND" : "MUTED"}</span>
+      </button>
+
+      {/* Sonification Toggle Button */}
+      <button
+        onClick={toggleSonification}
+        title="Toggle neural activation sonification during token decoding"
+        style={{
+          height: variant === "compact" ? "20px" : "22px",
+          padding: "0 7px",
+          fontSize: "10px",
+          fontWeight: sonificationEnabled ? 600 : 500,
+          fontFamily: TOKENS.fontSans,
+          letterSpacing: "0.02em",
+          borderRadius: "3px",
+          border: "none",
+          cursor: "pointer",
+          transition: "all 0.12s ease",
+          background: sonificationEnabled ? "#ffffff" : "transparent",
+          color: sonificationEnabled ? "#000000" : "#a3a3a3",
+          whiteSpace: "nowrap",
+        }}
+        aria-label={sonificationEnabled ? "Sonification enabled" : "Sonification disabled"}
+      >
+        {sonificationEnabled ? "SONIFY ON" : "SONIFY"}
       </button>
     </div>
   );
