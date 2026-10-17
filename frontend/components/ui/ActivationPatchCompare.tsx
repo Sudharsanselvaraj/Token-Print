@@ -106,8 +106,8 @@ export default function ActivationPatchCompare() {
 
       {!result && !loading && (
         <div className="ap-hint">
-          Suggestion: patch {data.tokens.length ? "into the last position" : ""} of a related
-          sentence (e.g. &quot;The {data.tokens[data.tokens.length - 1]?.text.trim()} sat.&quot;) to see
+          Suggestion: patch {data.tokens?.length ? "into the last position" : ""} of a related
+          sentence (e.g. &quot;The {data.tokens?.[data.tokens.length - 1]?.text?.trim()} sat.&quot;) to see
           where the prediction breaks.
         </div>
       )}
