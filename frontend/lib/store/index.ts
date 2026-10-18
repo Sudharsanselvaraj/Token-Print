@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { StateCreator } from "zustand";
 import { validateTrace } from "../traceValidation";
 import { loadTraceFile } from "../api";
 import type { GenerationSource } from "../generation";
@@ -13,14 +14,11 @@ import { createGenerationSlice } from "./generationSlice";
 import { createTraceSlice } from "./traceSlice";
 import type { StoreState } from "./types";
 import { createUISlice } from "./uiSlice";
+import { genResetFields } from "./genReset";
 
 let genHandle: GenerationHandle | null = null;
 
-/**
- * One Zustand store composed from domain slices. Middleware belongs here if it
- * is added in the future, so it observes a single coherent application state.
- */
-export const useStore = create<StoreState>()((set, get, store) => ({
+export const storeDefinition: StateCreator<StoreState, [], [], StoreState> = (set, get, store) => ({
   ...createArchitectureSlice(set, get, store),
   ...createGenerationSlice(set, get, store),
   ...createTraceSlice(set, get, store),
@@ -51,23 +49,8 @@ export const useStore = create<StoreState>()((set, get, store) => ({
   startGeneration: (prompt, options) => {
     genHandle?.close();
     set({
-      genStatus: "streaming",
-      genMeta: null,
-      genDone: null,
-      genFrames: [],
-      genText: "",
-      genError: null,
-      playIndex: -1,
-      isPlaying: false,
-      opIndex: 0,
-      opPlaying: false,
-      autoStarted: false,
-      traceSource: "live",
-      data: null,
-      generationTimestamp: Date.now(),
+      ...genResetFields(),
       ...(options?.source === "local" ? { arch: null, archError: null } : {}),
-      debugSnapshots: {},
-      debugSnapshotError: null,
     });
     const opts: GenOptions = {
       maxNewTokens: 40,
@@ -149,7 +132,9 @@ export const useStore = create<StoreState>()((set, get, store) => ({
     const count = state.genMeta?.op_catalog?.length ?? 1;
     return { opIndex: (state.opIndex + 1) % count };
   }),
-}));
+});
+
+export const useStore = create<StoreState>()(storeDefinition);
 
 /** Slice-scoped selectors for common, stable single-domain subscriptions. */
 export const useArchitectureTensors = () => useStore((state) => state.arch?.tensors);

@@ -10,6 +10,7 @@ import { createGenerationSlice } from "../../lib/store/generationSlice";
 import { createTraceSlice } from "../../lib/store/traceSlice";
 import type { StoreState } from "../../lib/store/types";
 import { createUISlice } from "../../lib/store/uiSlice";
+import { storeDefinition } from "../../lib/store/index";
 import { PRESET_PROMPTS, isByteFallbackToken } from "../../lib/prompts";
 import { CHAPTERS } from "../../lib/walkthrough";
 import type { AnalyzeResponse, GenDone, GenMeta, TokenFrame } from "../../lib/types";
@@ -207,18 +208,60 @@ test("Phase 5.2a: error frame while streaming flips status to error", () => {
 });
 
 
-test("startGeneration resets analysis data", () => {
-  const store = makeStore();
-  // Simulate some analysis data existing
-  store.setState({ data: { sentence: "some data" } as any });
-  assert.equal(store.getState().data?.sentence, "some data");
+test("startGeneration resets analysis data and invokes the generation source", () => {
+  const captured: { prompt?: string; source?: string; sink?: FrameSink } = {};
 
-  // Directly trigger the (now modified) startGeneration
-  // Since I can not call `startGeneration` easily,
-  // I will just test the reset-logic as an action.
-  // Actually, I can call `store.setState` to mimic the startGeneration logic
-  store.setState({ data: null });
-  assert.equal(store.getState().data, null);
+  registerLocalEngine((prompt, opts, sink) => {
+    captured.prompt = prompt;
+    captured.source = opts.source;
+    captured.sink = sink;
+    return { close: () => undefined };
+  });
+
+  try {
+    const store = createStore<StoreState>()(storeDefinition);
+    store.setState({
+      data: { sentence: "stale analysis" } as any,
+      genFrames: [tokenFrame as any],
+      genText: "stale text",
+      genError: "previous error",
+      genStatus: "done" as any,
+      playIndex: 5,
+      isPlaying: true,
+      opIndex: 3,
+      opPlaying: true,
+      autoStarted: true,
+      traceSource: "file" as any,
+      debugSnapshots: { 0: {} as any },
+      debugSnapshotError: "snap error",
+    });
+
+    assert.ok(store.getState().data !== null);
+    store.getState().startGeneration("test prompt", { source: "local" });
+
+    assert.equal(store.getState().data, null);
+    assert.deepEqual(store.getState().genFrames, []);
+    assert.equal(store.getState().genText, "");
+    assert.equal(store.getState().genError, null);
+    assert.equal(store.getState().genStatus, "streaming");
+    assert.equal(store.getState().traceSource, "live");
+    assert.equal(store.getState().playIndex, -1);
+    assert.equal(store.getState().isPlaying, false);
+    assert.equal(store.getState().opIndex, 0);
+    assert.equal(store.getState().opPlaying, false);
+    assert.equal(store.getState().autoStarted, false);
+    assert.deepEqual(store.getState().debugSnapshots, {});
+    assert.equal(store.getState().debugSnapshotError, null);
+
+    assert.equal(captured.prompt, "test prompt");
+    assert.equal(captured.source, "local");
+    assert.ok(captured.sink !== undefined);
+    assert.equal(typeof captured.sink!.onMeta, "function");
+    assert.equal(typeof captured.sink!.onToken, "function");
+    assert.equal(typeof captured.sink!.onError, "function");
+  } finally {
+    registerLocalEngine(null);
+  }
 });
 
 test("Phase 4.1: isByteFallbackToken identifies byte-fallback pieces and high IDs", () => {
@@ -389,6 +432,15 @@ test("Phase 5.8a: computeLayerPitch uses real attention-focus when provided", ()
   const maxPitch = computeLayerPitch(23, 24, 1.0);
   assert.ok(minPitch >= 100 && minPitch <= 900, `minPitch ${minPitch} out of [100,900]`);
   assert.ok(maxPitch >= 100 && maxPitch <= 900, `maxPitch ${maxPitch} out of [100,900]`);
+});
+
+test("HF Explorer: hfExplorerOpen defaults to false, open/close round-trips correctly", () => {
+  const store = makeStore();
+  assert.equal(store.getState().hfExplorerOpen, false);
+  store.getState().setHfExplorerOpen(true);
+  assert.equal(store.getState().hfExplorerOpen, true);
+  store.getState().setHfExplorerOpen(false);
+  assert.equal(store.getState().hfExplorerOpen, false);
 });
 
 test("Phase 5.8a: anchor positions map to correct attention entries and pitch calculation receives normalized transformer layer index", () => {

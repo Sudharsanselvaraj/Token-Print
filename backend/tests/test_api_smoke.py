@@ -14,8 +14,10 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import app.main as app_main
 import pytest
 from app.main import _hf_inspect_cache, _hf_search_cache, app
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 client = TestClient(app)
@@ -113,6 +115,97 @@ def test_analyze_without_model_fails_cleanly_not_5xx():
     assert resp.status_code == 503, f"expected 503 without a loaded model, got {resp.status_code}"
 
 
+def test_model_info_without_model_returns_503():
+    resp = client.get("/model-info")
+    assert resp.status_code == 503, f"expected 503 without a loaded model, got {resp.status_code}"
+
+
+def test_gguf_list_returns_200_without_model():
+    resp = client.get("/gguf/list")
+    assert resp.status_code == 200
+    assert "files" in resp.json()
+
+
+def test_trace_without_recorded_trace_returns_404():
+    resp = client.get("/trace")
+    assert resp.status_code == 404
+
+
 def test_capabilities_without_model_fails_cleanly_not_5xx():
     resp = client.get("/api/model/capabilities")
     assert resp.status_code == 503, f"expected 503 without a loaded model, got {resp.status_code}"
+
+
+def test_architecture_without_model_id_returns_503_when_engine_absent():
+    resp = client.get("/architecture")
+    assert resp.status_code == 503, f"expected 503 without a loaded model, got {resp.status_code}"
+
+
+def test_architecture_with_model_id_returns_503_when_engine_absent():
+    resp = client.get("/architecture", params={"model_id": "Qwen/Qwen2.5-0.5B-Instruct"})
+    assert resp.status_code == 503, f"expected 503 without a loaded model, got {resp.status_code}"
+
+
+def test_architecture_model_id_calls_checkpoint_architecture():
+    mock_engine = mock.MagicMock()
+    mock_engine.checkpoint_architecture.return_value = {
+        "metadata": {"model_type": "qwen2", "num_layers": 2},
+        "tensors": [],
+    }
+
+    with mock.patch.object(app_main, "engine", mock_engine):
+        resp = client.get("/architecture", params={"model_id": "Qwen/Qwen2.5-0.5B-Instruct"})
+
+    assert resp.status_code == 200
+    mock_engine.checkpoint_architecture.assert_called_once_with("Qwen/Qwen2.5-0.5B-Instruct")
+    mock_engine.architecture.assert_not_called()
+
+
+def test_architecture_without_model_id_calls_architecture():
+    mock_engine = mock.MagicMock()
+    mock_engine.architecture.return_value = {
+        "metadata": {"model_type": "qwen2", "num_layers": 24},
+        "tensors": [],
+    }
+
+    with mock.patch.object(app_main, "engine", mock_engine):
+        resp = client.get("/architecture")
+
+    assert resp.status_code == 200
+    mock_engine.architecture.assert_called_once()
+    mock_engine.checkpoint_architecture.assert_not_called()
+
+
+def test_architecture_value_error_returns_400():
+    mock_engine = mock.MagicMock()
+    mock_engine.checkpoint_architecture.side_effect = ValueError("unsupported architecture")
+
+    with mock.patch.object(app_main, "engine", mock_engine):
+        resp = client.get("/architecture", params={"model_id": "Org/Bad-Model"})
+
+    assert resp.status_code == 400
+    assert "unsupported architecture" in resp.json()["detail"]
+
+
+def test_architecture_runtime_error_returns_404():
+    mock_engine = mock.MagicMock()
+    mock_engine.checkpoint_architecture.side_effect = RuntimeError("HF request failed")
+
+    with mock.patch.object(app_main, "engine", mock_engine):
+        resp = client.get("/architecture", params={"model_id": "Org/Missing-Model"})
+
+    assert resp.status_code == 404
+    assert "Failed to fetch model architecture" in resp.json()["detail"]
+
+
+def test_architecture_http_exception_from_engine_propagates_unchanged():
+    mock_engine = mock.MagicMock()
+    mock_engine.checkpoint_architecture.side_effect = HTTPException(
+        status_code=422, detail="engine-level validation failed"
+    )
+
+    with mock.patch.object(app_main, "engine", mock_engine):
+        resp = client.get("/architecture", params={"model_id": "Org/Some-Model"})
+
+    assert resp.status_code == 422
+    assert "engine-level validation failed" in resp.json()["detail"]

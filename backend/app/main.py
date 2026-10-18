@@ -239,8 +239,11 @@ async def architecture(model_id: str | None = None) -> dict:
     the currently loaded model's metadata.
     """
     if model_id:
+        eng = _require_engine()
         try:
-            return _require_engine().checkpoint_architecture(model_id)
+            return eng.checkpoint_architecture(model_id)
+        except HTTPException:
+            raise
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception as exc:
