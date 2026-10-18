@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-import pytest
+
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -78,8 +78,9 @@ def test_custom_model_without_output_attentions_generates_successfully():
     import threading
     import types
     from unittest.mock import MagicMock
-    from torch import nn
+
     from app.model import ActivationEngine
+    from torch import nn
 
     class SyntheticNoAttnModel(nn.Module):
         def __init__(self):
