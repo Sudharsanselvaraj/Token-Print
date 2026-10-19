@@ -21,7 +21,7 @@ Open an issue before starting anything sizable so we can agree on the approach.
 
 | Idea | Where | Verify |
 | ---- | ----- | ------ |
-| **Dequantize for value preview** — quantized tensors are currently labeled "needs dequantization". Implement Q4_K/Q6_K/… dequant so their real values can be previewed. | `lib/gguf/` (parser + `ggmlTypes.ts`) | previewed values match a reference dequant (e.g. llama.cpp) |
+| **Dequantize for value preview** — quantized tensors are currently labeled "dequantized where applicable". Implement Q4_K/Q6_K/… dequant so their real values can be previewed. | `lib/gguf/` (parser + `ggmlTypes.ts`) | previewed values match a reference dequant (e.g. llama.cpp) |
 | **GGUF parser & playback unit coverage** — a Vitest suite exists (`frontend/scripts/verify-data.sh` + `tests/unit`); extend it to the GGUF parser fixture headers, `lib/playback.ts` (layer anchors, `phaseInfo`), and `detectArch()`. | `frontend/` | tests green in CI |
 | **Performance presets** — the `quality` toggle exists; make it actually degrade gracefully on integrated GPUs (fewer points, simpler materials) and document the tradeoffs. | `frontend/lib`, `Scene.tsx`, `TensorCloud.tsx` | 60fps on integrated graphics; stated in a note |
 | **MoE explorer view** — `expert_count` is parsed but there's no expert-routing visualization for MoE models. | `lib/pointcloud.ts`, scenes | real MoE `.gguf` renders experts distinctly |
@@ -40,7 +40,7 @@ Open an issue before starting anything sizable so we can agree on the approach.
 If real data can't cleanly support a visual, **label it or adjust the visual —
 never fabricate cleaner-looking fake data.** A PR that makes a number look nicer
 by faking it will be rejected; a PR that honestly says "this is a sampled slice"
-or "quantized — needs dequant" is exactly right. See
+or "quantized — dequantized preview" is exactly right. See
 [verification.md](verification.md) for how "real" is proven, and
 [visual-mapping.md](visual-mapping.md) for the data→geometry contract you're
 extending.

@@ -16,7 +16,7 @@ If you always pick the token with the highest probability (Greedy Decoding), the
 
 Because TokenPrint is an educational and debugging tool, determinism is currently favored over creativity. When you type a prompt, you will see exactly how the model determines the #1 most mathematically likely token. 
 
-The `WS /ws/generate` backend endpoint does calculate `top_k` probabilities to render the Skyline in the UI, but it does not use them to sample stochastically. The `SamplingPlayground` is currently scheduled for an upcoming milestone in the [Roadmap](Roadmap).
+The `WS /ws/generate` backend endpoint does calculate `top_k` probabilities to render the Skyline in the UI, but it does not use them to sample stochastically. Sampling controls (temperature, top_p, top_k) are shipped in the Generation UI; see [Roadmap](Roadmap).
 
 ## Diagram
 

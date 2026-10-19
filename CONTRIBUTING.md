@@ -30,8 +30,8 @@ Please keep that in mind for any change that touches what the user sees.
 See [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md) for a curated list of beginner, intermediate, and advanced tasks with files to touch and difficulty levels.
 
 For complete developer guides, see:
-- [Developer Guide](docs/DEVELOPMENT.md) — Local setup, testing, and PR conventions.
-- [Architecture Guide](docs/ARCHITECTURE.md) — System design and data flow.
+- [Developer Guide](docs/development.md) — Local setup, testing, and PR conventions.
+- [Architecture Guide](docs/architecture.md) — System design and data flow.
 
 ## Development setup
 

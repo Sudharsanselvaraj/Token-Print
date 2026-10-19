@@ -39,7 +39,7 @@ The protocol uses a strict JSON framing system. The client sends one configurati
       "label": "Token Embedding",
       "param_count": 136134656
     }
-    // ... 243 operations
+    // ... 219 operations
   ]
 }
 ```

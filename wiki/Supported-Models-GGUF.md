@@ -29,7 +29,7 @@ When GGUF execution is enabled, the resident engine holds recent models in an **
 - `GET /gguf/cache` — return resident engine cache statistics, limits, and eviction counters.
 
 > **Warning**
-> GGUF models are only supported for **Architecture Explorer** and **Tensor Inspector** modes. Because the backend PyTorch engine requires unquantized weights to capture exact intermediate activations (like softmax attention probabilities), TokenPrint cannot currently run Live Inference directly on a quantized GGUF file.
+> GGUF models are only supported for **Architecture Explorer** and **Tensor Inspector** modes. Because the backend PyTorch engine requires unquantized weights to capture exact intermediate activations (like softmax attention probabilities), TokenPrint can run Live Inference on quantized GGUF files via the llama.cpp backend engine (server-side).
 
 ## Diagram
 

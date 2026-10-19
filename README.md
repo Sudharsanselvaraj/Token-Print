@@ -83,7 +83,7 @@ Qwen 2.5 runs live by default. Llama 2/3/3.2, Gemma, Mistral/Mixtral, DeepSeek (
 ## Why you can trust the numbers
 
 - `GET /architecture` reports **494,032,768** parameters on live Qwen, the exact sum of all **290** real tensors.
-- The op catalog lists **243 ops** in true forward order, matching the actual module graph.
+- The op catalog lists **219 ops** in true forward order, matching the actual module graph.
 - Five independent verification scripts and a CI regression gate back this up: [docs/verification.md](docs/verification.md).
 
 Known limits, stated plainly:

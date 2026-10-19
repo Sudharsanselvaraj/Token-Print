@@ -4,7 +4,7 @@ Refreshed 2026-09-20. The previous catalog mixed shipped work with open work; do
 
 ## Open tracked task
 
-- [#293 — Non-Latin tokenization view (Hindi/Tamil/CJK)](https://github.com/Sudharsanselvaraj/Token-Print/issues/293). Start with a small tokenizer fixture and inspect byte/token boundaries. Preserve the original token IDs and text; do not normalize away distinctions the tokenizer produces. Verify Tamil, Hindi, CJK, emoji, and whitespace cases.
+- [#293 — Non-Latin tokenization view (Hindi/Tamil/CJK)](https://github.com/Sudharsanselvaraj/Token-Print/issues/293). **SHIPPED** in PR #362 (#293 closed).
 
 ## Small follow-up proposals
 

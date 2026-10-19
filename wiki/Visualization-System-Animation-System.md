@@ -14,7 +14,7 @@ TokenPrint uses a single, headless `PlaybackEngine` component.
 
 ### The Ticker Rule
 The ticker runs on a `setInterval` or `requestAnimationFrame` loop. However, **it never fabricates frames**. 
-- It looks at the `op_catalog` (e.g., 243 operations).
+- It looks at the `op_catalog` (e.g., 219 operations).
 - Based on the user's Speed Multiplier, it waits $X$ milliseconds.
 - It then instantly updates the `store.activeOp` to the next index.
 - The Geometry and Materials react instantly to the new `activeOp`.

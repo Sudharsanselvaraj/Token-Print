@@ -163,7 +163,7 @@ A real streamed greedy generation.
       "param_count": 136134656, "cumulative_params": 136134656,
       "in_dim": 896, "out_dim": 151936, "bias_dim": null,
       "weight_preview": [[/* up to 8×8 real weights */]] }
-    // … 243 ops total for this model
+    // … 219 ops total for this model
   ] }
 
 // 2) one per generated token

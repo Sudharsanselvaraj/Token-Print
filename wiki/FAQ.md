@@ -21,7 +21,7 @@ TokenPrint loads models in `float32` with eager attention to capture precise mat
 
 ### Can I run Live Inference on a `.gguf` file?
 **No, not currently.** 
-You can drag and drop a `.gguf` to view its static structure in the Architecture Explorer, but Live Inference requires the PyTorch engine. Support for in-browser WebGPU inference for GGUF files is on the roadmap.
+You can drag and drop a `.gguf` to view its static structure in the Architecture Explorer, but The backend can run quantized GGUF models via llama.cpp (`backend/app/gguf_engine.py`); browser execution is limited to the ONNX GPT-2 path. Support for in-browser WebGPU inference for GGUF files is on the roadmap.
 
 ### Why is the 3D canvas black or missing?
 Your browser likely dropped the WebGL context due to GPU strain, or hardware acceleration is disabled in your browser settings. TokenPrint requires a modern browser with WebGL enabled. 

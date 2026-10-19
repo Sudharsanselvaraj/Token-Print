@@ -21,7 +21,7 @@ This is critical. Modern PyTorch often defaults to FlashAttention or SDPA (Scale
 
 To load a different HuggingFace model:
 1. Stop the backend server.
-2. Edit the `MODEL_NAME` variable in `backend/app/model.py`.
+2. Set `TOKENPRINT_MODEL` environment variable (or edit the default in `backend/app/model.py`); adapters in `backend/app/inference/adapters/` register families..
 3. Restart the server.
 
 > **Warning**

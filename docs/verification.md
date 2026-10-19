@@ -36,11 +36,11 @@ projection is identical across runs.
 `verify_trace.py` builds the op catalog and asserts:
 
 ```
-total ops: 243
-layer-0 op order: norm, attn.q, attn.k, attn.v, attention, attn.o, norm,
+total ops: 219
+layer-0 op order: norm, attn.q, attn.k, attn.v, attention, attn.o,
                   mlp.gate, mlp.up, mlp.down
 q_proj L0: op=803,712  module=803,712  in=896 out=896 bias=896
-final op: Vocabulary Unembedding · cumulative params used: 630,167,424
+final op: Vocabulary Unembedding · cumulative params used: 630,145,920
 PASS: op catalog is real, ordered, and bounded.
 ```
 

@@ -11,7 +11,7 @@ sit outside the application. No model responses or tensor values are mocked.
 
 ## Reproduce
 
-1. Start the backend and frontend using the [quickstart](../README.md#quickstart).
+1. Start the backend and frontend using the [quickstart](../README.md#get-started).
 2. Install frontend dependencies, Google Chrome, and FFmpeg.
 3. From the repository root, run:
 
