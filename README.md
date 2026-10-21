@@ -127,7 +127,7 @@ The one rule for every change: every number shown must be real.
 
 <!-- CONTRIBUTORS:START -->
 <div align="center">
-  <a href="https://github.com/Sudharsanselvaraj/Token-Print/graphs/contributors"><strong>21 contributors</strong></a>
+  <a href="https://github.com/Sudharsanselvaraj/Token-Print/graphs/contributors"><strong>22 contributors</strong></a>
   <div align="center">
     <a href="https://github.com/Sudharsanselvaraj" title="Sudharsanselvaraj"><img src="https://github.com/Sudharsanselvaraj.png?size=96" width="48" height="48" alt="Sudharsanselvaraj" /></a>
     <a href="https://github.com/ManoShruthiS" title="ManoShruthiS"><img src="https://github.com/ManoShruthiS.png?size=96" width="48" height="48" alt="ManoShruthiS" /></a>
@@ -145,13 +145,14 @@ The one rule for every change: every number shown must be real.
     <a href="https://github.com/challenge456" title="challenge456"><img src="https://github.com/challenge456.png?size=96" width="48" height="48" alt="challenge456" /></a>
     <a href="https://github.com/Deepashaa24" title="Deepashaa24"><img src="https://github.com/Deepashaa24.png?size=96" width="48" height="48" alt="Deepashaa24" /></a>
     <a href="https://github.com/jk-pvt" title="jk-pvt"><img src="https://github.com/jk-pvt.png?size=96" width="48" height="48" alt="jk-pvt" /></a>
+    <a href="https://github.com/Kajal429" title="Kajal429"><img src="https://github.com/Kajal429.png?size=96" width="48" height="48" alt="Kajal429" /></a>
     <a href="https://github.com/karansakure123" title="karansakure123"><img src="https://github.com/karansakure123.png?size=96" width="48" height="48" alt="karansakure123" /></a>
     <a href="https://github.com/ris422" title="ris422"><img src="https://github.com/ris422.png?size=96" width="48" height="48" alt="ris422" /></a>
     <a href="https://github.com/Sarvatha02" title="Sarvatha02"><img src="https://github.com/Sarvatha02.png?size=96" width="48" height="48" alt="Sarvatha02" /></a>
     <a href="https://github.com/SYDEFACTOR1" title="SYDEFACTOR1"><img src="https://github.com/SYDEFACTOR1.png?size=96" width="48" height="48" alt="SYDEFACTOR1" /></a>
     <a href="https://github.com/vigasinii" title="vigasinii"><img src="https://github.com/vigasinii.png?size=96" width="48" height="48" alt="vigasinii" /></a>
   </div>
-  <sub><a href="https://github.com/Sudharsanselvaraj">Sudharsanselvaraj</a>, <a href="https://github.com/ManoShruthiS">ManoShruthiS</a>, <a href="https://github.com/Vedhiga">Vedhiga</a>, <a href="https://github.com/shanky-ux">shanky-ux</a>, <a href="https://github.com/Ritik-The-Dev">Ritik-The-Dev</a>, <a href="https://github.com/Sew-a">Sew-a</a>, <a href="https://github.com/Kesavaraja67">Kesavaraja67</a>, <a href="https://github.com/nihal29055">nihal29055</a>, <a href="https://github.com/sairam-s0">sairam-s0</a>, <a href="https://github.com/Mayank-agrawal155">Mayank-agrawal155</a>, <a href="https://github.com/Shivamyadav1312">Shivamyadav1312</a>, <a href="https://github.com/Sriram-Selvaperumal">Sriram-Selvaperumal</a>, <a href="https://github.com/AbinanthanS">AbinanthanS</a>, <a href="https://github.com/challenge456">challenge456</a>, <a href="https://github.com/Deepashaa24">Deepashaa24</a>, <a href="https://github.com/jk-pvt">jk-pvt</a>, <a href="https://github.com/karansakure123">karansakure123</a>, <a href="https://github.com/ris422">ris422</a>, <a href="https://github.com/Sarvatha02">Sarvatha02</a>, <a href="https://github.com/SYDEFACTOR1">SYDEFACTOR1</a>, <a href="https://github.com/vigasinii">vigasinii</a></sub>
+  <sub><a href="https://github.com/Sudharsanselvaraj">Sudharsanselvaraj</a>, <a href="https://github.com/ManoShruthiS">ManoShruthiS</a>, <a href="https://github.com/Vedhiga">Vedhiga</a>, <a href="https://github.com/shanky-ux">shanky-ux</a>, <a href="https://github.com/Ritik-The-Dev">Ritik-The-Dev</a>, <a href="https://github.com/Sew-a">Sew-a</a>, <a href="https://github.com/Kesavaraja67">Kesavaraja67</a>, <a href="https://github.com/nihal29055">nihal29055</a>, <a href="https://github.com/sairam-s0">sairam-s0</a>, <a href="https://github.com/Mayank-agrawal155">Mayank-agrawal155</a>, <a href="https://github.com/Shivamyadav1312">Shivamyadav1312</a>, <a href="https://github.com/Sriram-Selvaperumal">Sriram-Selvaperumal</a>, <a href="https://github.com/AbinanthanS">AbinanthanS</a>, <a href="https://github.com/challenge456">challenge456</a>, <a href="https://github.com/Deepashaa24">Deepashaa24</a>, <a href="https://github.com/jk-pvt">jk-pvt</a>, <a href="https://github.com/Kajal429">Kajal429</a>, <a href="https://github.com/karansakure123">karansakure123</a>, <a href="https://github.com/ris422">ris422</a>, <a href="https://github.com/Sarvatha02">Sarvatha02</a>, <a href="https://github.com/SYDEFACTOR1">SYDEFACTOR1</a>, <a href="https://github.com/vigasinii">vigasinii</a></sub>
   <br />
   <sub>Every person who has contributed to Token-Print. Thank you.</sub>
 </div>
