@@ -1,0 +1,20 @@
+
+# TokenPrint backend dependencies
+fastapi
+uvicorn[standard]
+websockets
+numpy
+python-multipart
+pyyaml
+httpx
+
+# ML stack
+torch==2.14.0
+transformers==4.51.3
+scikit-learn==1.9.1
+
+# Testing
+pytest
+
+# Code quality
+ruff

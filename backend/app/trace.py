@@ -70,20 +70,43 @@ def serialize_trace(trace: dict[str, Any]) -> bytes:
 
 
 def parse_trace(raw: dict[str, Any]) -> dict[str, Any]:
-    """Validate and normalize a trace loaded from JSON.
+    """Validate the supported trace version and required trace structure.
 
-    Raises ``ValueError`` if the version is unsupported.
+    Raises ``ValueError`` for unsupported versions or malformed trace data.
+    Validation is intentionally structural: tensor values and optional frame
+    fields remain backend-defined and are preserved without normalization.
     """
+    if not isinstance(raw, dict):
+        raise ValueError("Trace must be a JSON object")
+
     version = raw.get("trace_version")
     if version is None:
         raise ValueError("Missing trace_version field")
-    if not isinstance(version, int) or version < 1:
-        raise ValueError(f"Unsupported trace_version: {version}")
+    # bool is a subclass of int in Python, but True is not trace version 1.
+    if isinstance(version, bool) or not isinstance(version, int) or version != TRACE_VERSION:
+        raise ValueError(
+            f"Unsupported trace_version: {version!r}; expected {TRACE_VERSION}"
+        )
 
-    # Ensure required top-level keys exist.
     for key in ("meta", "frames", "done"):
         if key not in raw:
             raise ValueError(f"Missing required field: {key}")
+
+    if not isinstance(raw["meta"], dict):
+        raise ValueError("Trace field 'meta' must be an object")
+    if not isinstance(raw["frames"], list):
+        raise ValueError("Trace field 'frames' must be an array")
+    if not isinstance(raw["done"], dict):
+        raise ValueError("Trace field 'done' must be an object")
+
+    for index, frame in enumerate(raw["frames"]):
+        if not isinstance(frame, dict):
+            raise ValueError(f"Trace frame {index} must be an object")
+        if frame.get("type") != "token":
+            raise ValueError(f"Trace frame {index} must have type 'token'")
+
+    if raw["done"].get("type") != "done":
+        raise ValueError("Trace field 'done' must have type 'done'")
 
     return raw
 

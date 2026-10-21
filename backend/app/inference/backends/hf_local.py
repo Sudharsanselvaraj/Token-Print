@@ -78,5 +78,17 @@ class HFLocalBackend(InferenceBackend):
         )
 
     def health_check(self) -> bool:
-        eng = self._get_engine()
-        return eng.is_loaded or True
+        """Return whether the local Transformers model is ready for inference."""
+        try:
+            eng = self._get_engine()
+        except Exception:  # noqa: BLE001 - health checks must fail closed.
+            return False
+
+        # ModelEngine eagerly loads its model in __init__ and does not currently
+        # expose an `is_loaded` property. Prefer an explicit boolean readiness
+        # flag if a future engine implementation provides one; otherwise inspect
+        # the actual model reference instead of assuming the backend is healthy.
+        loaded_flag = getattr(eng, "is_loaded", None)
+        if isinstance(loaded_flag, bool):
+            return loaded_flag
+        return getattr(eng, "model", None) is not None

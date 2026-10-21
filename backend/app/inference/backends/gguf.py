@@ -69,4 +69,16 @@ class GGUFBackend(InferenceBackend):
         )
 
     def health_check(self) -> bool:
-        return True
+        """Return whether a GGUF model is resident and ready for inference."""
+        try:
+            eng = self._get_engine()
+        except Exception:  # noqa: BLE001 - health checks must fail closed.
+            return False
+        if eng is None:
+            return False
+
+        loaded_flag = getattr(eng, "is_loaded", None)
+        if isinstance(loaded_flag, bool):
+            return loaded_flag
+        # GGUFEngine loads lazily and stores its live llama.cpp context in _llm.
+        return getattr(eng, "_llm", None) is not None

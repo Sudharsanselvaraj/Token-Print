@@ -93,13 +93,35 @@ def _classify_model_type(model_type: str) -> str:
 
 
 def _pick_device() -> str:
-    """Choose the compute device, honoring an explicit override."""
+    """Choose the best available compute device, honoring an explicit override.
+
+    CUDA is preferred when available, followed by Apple MPS and finally CPU.
+    The explicit environment override remains authoritative so users can force
+    a specific device for debugging or compatibility.
+    """
     override = os.environ.get("TOKENPRINT_DEVICE")
     if override:
         return override
+    if torch.cuda.is_available():
+        return "cuda"
     if torch.backends.mps.is_available():
         return "mps"
     return "cpu"
+
+
+def _make_sampling_generator(seed: int | None) -> torch.Generator | None:
+    """Create a request-local CPU RNG for reproducible token sampling.
+
+    Token sampling is performed on CPU (the probability vector is moved there
+    to avoid backend-specific multinomial limitations). A dedicated generator
+    keeps a seeded request reproducible without resetting or mutating PyTorch's
+    process-global random-number generator on every generated token.
+    """
+    if seed is None:
+        return None
+    generator = torch.Generator(device="cpu")
+    generator.manual_seed(int(seed))
+    return generator
 
 
 def _model_accepts_output_attentions(model: torch.nn.Module) -> bool:
@@ -1118,6 +1140,8 @@ class ModelEngine:
             if needle:
                 prompt = f'[MEMORY] {needle}\n\n[QUERY] {prompt}'
 
+        sampling_generator = _make_sampling_generator(seed)
+
         with self._lock, torch.no_grad():
             # Build the prompt. The chat template makes the instruct model
             # actually respond (coherent generation); raw mode just continues text.
@@ -1315,7 +1339,10 @@ class ModelEngine:
                         # we sample on CPU (one small vocab-vector copy).
                         draft_probs = (logits / 0.6).softmax(-1)[0].float().cpu()
                         draft_ids = torch.multinomial(
-                            draft_probs, draft_gamma, replacement=True
+                            draft_probs,
+                            draft_gamma,
+                            replacement=True,
+                            generator=sampling_generator,
                         )
                         draft_seq = [int(d) for d in draft_ids.tolist()]
                         draft_tokens = torch.tensor([draft_seq], device=self.device)
@@ -1416,9 +1443,6 @@ class ModelEngine:
                         cur = torch.tensor([[chosen_id]], device=self.device)
                         continue
                     else:
-                        if seed is not None:
-                            torch.manual_seed(seed)
-
                         # Greedy decode is argmax regardless of temperature; only the
                         # explicit "sampling" mode draws from the true distribution.
                         if decoding_mode == "greedy" or temperature <= 0.001:
@@ -1445,7 +1469,11 @@ class ModelEngine:
                                 scaled_logits[indices_to_remove] = float('-inf')
 
                             sample_probs = scaled_logits.softmax(-1)[0].float().cpu()
-                            chosen_id = int(torch.multinomial(sample_probs, 1).item())
+                            chosen_id = int(
+                                torch.multinomial(
+                                    sample_probs, 1, generator=sampling_generator
+                                ).item()
+                            )
 
                         generated_ids.append(chosen_id)
                         # Build expert_routing for this decode step if the model is MoE.

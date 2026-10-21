@@ -149,25 +149,48 @@ def test_collab_handshake_parameter_validation():
         pass
 
 
+
+
 def test_collab_socket_isolation_on_reconnect():
     """Verify reconnecting with the same user_id does not get deleted by old disconnect."""
+    from contextlib import ExitStack
+
     client = TestClient(app)
 
-    # First connection for charlie
-    ws1 = client.websocket_connect("/ws/collab/room-dc?user_id=charlie&color=%2338bdf8")
-    init_msg = ws1.receive_json()
-    assert init_msg["type"] == "presence"
+    # Keep the old connection in its own independently managed stack.
+    with ExitStack() as first_stack:
+        ws1 = first_stack.enter_context(
+            client.websocket_connect(
+                "/ws/collab/room-dc?user_id=charlie&color=%2338bdf8"
+            )
+        )
 
-    # Second connection for charlie (reconnect)
-    ws2 = client.websocket_connect("/ws/collab/room-dc?user_id=charlie&color=%2338bdf8")
-    reconn_msg = ws2.receive_json()
-    assert reconn_msg["type"] == "presence"
+        init_msg = ws1.receive_json()
+        assert init_msg["type"] == "presence"
 
-    # Close first socket
-    ws1.close()
+        # Keep the replacement connection open while closing the old one.
+        with ExitStack() as second_stack:
+            ws2 = second_stack.enter_context(
+                client.websocket_connect(
+                    "/ws/collab/room-dc?user_id=charlie&color=%2338bdf8"
+                )
+            )
 
-    # Verify ws2 is still active and can exchange messages
-    ws2.send_json({"type": "ping"})
-    pong = ws2.receive_json()
-    assert pong["type"] == "pong"
-    ws2.close()
+            reconn_msg = ws2.receive_json()
+            assert reconn_msg["type"] == "presence"
+
+            # Close the old connection while ws2 is still active.
+            first_stack.close()
+
+            # Check the presence update caused by the old connection closing.
+            presence_after_disconnect = ws2.receive_json()
+            assert presence_after_disconnect["type"] == "presence"
+            assert any(
+                peer["user_id"] == "charlie"
+                for peer in presence_after_disconnect["peers"]
+            )
+
+            # The replacement connection must still respond.
+            ws2.send_json({"type": "ping"})
+            pong = ws2.receive_json()
+            assert pong["type"] == "pong"
