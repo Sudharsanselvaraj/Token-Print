@@ -77,7 +77,7 @@ def parse_trace(raw: dict[str, Any]) -> dict[str, Any]:
     fields remain backend-defined and are preserved without normalization.
     """
     if not isinstance(raw, dict):
-        raise ValueError("Trace must be a JSON object")
+        raise TypeError("Trace must be a JSON object")
 
     version = raw.get("trace_version")
     if version is None:
@@ -93,15 +93,15 @@ def parse_trace(raw: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"Missing required field: {key}")
 
     if not isinstance(raw["meta"], dict):
-        raise ValueError("Trace field 'meta' must be an object")
+        raise TypeError("Trace field 'meta' must be an object")
     if not isinstance(raw["frames"], list):
-        raise ValueError("Trace field 'frames' must be an array")
+        raise TypeError("Trace field 'frames' must be an array")
     if not isinstance(raw["done"], dict):
-        raise ValueError("Trace field 'done' must be an object")
+        raise TypeError("Trace field 'done' must be an object")
 
     for index, frame in enumerate(raw["frames"]):
         if not isinstance(frame, dict):
-            raise ValueError(f"Trace frame {index} must be an object")
+            raise TypeError(f"Trace frame {index} must be an object")
         if frame.get("type") != "token":
             raise ValueError(f"Trace frame {index} must have type 'token'")
 
