@@ -1,6 +1,7 @@
 """Regression test ensuring 100% parity between raw ModelEngine and HFLocalBackend."""
 
 import pytest
+
 from app.inference.backends.hf_local import HFLocalBackend
 
 

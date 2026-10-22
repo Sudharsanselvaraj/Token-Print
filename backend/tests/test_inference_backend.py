@@ -1,6 +1,7 @@
 """Unit tests for InferenceBackend registry and interface."""
 
 import pytest
+
 from app.inference.backends.gguf import GGUFBackend
 from app.inference.backends.hf_local import HFLocalBackend
 from app.inference.registry import registry

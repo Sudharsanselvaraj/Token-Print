@@ -24,8 +24,9 @@ except ImportError:
 
     pytest = _PytestFallback()
 
-from app.main import app
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 
 def test_collab_room_presence_and_cursor_sync():
