@@ -24,6 +24,33 @@
 * **backend:** repair corrupt encoding of requirements-gguf.txt ([#229](https://github.com/Sudharsanselvaraj/Token-Print/issues/229)) ([d0be661](https://github.com/Sudharsanselvaraj/Token-Print/commit/d0be66177c2cf616108a87bab5c87c3fb9fbf796))
 * **fix:** route isolation + HF Model Explorer client-side fallback ([#269](https://github.com/Sudharsanselvaraj/Token-Print/issues/269)) ([f69e2c9](https://github.com/Sudharsanselvaraj/Token-Print/commit/f69e2c9ede97dbe7e72fdb19b40c85a5e1a08618))
 
+## [0.4.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-backend-v0.3.0...token-print-backend-v0.4.0) (2026-10-23)
+
+
+### Features
+
+* **collab:** add collaborative cursors, presence sync, and classroom sharing (refs [#301](https://github.com/Sudharsanselvaraj/Token-Print/issues/301) phase 5.8c) ([c062c4f](https://github.com/Sudharsanselvaraj/Token-Print/commit/c062c4f2e01336996c8be49a441fea87d9fc7bba))
+* **generation:** decoding-mode surface for speculative, sliding-window and needle ([#297](https://github.com/Sudharsanselvaraj/Token-Print/issues/297), [#281](https://github.com/Sudharsanselvaraj/Token-Print/issues/281)) ([6f59ac3](https://github.com/Sudharsanselvaraj/Token-Print/commit/6f59ac3ca453bf595c6911d8d4273d5e79b762f9))
+* **generation:** decoding-mode surface for speculative, sliding-window and needle ([#297](https://github.com/Sudharsanselvaraj/Token-Print/issues/297), [#281](https://github.com/Sudharsanselvaraj/Token-Print/issues/281)) ([f3f4154](https://github.com/Sudharsanselvaraj/Token-Print/commit/f3f41548fc3e20c1b7053e629d8cd43e338be7ed))
+* **generation:** track speculative decoding statistics ([3b92cbb](https://github.com/Sudharsanselvaraj/Token-Print/commit/3b92cbbeb1f5dc646cf383194fce98164f45b62c))
+* **generation:** track speculative decoding statistics ([cab4e8a](https://github.com/Sudharsanselvaraj/Token-Print/commit/cab4e8acf928d459b862c6f3bca9fc2ee8423830))
+* prompt-level embedding similarity view for encoder models ([#298](https://github.com/Sudharsanselvaraj/Token-Print/issues/298)) ([1be2b54](https://github.com/Sudharsanselvaraj/Token-Print/commit/1be2b540959dd3b0d09c80b70b8000b4037605d9))
+* **sonification:** map attention intensity to layer pitch ([7d4251a](https://github.com/Sudharsanselvaraj/Token-Print/commit/7d4251ae064b12b5fde43a0248f6666c14a76469))
+
+
+### Bug Fixes
+
+* address review feedback on similarity view ([9c4d40d](https://github.com/Sudharsanselvaraj/Token-Print/commit/9c4d40dcf5c6400a4218849076be870b7294dc11))
+* **backend:** use TypeError for invalid trace types (ruff TRY004) ([cd355f3](https://github.com/Sudharsanselvaraj/Token-Print/commit/cd355f3855871c034ae7fa6459b81caea39d6685))
+* **collab:** address review findings for authorization, connection safety, and resilience ([4097fde](https://github.com/Sudharsanselvaraj/Token-Print/commit/4097fde49f055c64071fdf391c2eaaa86731d2ce))
+* **collab:** atomic connection cleanup, dynamic role sync, and render optimizations ([5aaa83d](https://github.com/Sudharsanselvaraj/Token-Print/commit/5aaa83dc24cd9fe2ad5d9caba4001e610942aa51))
+* **collab:** sanitize user input in logs and address ruff findings ([9369f70](https://github.com/Sudharsanselvaraj/Token-Print/commit/9369f70d39523370de0f3b2937989791bd33e6a1))
+* **eng-21:** propagate HTTPException from /architecture; add frontend regression test ([b1673c6](https://github.com/Sudharsanselvaraj/Token-Print/commit/b1673c6bf13881f7f758d847f8fa0a39ba084ac4))
+* **generation:** mount decode-mode visuals and make readouts honest ([a8d97aa](https://github.com/Sudharsanselvaraj/Token-Print/commit/a8d97aaebc114fe7388976aee90cf2334778aeae))
+* handle malformed traces in replay endpoint ([dbd66a7](https://github.com/Sudharsanselvaraj/Token-Print/commit/dbd66a7ffddec66e6f0c5c9e2099aa443e66d42e))
+* improve inference reliability and regression coverage ([be82915](https://github.com/Sudharsanselvaraj/Token-Print/commit/be82915c83a7a9e10c17934f3c77b5984342dc86))
+* **sonification:** correct attention layer mapping ([5c3fcf1](https://github.com/Sudharsanselvaraj/Token-Print/commit/5c3fcf1464a2c405aff66575240ccea1cfb607e4))
+
 ## [0.3.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-backend-v0.2.0...token-print-backend-v0.3.0) (2026-09-22)
 
 
