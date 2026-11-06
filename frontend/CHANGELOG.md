@@ -31,6 +31,51 @@
 * **scene:** seed pointcloud layout jitter for deterministic visuals ([#100](https://github.com/Sudharsanselvaraj/Token-Print/issues/100)) ([3a8c4ad](https://github.com/Sudharsanselvaraj/Token-Print/commit/3a8c4ad8878deceac7651695b68e2991c497997b))
 * **fix:** route isolation + HF Model Explorer client-side fallback ([#269](https://github.com/Sudharsanselvaraj/Token-Print/issues/269)) ([f69e2c9](https://github.com/Sudharsanselvaraj/Token-Print/commit/f69e2c9ede97dbe7e72fdb19b40c85a5e1a08618))
 
+## [0.4.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-frontend-v0.3.0...token-print-frontend-v0.4.0) (2026-10-23)
+
+
+### Features
+
+* **a11y:** add keyboard tour navigation and Escape dismissal to ReplayGuide ([#350](https://github.com/Sudharsanselvaraj/Token-Print/issues/350)) ([f4c85c8](https://github.com/Sudharsanselvaraj/Token-Print/commit/f4c85c8998fc8f040751cf908cc4f4148fea579a))
+* add non-Latin tokenization view ([#293](https://github.com/Sudharsanselvaraj/Token-Print/issues/293)) ([#362](https://github.com/Sudharsanselvaraj/Token-Print/issues/362)) ([4bb5355](https://github.com/Sudharsanselvaraj/Token-Print/commit/4bb535557a50a2c675bea5e44bb156999708c11d))
+* **collab:** add collaborative cursors, presence sync, and classroom sharing (refs [#301](https://github.com/Sudharsanselvaraj/Token-Print/issues/301) phase 5.8c) ([c062c4f](https://github.com/Sudharsanselvaraj/Token-Print/commit/c062c4f2e01336996c8be49a441fea87d9fc7bba))
+* **embed:** add title and autoplay support to interactive 3d sandbox player ([516a75c](https://github.com/Sudharsanselvaraj/Token-Print/commit/516a75c877de136305805dacc3ebb972f46123a9))
+* **formulas:** add Gemma architecture family formula set and citations ([36de6b8](https://github.com/Sudharsanselvaraj/Token-Print/commit/36de6b8ad957f480be0c0e64cb74ca0abf8ec15a))
+* **frontend:** add Sonify and Sound toolbar controls (refs [#301](https://github.com/Sudharsanselvaraj/Token-Print/issues/301) phase 5.8a Sonification) ([094abe3](https://github.com/Sudharsanselvaraj/Token-Print/commit/094abe3dc61d3b6191a57067d37b75ab6bf97722))
+* **gallery:** streamline to Interactive 3D Tensor Sandbox and remove redundant catalog cards ([bc34ff0](https://github.com/Sudharsanselvaraj/Token-Print/commit/bc34ff055febb2a942605a5ce11b7e05b580875b))
+* **generation:** decoding-mode surface for speculative, sliding-window and needle ([#297](https://github.com/Sudharsanselvaraj/Token-Print/issues/297), [#281](https://github.com/Sudharsanselvaraj/Token-Print/issues/281)) ([6f59ac3](https://github.com/Sudharsanselvaraj/Token-Print/commit/6f59ac3ca453bf595c6911d8d4273d5e79b762f9))
+* **generation:** decoding-mode surface for speculative, sliding-window and needle ([#297](https://github.com/Sudharsanselvaraj/Token-Print/issues/297), [#281](https://github.com/Sudharsanselvaraj/Token-Print/issues/281)) ([f3f4154](https://github.com/Sudharsanselvaraj/Token-Print/commit/f3f41548fc3e20c1b7053e629d8cd43e338be7ed))
+* **generation:** track speculative decoding statistics ([3b92cbb](https://github.com/Sudharsanselvaraj/Token-Print/commit/3b92cbbeb1f5dc646cf383194fce98164f45b62c))
+* **generation:** track speculative decoding statistics ([cab4e8a](https://github.com/Sudharsanselvaraj/Token-Print/commit/cab4e8acf928d459b862c6f3bca9fc2ee8423830))
+* **health-report:** export model-health PDF with capabilities, provenance, timings (refs [#301](https://github.com/Sudharsanselvaraj/Token-Print/issues/301)) ([6f41bac](https://github.com/Sudharsanselvaraj/Token-Print/commit/6f41bac26f0259e3f49370b84aafaec51f581544))
+* **landing:** add curated trace gallery and embed player section ([#299](https://github.com/Sudharsanselvaraj/Token-Print/issues/299)) ([94f65a9](https://github.com/Sudharsanselvaraj/Token-Print/commit/94f65a94ebcc1334467e78ff15a96b5f0eacc161))
+* **landing:** integrate 3D Card Carousel into Feature Showcase and Curated Trace Gallery ([4e5e193](https://github.com/Sudharsanselvaraj/Token-Print/commit/4e5e193fc901e3cf1bce5f0255775fe73debc94e))
+* prompt-level embedding similarity view for encoder models ([#298](https://github.com/Sudharsanselvaraj/Token-Print/issues/298)) ([1be2b54](https://github.com/Sudharsanselvaraj/Token-Print/commit/1be2b540959dd3b0d09c80b70b8000b4037605d9))
+* **sonification:** map attention intensity to layer pitch ([7d4251a](https://github.com/Sudharsanselvaraj/Token-Print/commit/7d4251ae064b12b5fde43a0248f6666c14a76469))
+* **ui:** add capability-aware UI controls and badges (DESIGN-02) ([58681ec](https://github.com/Sudharsanselvaraj/Token-Print/commit/58681ec7b52322494d57c851433e4cd8c094b960))
+* **ui:** add CardCarousel and Badge components with Tailwind and shadcn support ([d4128d6](https://github.com/Sudharsanselvaraj/Token-Print/commit/d4128d6ba2cbf65271cedd909d1d63fd6548256b))
+* **ui:** add FocusFrameBorder shine border component to embed iframe and modal; remove issue number ([1193406](https://github.com/Sudharsanselvaraj/Token-Print/commit/1193406ed39a25bf961ba6213c92dee2391a0edc))
+
+
+### Bug Fixes
+
+* address review feedback on similarity view ([9c4d40d](https://github.com/Sudharsanselvaraj/Token-Print/commit/9c4d40dcf5c6400a4218849076be870b7294dc11))
+* **collab:** address review findings for authorization, connection safety, and resilience ([4097fde](https://github.com/Sudharsanselvaraj/Token-Print/commit/4097fde49f055c64071fdf391c2eaaa86731d2ce))
+* **collab:** atomic connection cleanup, dynamic role sync, and render optimizations ([5aaa83d](https://github.com/Sudharsanselvaraj/Token-Print/commit/5aaa83dc24cd9fe2ad5d9caba4001e610942aa51))
+* **collab:** seed presence randomness from crypto and drop unused var ([b000414](https://github.com/Sudharsanselvaraj/Token-Print/commit/b0004140d1a200eb6937785b09f24a967d2a52b9))
+* **debugger:** isolate stale analysis state and render Console REPL once ([#353](https://github.com/Sudharsanselvaraj/Token-Print/issues/353)) ([2c2d571](https://github.com/Sudharsanselvaraj/Token-Print/commit/2c2d571afca3e48e0eb67f052606677b3c0dcd71))
+* **debugger:** prevent stale analysis data updates using generation timestamp ([#353](https://github.com/Sudharsanselvaraj/Token-Print/issues/353)) ([674e083](https://github.com/Sudharsanselvaraj/Token-Print/commit/674e0839f2b5377a69b820f17f3b9b933a164ad0))
+* **eng-21:** propagate HTTPException from /architecture; add frontend regression test ([b1673c6](https://github.com/Sudharsanselvaraj/Token-Print/commit/b1673c6bf13881f7f758d847f8fa0a39ba084ac4))
+* **frontend:** add swiper and ssr-window to transpilePackages ([2ad3904](https://github.com/Sudharsanselvaraj/Token-Print/commit/2ad3904975b9ac92f2044493bdfef077c62fcb80))
+* **generation:** mount decode-mode visuals and make readouts honest ([a8d97aa](https://github.com/Sudharsanselvaraj/Token-Print/commit/a8d97aaebc114fe7388976aee90cf2334778aeae))
+* **health-report:** address CodeQL findings and seed report ID from crypto ([0c28efd](https://github.com/Sudharsanselvaraj/Token-Print/commit/0c28efd73c818d1b11546756ed13f5a9c2339e11))
+* **health-report:** address review findings on sanitization, provenance, and timings ([018bc82](https://github.com/Sudharsanselvaraj/Token-Print/commit/018bc823626dde3cf28c5ebcde93e1117a415c7b))
+* **health-report:** remove unused vocabSize variable flagged by CodeQL ([4d5e813](https://github.com/Sudharsanselvaraj/Token-Print/commit/4d5e813ea7a34a5ab28fce27eae891002608de26))
+* **sonification:** correct attention layer mapping ([5c3fcf1](https://github.com/Sudharsanselvaraj/Token-Print/commit/5c3fcf1464a2c405aff66575240ccea1cfb607e4))
+* **test:** add test for ConsoleRepl removal and startGeneration state reset ([#353](https://github.com/Sudharsanselvaraj/Token-Print/issues/353)) ([b9ae66e](https://github.com/Sudharsanselvaraj/Token-Print/commit/b9ae66e5f7643edc83abc38d2400a884153e94a4))
+* **ui:** add null safety for data.tokens in ActivationPatchCompare ([f2b27d5](https://github.com/Sudharsanselvaraj/Token-Print/commit/f2b27d5d6a08830f0deb69fb56dcf69c4c56372e))
+* **ui:** ensure high contrast button text and abstract embed player into unified focus frame ([218d059](https://github.com/Sudharsanselvaraj/Token-Print/commit/218d059393873da7436a3044a0039c60e9ae7edb))
+
 ## [0.3.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-frontend-v0.2.0...token-print-frontend-v0.3.0) (2026-09-22)
 
 
