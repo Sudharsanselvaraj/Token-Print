@@ -2,10 +2,30 @@
 
 from unittest.mock import MagicMock, patch
 
-from app.main import app
+import pytest
+from app.main import (
+    _hf_inspect_cache,
+    _hf_search_cache,
+    _hub_compat_cache,
+    _hub_search_cache,
+    app,
+)
 from fastapi.testclient import TestClient
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def _clear_hub_caches():
+    _hub_search_cache.clear()
+    _hf_search_cache.clear()
+    _hub_compat_cache.clear()
+    _hf_inspect_cache.clear()
+    yield
+    _hub_search_cache.clear()
+    _hf_search_cache.clear()
+    _hub_compat_cache.clear()
+    _hf_inspect_cache.clear()
 
 
 def test_api_hf_curated():
