@@ -13,8 +13,6 @@ Verifies:
 from __future__ import annotations
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app.main import (
     _hf_inspect_cache,
     _hf_search_cache,
@@ -22,6 +20,7 @@ from app.main import (
     _hub_search_cache,
     app,
 )
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
