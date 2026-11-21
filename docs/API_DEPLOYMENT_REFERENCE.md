@@ -9,6 +9,44 @@
 
 ## 1. System & Health Endpoints
 
+### `GET /api/model/compatibility`
+Returns the model compatibility and verification registry across architectures.
+- **Request:** None
+- **Response `200 OK`:**
+  ```json
+  [
+    {
+      "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+      "family": "qwen",
+      "architecture_recognized": true,
+      "model_load_tested": true,
+      "forward_pass_tested": true,
+      "attention_extraction_tested": true,
+      "full_interpretability_tested": true,
+      "hf_space_deployment_verified": true,
+      "status": "fully_operational",
+      "supported_features": [
+        "attention_matrix_24_layers",
+        "residual_stream_trajectory",
+        "logit_lens",
+        "head_ablation",
+        "activation_patching",
+        "zerogpu_cuda_acceleration",
+        "cpu_fallback",
+        "streaming_websockets"
+      ],
+      "limitations": [
+        "ZeroGPU cold starts may take ~25s",
+        "Subject to Hugging Face Free ZeroGPU quota limits per IP"
+      ],
+      "notes": "Primary verified production model actively deployed on Hugging Face Spaces."
+    }
+  ]
+  ```
+
+### `GET /api/model/compatibility/{model_id}`
+Returns compatibility verification record for a specific model checkpoint.
+
 ### `GET /health`
 Returns backend liveness status and engine readiness.
 - **Request:** None
@@ -225,3 +263,22 @@ Downloads the last recorded forward pass as a serialized trace JSON file.
 Validates an uploaded JSON trace and parses it for browser playback.
 - **Request Body:** Serialized trace object.
 - **Response `200 OK`:** Validated parsed trace structure.
+
+---
+
+## 6. Error Handling & Production Security
+
+### Sanitized Error Responses
+Production API error responses do not disclose internal stack traces or server file system paths:
+- **`500 Internal Server Error`**:
+  ```json
+  {
+    "detail": "Inference execution failed: <ExceptionType>."
+  }
+  ```
+- **Logging**: Full exception tracebacks are logged strictly to the internal server process log (`exc_info=True`).
+
+### ZeroGPU Execution & Failover
+- Forward passes (`/analyze`, `/debug/analyze`, `/ablate/analyze`, `/patch/analyze`) and streamed token generation (`/ws/generate`) utilize dedicated `@spaces.GPU` runners when deployed on Hugging Face Spaces.
+- GPU and quota errors (`ZeroGPUQuotaExceeded`, `CUDAOutOfMemory`, `CUDARuntimeError`) are explicitly classified by `is_gpu_or_quota_error()`. When detected, requests seamlessly fall back to CPU execution without returning 500 errors to the client.
+- Validation errors (`TokenizedTooLong`, schema mismatches, `ValueError`) are never masked as GPU errors and return appropriate `400` / `422` status codes.
