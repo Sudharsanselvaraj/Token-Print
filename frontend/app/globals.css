@@ -8128,18 +8128,18 @@ html:has(.app.embed) .global-nav {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* 3. Technology Stack Marquee Strip — Continuous Smooth Motion & Edge Fading */
+/* 3. Technology Stack Marquee Strip — Authentic Brand Ecosystem Marquee */
 .landing-hero-bottom-strip {
   position: absolute;
-  bottom: 64px;
+  bottom: 48px;
   left: 0;
   right: 0;
   width: 100%;
   z-index: 10;
   pointer-events: auto;
   overflow: hidden;
-  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
 }
 
 .landing-strip-wrapper {
@@ -8152,12 +8152,14 @@ html:has(.app.embed) .global-nav {
 .landing-strip-track {
   display: flex;
   align-items: center;
-  gap: 64px;
+  gap: 68px;
+  width: max-content;
   white-space: nowrap;
-  animation: marquee-infinite 35s linear infinite;
+  animation: marquee-infinite 48s linear infinite;
   will-change: transform;
 }
 
+.landing-strip-wrapper:hover .landing-strip-track,
 .landing-strip-track:hover {
   animation-play-state: paused;
 }
@@ -8166,24 +8168,53 @@ html:has(.app.embed) .global-nav {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  color: #D1D5DB;
-  opacity: 0.85;
-  transition: opacity 0.2s ease, color 0.2s ease;
-  font-family: var(--font-sans), 'Inter', system-ui, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  color: #D4D4D8;
+  opacity: 0.82;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  cursor: default;
 }
 
 .landing-strip-item:hover {
   opacity: 1;
   color: #FFFFFF;
+  transform: translateY(-1px);
 }
 
-.landing-strip-item svg {
-  color: currentColor;
+.landing-strip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
   height: 26px;
-  width: auto;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.landing-strip-icon svg {
+  width: 26px;
+  height: 26px;
+  display: block;
+  color: currentColor;
+  fill: currentColor;
+}
+
+.landing-strip-icon svg[fill="none"] {
+  fill: none;
+  stroke: currentColor;
+}
+
+.landing-strip-name {
+  font-family: var(--font-sans), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15.5px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: currentColor;
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
 }
 
 @keyframes marquee-infinite {
@@ -8191,92 +8222,7 @@ html:has(.app.embed) .global-nav {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-33.3333%);
-  }
-}
-
-.landing-strip-section {
-  padding: 44px 0 52px;
-  background: #000000;
-  border-bottom: 1px solid #1C1F26;
-  overflow: hidden;
-  position: relative;
-}
-
-.landing-strip-label {
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-  margin-bottom: 36px;
-  padding: 0 32px;
-}
-
-.landing-strip-wrapper {
-  width: 100%;
-  overflow: hidden;
-  position: relative;
-  padding: 0 48px;
-  box-sizing: border-box;
-  mask-image: linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%);
-}
-
-.landing-strip-track {
-  display: flex;
-  align-items: center;
-  gap: 72px;
-  width: max-content;
-  animation: marqueeLeftToRight 42s linear infinite;
-  will-change: transform;
-}
-
-.landing-strip-wrapper:hover .landing-strip-track {
-  animation-play-state: paused;
-}
-
-.landing-strip-item {
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  opacity: 0.5;
-  transition: opacity 0.25s ease;
-  cursor: default;
-}
-
-.landing-strip-item:hover {
-  opacity: 0.9;
-}
-
-.landing-strip-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 10px;
-  color: #9CA3AF;
-  opacity: 0.75;
-}
-
-.landing-strip-name {
-  font-family: var(--font-sans), 'Inter', system-ui, sans-serif;
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  color: #9CA3AF;
-  text-transform: uppercase;
-  -webkit-font-smoothing: antialiased;
-}
-
-@keyframes marqueeLeftToRight {
-  0% {
-    transform: translateX(-33.3333%);
-  }
-
-  100% {
-    transform: translateX(0%);
+    transform: translateX(-33.333333%);
   }
 }
 
@@ -8287,6 +8233,32 @@ html:has(.app.embed) .global-nav {
     justify-content: center;
     width: 100%;
     flex-wrap: wrap;
+    gap: 32px 48px;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-hero-bottom-strip {
+    bottom: 24px;
+  }
+
+  .landing-strip-track {
+    gap: 44px;
+    animation-duration: 36s;
+  }
+
+  .landing-strip-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .landing-strip-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .landing-strip-name {
+    font-size: 13.5px;
   }
 }
 
