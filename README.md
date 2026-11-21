@@ -32,18 +32,14 @@
 </p>
 
 <p align="center">
-  <img src="frontend/public/screenshots/generation.webp" alt="TokenPrint live generation view" width="900" />
-</p>
-
-<p align="center">
-  <img src=".github/assets/logos/huggingface.svg" height="30" alt="Hugging Face" />&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/pytorch.svg" height="30" alt="PyTorch" />&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/llamacpp.svg" height="30" alt="llama.cpp" />&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/onnxruntime.svg" height="30" alt="ONNX Runtime" />&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/webgpu.svg" height="30" alt="WebGPU" />&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/threejs.svg" height="30" alt="Three.js" />&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/fastapi.svg" height="30" alt="FastAPI" />&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/nextjs.svg" height="30" alt="Next.js" />
+  <img src=".github/assets/logos/huggingface.svg?v=2" height="30" alt="Hugging Face" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/pytorch.svg?v=2" height="30" alt="PyTorch" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/llamacpp.svg?v=2" height="30" alt="llama.cpp" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/onnxruntime.svg?v=2" height="30" alt="ONNX Runtime" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/webgpu.svg?v=2" height="30" alt="WebGPU" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/threejs.svg?v=2" height="30" alt="Three.js" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/fastapi.svg?v=2" height="30" alt="FastAPI" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/nextjs.svg?v=2" height="30" alt="Next.js" />
 </p>
 
 ---
@@ -58,28 +54,15 @@ Architecture diagrams show you a transformer. TokenPrint runs one and lets you l
 - **Cited, not hand-waved.** Click RoPE, SwiGLU, RMSNorm, GQA or an induction-head pair and get the primary source.
 - **Private by default.** GGUF files are parsed client-side. Nothing is uploaded.
 
-## Views
-
-<table>
-  <tr>
-    <td width="50%"><img src="frontend/public/screenshots/architecture.webp" alt="Architecture explorer" /><br /><b>Architecture</b><br /><sub>Every layer, parameter and tensor of the loaded model.</sub></td>
-    <td width="50%"><img src="frontend/public/screenshots/generation.webp" alt="Live generation" /><br /><b>Generation</b><br /><sub>Token-by-token decoding with the real top-k distribution.</sub></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="frontend/public/screenshots/walkthrough.webp" alt="Guided walkthrough" /><br /><b>Walkthrough</b><br /><sub>Tokenization, embedding, RMSNorm, attention, MLP, softmax.</sub></td>
-    <td width="50%"><img src="frontend/public/screenshots/debugger.webp" alt="Debugger" /><br /><b>Debugger</b><br /><sub>Breakpoints, ablation, patching and logit lens.</sub></td>
-  </tr>
-</table>
-
 ## Supported models
 
 <p align="center">
-  <img src=".github/assets/logos/qwen.svg" height="34" alt="Qwen" />&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/llama.svg" height="34" alt="Llama" />&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/gemma.svg" height="34" alt="Gemma" />&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/mistral.svg" height="34" alt="Mistral" />&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/deepseek.svg" height="34" alt="DeepSeek" />&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src=".github/assets/logos/phi.svg" height="34" alt="Phi" />
+  <img src=".github/assets/logos/qwen.svg?v=2" height="34" alt="Qwen" />&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/llama.svg?v=2" height="34" alt="Llama" />&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/gemma.svg?v=2" height="34" alt="Gemma" />&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/mistral.svg?v=2" height="34" alt="Mistral" />&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/deepseek.svg?v=2" height="34" alt="DeepSeek" />&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/phi.svg?v=2" height="34" alt="Phi" />
 </p>
 
 Qwen 2.5 runs live by default. Llama 2/3/3.2, Gemma, Mistral/Mixtral, DeepSeek (including MoE), Phi and GPT-2/Pythia load as GGUF, and any local `.gguf` works. GPT-2 also runs fully in the browser. Per-family notes are in the [wiki](wiki/Home.md); to add one, see the [developer guide](wiki/Developer-Guide-Adding-a-New-Model.md).
