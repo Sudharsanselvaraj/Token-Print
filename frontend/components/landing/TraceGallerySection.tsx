@@ -256,7 +256,7 @@ export function TraceGallerySection() {
 
         {/* 1. The 3D Card Carousel for Curated Traces */}
         <Reveal delay={0.2}>
-          <div style={{ marginBottom: "48px" }}>
+          <div>
             <CardCarousel
               badgeText="Curated 3D Traces"
               badgeIcon={<Sparkles className="fill-white stroke-1 text-white/80 mr-1.5" size={14} />}
@@ -268,40 +268,6 @@ export function TraceGallerySection() {
               showNavigation={true}
               maxWidth="max-w-5xl"
             />
-          </div>
-        </Reveal>
-
-        {/* 2. Interactive 3D Tensor Sandbox */}
-        <Reveal delay={0.25}>
-          <div style={{ width: "100%", marginBottom: "16px" }}>
-            <h3
-              className="marshal-showcase-title"
-              style={{
-                fontSize: "26px",
-                textAlign: "center",
-                marginBottom: "24px",
-                fontWeight: 300,
-                color: "#FFFFFF",
-              }}
-            >
-              Interactive 3D Tensor Sandbox
-            </h3>
-
-            <FocusFrameBorder
-              duration={2.4}
-              color="rgba(255, 255, 255, 0.45)"
-              className="w-full overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.06)]"
-            >
-              <iframe
-                src="/app/?mode=generation&demo=hello-world&embed=true&autoplay=true"
-                width="100%"
-                height="620"
-                style={{ border: "none", display: "block" }}
-                title="Interactive 3D Tensor Sandbox"
-                allow="autoplay; fullscreen"
-                loading="lazy"
-              />
-            </FocusFrameBorder>
           </div>
         </Reveal>
       </div>
