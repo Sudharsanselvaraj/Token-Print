@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import DocsNav from "./DocsNav";
 import DocsOnThisPage from "./DocsOnThisPage";
+import DocsSearchModal from "./DocsSearchModal";
 
 export default function DocsAppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   // Lock root html & body overflow so top header & sidebar remain fixed while main container scrolls
   useEffect(() => {
@@ -45,17 +47,12 @@ export default function DocsAppShell({ children }: { children: React.ReactNode }
     }
   }, [pathname]);
 
-  // Keyboard shortcut Ctrl+K / ⌘K to focus search input
+  // Keyboard shortcut Ctrl+K / ⌘K to open Search Modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        const searchInput = document.querySelector(
-          ".docs-nav-search-input"
-        ) as HTMLInputElement;
-        if (searchInput) {
-          searchInput.focus();
-        }
+        setSearchModalOpen(true);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -64,6 +61,11 @@ export default function DocsAppShell({ children }: { children: React.ReactNode }
 
   return (
     <div className="docs-shell">
+      <DocsSearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+      />
+
       {/* Mobile-only sidebar toggle (global header handles site nav) */}
       <button
         className="docs-mobile-menu-btn"
@@ -81,6 +83,7 @@ export default function DocsAppShell({ children }: { children: React.ReactNode }
           setMobileOpen={setMobileOpen}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          onOpenSearchModal={() => setSearchModalOpen(true)}
         />
 
         {/* Independent main article scroll container */}
