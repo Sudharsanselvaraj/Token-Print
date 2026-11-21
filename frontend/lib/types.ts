@@ -70,11 +70,27 @@ export interface HFModelMeta {
   pipeline_tag: string;
   last_modified: string;
   private: boolean;
+  gated?: boolean | string;
+  library_name?: string;
+  compatibility_level?: string;
+  level_number?: number;
+  parameter_count?: number | null;
+  estimated_vram_gb?: number | null;
+  architecture?: string;
 }
 
 export interface HFSearchResponse {
   query: string;
   limit: number;
+  models: HFModelMeta[];
+}
+
+export interface HubSearchResponse {
+  query: string;
+  limit: number;
+  page: number;
+  total: number;
+  sort: string;
   models: HFModelMeta[];
 }
 
@@ -90,6 +106,19 @@ export interface HFInspectResponse {
   compatibility_level: "High" | "Partial" | "Basic" | "Unsupported";
   compatibility_reason: string;
   capabilities: Record<string, CapabilityStatus | VRAMEstimate>;
+  level_number?: 1 | 2 | 3 | 4;
+  level_name?: "DISCOVERABLE" | "LOADABLE" | "INSTRUMENTED" | "ADVANCED";
+  gated?: boolean | string;
+  private?: boolean;
+  weight_formats?: string[];
+  supported_backends?: string[];
+  hardware?: {
+    zerogpu_feasible: boolean;
+    cpu_feasible: boolean;
+    recommended_vram_gb: number;
+    recommended_ram_gb: number;
+    notes: string;
+  };
 }
 
 export interface CuratedModel {
