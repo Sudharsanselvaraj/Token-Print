@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from app.inference.base import InferenceBackend
 from app.inference.capabilities import BackendCapabilities
 from app.schemas import AnalyzeResponse, ProvenanceInfo
+
+logger = logging.getLogger("tokenprint.inference.hf_local")
 
 
 class HFLocalBackend(InferenceBackend):
@@ -48,8 +51,21 @@ class HFLocalBackend(InferenceBackend):
         return eng.generate(prompt, **kwargs)
 
     async def analyze(self, sentence: str, **kwargs: Any) -> AnalyzeResponse:
-        eng = self._get_engine()
-        raw = eng.analyze(sentence)
+        import sys
+        main_mod = sys.modules.get("__main__")
+        runner = getattr(main_mod, "hf_space_analyze", None)
+        raw = None
+        if runner is not None:
+            try:
+                raw = runner(sentence)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("ZeroGPU execution unavailable (%s). Falling back to CPU.", exc)
+                eng = self._get_engine()
+                raw = eng.analyze_cpu_fallback(sentence)
+        else:
+            eng = self._get_engine()
+            raw = eng.analyze(sentence)
+
         resp = AnalyzeResponse(**raw) if isinstance(raw, dict) else raw
 
         # Attach explicit Phase 0 ProvenanceInfo if not already populated
