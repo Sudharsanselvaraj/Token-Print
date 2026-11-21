@@ -14,7 +14,6 @@ import {
 import { registerLocalEngine } from "@/lib/generation";
 import { browserEngine } from "@/lib/browser/engine";
 export default function ExperimentPanel() {
-  const s = useStore();
   const items = useExperiments((state) => state.items);
   const [selected, setSelected] = useState<Experiment | null>(null);
   const [message, setMessage] = useState("");
@@ -30,6 +29,7 @@ export default function ExperimentPanel() {
     }
   }
   function saveCurrent() {
+    const s = useStore.getState();
     if (!s.genMeta || !s.genFrames.length)
       throw new Error("Generate tokens or load a recorded demo first.");
     const e = generationExperiment({
@@ -142,7 +142,7 @@ export default function ExperimentPanel() {
                 disabled={busy}
                 onClick={() =>
                   action(async () => {
-                    await s.loadTrace(selected.trace!);
+                    await useStore.getState().loadTrace(selected.trace!);
                     setMessage(
                       "Saved results loaded as recorded replay. Open Generation to step through them.",
                     );
@@ -157,7 +157,8 @@ export default function ExperimentPanel() {
               disabled={busy}
               onClick={() =>
                 action(async () => {
-                  if (s.genStatus === "streaming") s.stopGeneration();
+                  const state = useStore.getState();
+                  if (state.genStatus === "streaming") state.stopGeneration();
                   setBusy(true);
                   setMessage("Re-running the saved experiment…");
                   controller.current = new AbortController();
