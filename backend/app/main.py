@@ -478,8 +478,8 @@ def _fetch_hub_models_internal(
                         HFModelMeta(
                             id=mid,
                             author=str(it.get("author") or (mid.split("/")[0] if "/" in mid else "")),
-                            downloads=int(it.get("downloads", 0)),
-                            likes=int(it.get("likes", 0)),
+                            downloads=int(it.get("downloads") or 0),
+                            likes=int(it.get("likes") or 0),
                             tags=[str(t) for t in it.get("tags", [])][:10],
                             pipeline_tag=str(it.get("pipeline_tag", "text-generation")),
                             last_modified=str(it.get("lastModified", "")),
@@ -505,8 +505,8 @@ def _fetch_hub_models_internal(
                                     HFModelMeta(
                                         id=ex_mid,
                                         author=str(ex.get("author") or (ex_mid.split("/")[0] if "/" in ex_mid else "")),
-                                        downloads=int(ex.get("downloads", 0)),
-                                        likes=int(ex.get("likes", 0)),
+                                        downloads=int(ex.get("downloads") or 0),
+                                        likes=int(ex.get("likes") or 0),
                                         tags=[str(t) for t in ex.get("tags", [])][:10],
                                         pipeline_tag=str(ex.get("pipeline_tag", "text-generation")),
                                         last_modified=str(ex.get("lastModified", "")),
@@ -518,7 +518,7 @@ def _fetch_hub_models_internal(
                                         architecture=ex_mid.split("/")[-1],
                                     ),
                                 )
-                    except (urllib.error.URLError, OSError, ValueError, KeyError):
+                    except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError, AttributeError):
                         pass
 
                 total = len(models)
@@ -527,7 +527,7 @@ def _fetch_hub_models_internal(
                 resp = HubSearchResponse(query=query, limit=limit, page=page, total=total, sort=sort, models=page_models)
                 _hub_search_cache[cache_key] = (now, resp)
                 return resp
-    except (urllib.error.URLError, OSError, ValueError, KeyError) as exc:
+    except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
         logger.warning("Hub search failed for '%s': %s", query.replace("\n", ""), exc)
 
     # Secondary: fallback to HfApi
@@ -570,7 +570,7 @@ def _fetch_hub_models_internal(
         resp = HubSearchResponse(query=query, limit=limit, page=page, total=total, sort=sort, models=models[start_idx : start_idx + limit])
         _hub_search_cache[cache_key] = (now, resp)
         return resp
-    except (OSError, ValueError, KeyError, RuntimeError) as exc:
+    except (OSError, ValueError, KeyError, RuntimeError, TypeError, AttributeError) as exc:
         logger.warning("HfApi secondary fallback search failed for '%s': %s", query.replace("\n", ""), exc)
 
     return HubSearchResponse(query=query, limit=limit, page=page, total=0, sort=sort, models=[])
