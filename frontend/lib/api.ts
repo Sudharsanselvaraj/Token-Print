@@ -369,19 +369,44 @@ export async function fetchHFCurated(): Promise<{ models: any[] }> {
   return { models: CLIENT_CURATED };
 }
 
-export async function searchHFModels(query: string, limit = 10): Promise<any> {
+export async function searchHFModels(
+  query: string,
+  limit = 12,
+  sort = "downloads",
+  page = 1
+): Promise<{ query: string; limit: number; page?: number; total?: number; sort?: string; models: any[] }> {
+  try {
+    const hubUrl = `${API_URL}/api/hub/models?search=${encodeURIComponent(query)}&limit=${limit}&sort=${encodeURIComponent(sort)}&page=${page}`;
+    const res = await fetch(hubUrl);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.models)) return data;
+    }
+  } catch {
+    // Backend unreachable — try legacy route or direct client search
+  }
   try {
     const url = `${API_URL}/api/hf/search?query=${encodeURIComponent(query)}&limit=${limit}`;
     const res = await fetch(url);
-    if (res.ok) return res.json();
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.models) && (data.models.length > 0 || !query.trim())) return data;
+    }
   } catch {
     // Backend unreachable — fall back to direct Hub search below.
   }
-  const models = await clientSearchHFModels(query, limit);
-  return { query, limit, models };
+  const models = await clientSearchHFModels(query, limit, sort, page);
+  return { query, limit, page, total: models.length, sort, models };
 }
 
 export async function inspectHFModel(modelId: string): Promise<any> {
+  try {
+    const compatUrl = `${API_URL}/api/hub/models/${encodeURIComponent(modelId)}/compatibility`;
+    const res = await fetch(compatUrl);
+    if (res.ok) return res.json();
+  } catch {
+    // Fall through to /api/hf/inspect
+  }
   try {
     const url = `${API_URL}/api/hf/inspect?model_id=${encodeURIComponent(modelId)}`;
     const res = await fetch(url);
