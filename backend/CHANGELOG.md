@@ -24,6 +24,47 @@
 * **backend:** repair corrupt encoding of requirements-gguf.txt ([#229](https://github.com/Sudharsanselvaraj/Token-Print/issues/229)) ([d0be661](https://github.com/Sudharsanselvaraj/Token-Print/commit/d0be66177c2cf616108a87bab5c87c3fb9fbf796))
 * **fix:** route isolation + HF Model Explorer client-side fallback ([#269](https://github.com/Sudharsanselvaraj/Token-Print/issues/269)) ([f69e2c9](https://github.com/Sudharsanselvaraj/Token-Print/commit/f69e2c9ede97dbe7e72fdb19b40c85a5e1a08618))
 
+## [0.4.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-backend-v0.3.0...token-print-backend-v0.4.0) (2026-11-21)
+
+
+### Features
+
+* **api:** add compatibility endpoints, dedicated ws generator, and safe errors ([64dd3db](https://github.com/Sudharsanselvaraj/Token-Print/commit/64dd3db239b4170b39dd654e619660708967d4b1))
+* **api:** expose /api/hub/models search and compatibility endpoints ([db07c18](https://github.com/Sudharsanselvaraj/Token-Print/commit/db07c1835de408bc10a6ef5c0ccc77139dd23130))
+* **api:** expose resilient forward pass endpoints and error handling ([bf742a6](https://github.com/Sudharsanselvaraj/Token-Print/commit/bf742a6bc26ccb0a57f5386b2091ef826008bd2e))
+* **collab:** add collaborative cursors, presence sync, and classroom sharing (refs [#301](https://github.com/Sudharsanselvaraj/Token-Print/issues/301) phase 5.8c) ([c062c4f](https://github.com/Sudharsanselvaraj/Token-Print/commit/c062c4f2e01336996c8be49a441fea87d9fc7bba))
+* **engine:** add dynamic 4-level model compatibility engine ([6830c00](https://github.com/Sudharsanselvaraj/Token-Print/commit/6830c0051772454fabaafc7aa01150e1097da112))
+* **generation:** decoding-mode surface for speculative, sliding-window and needle ([#297](https://github.com/Sudharsanselvaraj/Token-Print/issues/297), [#281](https://github.com/Sudharsanselvaraj/Token-Print/issues/281)) ([6f59ac3](https://github.com/Sudharsanselvaraj/Token-Print/commit/6f59ac3ca453bf595c6911d8d4273d5e79b762f9))
+* **generation:** decoding-mode surface for speculative, sliding-window and needle ([#297](https://github.com/Sudharsanselvaraj/Token-Print/issues/297), [#281](https://github.com/Sudharsanselvaraj/Token-Print/issues/281)) ([f3f4154](https://github.com/Sudharsanselvaraj/Token-Print/commit/f3f41548fc3e20c1b7053e629d8cd43e338be7ed))
+* **generation:** track speculative decoding statistics ([3b92cbb](https://github.com/Sudharsanselvaraj/Token-Print/commit/3b92cbbeb1f5dc646cf383194fce98164f45b62c))
+* **generation:** track speculative decoding statistics ([cab4e8a](https://github.com/Sudharsanselvaraj/Token-Print/commit/cab4e8acf928d459b862c6f3bca9fc2ee8423830))
+* **inference:** add GPU error and quota classification logic ([e000c9f](https://github.com/Sudharsanselvaraj/Token-Print/commit/e000c9fc8da8bd27a12acaf9ebac5ed803555132))
+* **inference:** add model compatibility and verification registry ([b067985](https://github.com/Sudharsanselvaraj/Token-Print/commit/b0679853d2257bd6f0bbf9c8c2bbb466da436a42))
+* **inference:** implement ZeroGPU execution with resilient CPU fallback ([372c10a](https://github.com/Sudharsanselvaraj/Token-Print/commit/372c10a90f6550a2105eaadb844474213f0e44dd))
+* **model:** add analyze_cpu_fallback forward pass handler ([6e0975c](https://github.com/Sudharsanselvaraj/Token-Print/commit/6e0975c88dc84187eec17e6ac7d85fa5a9227083))
+* **model:** add is_loaded property to ModelEngine ([f4e5218](https://github.com/Sudharsanselvaraj/Token-Print/commit/f4e521809d4e510de3e9848b70cea61bcd6f720c))
+* prompt-level embedding similarity view for encoder models ([#298](https://github.com/Sudharsanselvaraj/Token-Print/issues/298)) ([1be2b54](https://github.com/Sudharsanselvaraj/Token-Print/commit/1be2b540959dd3b0d09c80b70b8000b4037605d9))
+* **schemas:** add HubSearchResponse and capability metadata schemas ([e8224a5](https://github.com/Sudharsanselvaraj/Token-Print/commit/e8224a5ad8b4e5e680d1d6988ac6949a3f337860))
+* **sonification:** map attention intensity to layer pitch ([7d4251a](https://github.com/Sudharsanselvaraj/Token-Print/commit/7d4251ae064b12b5fde43a0248f6666c14a76469))
+
+
+### Bug Fixes
+
+* address review feedback on similarity view ([9c4d40d](https://github.com/Sudharsanselvaraj/Token-Print/commit/9c4d40dcf5c6400a4218849076be870b7294dc11))
+* **api:** guard None downloads and likes in hub model search results ([c94a875](https://github.com/Sudharsanselvaraj/Token-Print/commit/c94a8754ce5d20a4a996e4f1d0199c11bc8d8c53))
+* **backend:** use TypeError for invalid trace types (ruff TRY004) ([cd355f3](https://github.com/Sudharsanselvaraj/Token-Print/commit/cd355f3855871c034ae7fa6459b81caea39d6685))
+* **collab:** address review findings for authorization, connection safety, and resilience ([4097fde](https://github.com/Sudharsanselvaraj/Token-Print/commit/4097fde49f055c64071fdf391c2eaaa86731d2ce))
+* **collab:** atomic connection cleanup, dynamic role sync, and render optimizations ([5aaa83d](https://github.com/Sudharsanselvaraj/Token-Print/commit/5aaa83dc24cd9fe2ad5d9caba4001e610942aa51))
+* **collab:** sanitize user input in logs and address ruff findings ([9369f70](https://github.com/Sudharsanselvaraj/Token-Print/commit/9369f70d39523370de0f3b2937989791bd33e6a1))
+* **eng-21:** propagate HTTPException from /architecture; add frontend regression test ([b1673c6](https://github.com/Sudharsanselvaraj/Token-Print/commit/b1673c6bf13881f7f758d847f8fa0a39ba084ac4))
+* **generation:** mount decode-mode visuals and make readouts honest ([a8d97aa](https://github.com/Sudharsanselvaraj/Token-Print/commit/a8d97aaebc114fe7388976aee90cf2334778aeae))
+* handle malformed traces in replay endpoint ([dbd66a7](https://github.com/Sudharsanselvaraj/Token-Print/commit/dbd66a7ffddec66e6f0c5c9e2099aa443e66d42e))
+* **hf-guard:** allow hub vpc domains and expand search pattern characters ([1815a49](https://github.com/Sudharsanselvaraj/Token-Print/commit/1815a4973c2896fa6ba644f44685b0af59ff4d69))
+* improve inference reliability and regression coverage ([be82915](https://github.com/Sudharsanselvaraj/Token-Print/commit/be82915c83a7a9e10c17934f3c77b5984342dc86))
+* **inference:** resolve UnboundLocalError in analyze and improve health_check ([860826d](https://github.com/Sudharsanselvaraj/Token-Print/commit/860826dfc6053dff247299924bcfd97e51b9ac22))
+* **security:** preserve strict ssrf private network check on safe urlopen ([bf15fae](https://github.com/Sudharsanselvaraj/Token-Print/commit/bf15fae894a87586781006471266db38c6579b99))
+* **sonification:** correct attention layer mapping ([5c3fcf1](https://github.com/Sudharsanselvaraj/Token-Print/commit/5c3fcf1464a2c405aff66575240ccea1cfb607e4))
+
 ## [0.3.0](https://github.com/Sudharsanselvaraj/Token-Print/compare/token-print-backend-v0.2.0...token-print-backend-v0.3.0) (2026-09-22)
 
 
