@@ -20,17 +20,21 @@ Hugging Face Spaces ZeroGPU provides dynamic GPU allocation powered by AMD or NV
 
 ---
 
-## 2. Model Compatibility Matrix
+## 2. Model Compatibility Registry & Verification Status
 
-| Model Family / Checkpoint | Parameters | Required RAM/VRAM | ZeroGPU Support | CPU Support | Recommended Runtime Mode |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Qwen/Qwen2.5-0.5B-Instruct** | 490M | ~1.0 GB fp32 | ✅ Supported | ✅ Excellent (~120ms/tok) | **Default resident model** |
-| **Qwen/Qwen2.5-1.5B-Instruct** | 1.54B | ~3.2 GB fp32 | ✅ Supported | ⚠️ Slower (~400ms/tok) | Supported via HF selector |
-| **meta-llama/Llama-3.2-1B** | 1.23B | ~2.5 GB fp32 | ✅ Supported | ⚠️ Moderate (~350ms/tok) | Requires user HF token for gated weights |
-| **meta-llama/Llama-3.2-3B** | 3.21B | ~6.5 GB fp32 | ✅ Supported | ❌ High latency on CPU | Requires ZeroGPU allocation |
-| **mistralai/Mistral-7B-v0.1** | 7.24B | ~14.5 GB fp16 | ⚠️ Near VRAM limit | ❌ Exceeds practical CPU budget | High latency on Free tier |
-| **deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B** | 1.5B | ~3.0 GB fp32 | ✅ Supported | ⚠️ Slower (~450ms/tok) | Supported via HF selector |
-| **Custom `.gguf` Uploads** | Variable | 0.5 – 8 GB | ⚠️ CPU/NEON only | ✅ Fast with Q4_K_M | Metadata & inference supported |
+The backend maintains an explicit model compatibility registry (`GET /api/model/compatibility`) distinguishing architecture recognition, model loading, forward pass execution, attention extraction, full interpretability (logit lens, ablation, patching), and Hugging Face Space deployment verification.
+
+| Model Checkpoint | Architecture | Parameters | VRAM Budget | Load Tested | Forward Tested | Attention Extracted | Interpretability | HF Space Verified | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Qwen/Qwen2.5-0.5B-Instruct** | `qwen2` | 490M | ~1.0 GB fp32 | ✅ Yes | ✅ Yes (24 layers) | ✅ Yes (14 heads) | ✅ Yes | ✅ Yes (Resident) | **Fully Operational** |
+| **gpt2** | `gpt2` | 124M | ~0.5 GB fp32 | ✅ Yes | ✅ Yes (12 layers) | ✅ Yes (12 heads) | ✅ Yes | ✅ Yes | **Fully Operational** |
+| **TinyLlama/TinyLlama-1.1B-Chat-v1.0** | `llama` | 1.10B | ~2.2 GB fp32 | ✅ Yes | ✅ Yes (22 layers) | ✅ Yes (32 heads) | ✅ Yes | ✅ Yes | **Fully Operational** |
+| **google/gemma-2-2b** | `gemma2` | 2.61B | ~5.2 GB fp32 | ⚠️ Untested | ⚠️ Untested | ⚠️ Untested | ⚠️ Untested | ❌ No | **Partially Supported** (Gated; requires `HF_TOKEN`) |
+| **mistralai/Mistral-7B-v0.1** | `mistral` | 7.24B | ~14.5 GB fp16 | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | **Unsupported** (Exceeds free ZeroGPU allocation) |
+| **deepseek-ai/DeepSeek-V3** | `deepseek_v3` | 671B | >700 GB | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No | **Unsupported** (Requires distributed multi-node cluster) |
+
+> [!IMPORTANT]
+> TokenPrint does not claim unsupported model families are fully operational. Heavy models (>3B parameters) and gated architectures require dedicated compute tiers or user authorization tokens.
 
 ---
 
