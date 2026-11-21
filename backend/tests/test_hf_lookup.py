@@ -19,7 +19,6 @@ for _mod in _HEAVY_MODS:
             sys.modules[_mod] = mock.MagicMock()
 
 import pytest
-
 from app.model import ModelEngine
 
 
