@@ -369,12 +369,23 @@ from app.inference.capabilities import (
     RuntimeCapabilities,
     calculate_effective_capabilities,
 )
+from app.inference.compatibility_engine import (
+    ModelCompatibilityReport,
+    evaluate_model_compatibility,
+)
 from app.inference.registry import registry as backend_registry
-from app.schemas import HFInspectResponse, HFModelMeta, HFSearchResponse
+from app.schemas import (
+    HFInspectResponse,
+    HFModelMeta,
+    HFSearchResponse,
+    HubSearchResponse,
+)
 
 # Simple in-memory cache for HF API responses with timestamp
 _hf_search_cache: dict[str, tuple[float, HFSearchResponse]] = {}
+_hub_search_cache: dict[str, tuple[float, HubSearchResponse]] = {}
 _hf_inspect_cache: dict[str, tuple[float, HFInspectResponse]] = {}
+_hub_compat_cache: dict[str, tuple[float, ModelCompatibilityReport]] = {}
 _CACHE_TTL_SEARCH = 60.0  # seconds
 _CACHE_TTL_INSPECT = 300.0  # seconds
 
@@ -382,7 +393,7 @@ _CACHE_TTL_INSPECT = 300.0  # seconds
 # objects at module scope so CodeQL's py/partial-ssrf query sees the inline
 # fullmatch() guards as barriers on values that feed HF Hub URLs.
 _MODEL_ID_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}/[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$")
-_SEARCH_TERM_RE = re.compile(r"^[A-Za-z0-9 _.,'+-]{1,200}$")
+_SEARCH_TERM_RE = re.compile(r"^[A-Za-z0-9 _.,'+/:-]{1,200}$")
 
 
 @app.get("/api/hf/curated")
@@ -398,159 +409,320 @@ def hf_curated() -> dict:
     return {"models": []}
 
 
-@app.get("/api/hf/search", response_model=HFSearchResponse)
-@app.get("/api/hf/search/", response_model=HFSearchResponse)
-def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
-    """Search Hugging Face Hub for text generation models with caching and safety bounds."""
-    query = (query or "").strip()[:200]  # Sanitize and cap length
-    limit = max(1, min(int(limit), 25))  # Bound limit between 1 and 25
+def _fetch_hub_models_internal(
+    query: str = "",
+    limit: int = 20,
+    page: int = 1,
+    sort: str = "downloads",
+    filter_tag: str = "text-generation",
+) -> HubSearchResponse:
+    query = (query or "").strip()[:200]
+    limit = max(1, min(int(limit), 50))
+    page = max(1, int(page))
 
-    from app.hf_guard import safe_urlopen
+    from app.hf_guard import _SEARCH_TERM_RE
 
     if query and not _SEARCH_TERM_RE.fullmatch(query):
-        # Reject control characters / non-url-safe input with an empty result.
         logger.warning("Rejected non-printable HF search term: %s", query.replace("\n", ""))
-        return HFSearchResponse(query=query, limit=limit, models=[])
+        return HubSearchResponse(query=query, limit=limit, page=page, total=0, sort=sort, models=[])
 
-    cache_key = f"{query}:{limit}"
+    cache_key = f"{query}:{limit}:{page}:{sort}:{filter_tag}"
     now = time.time()
-    if cache_key in _hf_search_cache:
-        ts, cached_resp = _hf_search_cache[cache_key]
+    if cache_key in _hub_search_cache:
+        ts, cached_resp = _hub_search_cache[cache_key]
         if now - ts < _CACHE_TTL_SEARCH:
             return cached_resp
 
-    import urllib.error
-    import urllib.parse
+    models: list[HFModelMeta] = []
+    total = 0
 
-    params: dict[str, str] = {"limit": str(limit), "filter": "text-generation"}
-    if query:
-        params["search"] = query
-    url = "https://huggingface.co/api/models?" + urllib.parse.urlencode(params)
+    # Sort mapping for Hugging Face Hub
+    sort_key = "downloads"
+    if sort in ("likes", "most_likes"):
+        sort_key = "likes"
+    elif sort in ("recently_updated", "lastModified", "last_modified"):
+        sort_key = "lastModified"
 
+    # Primary: query Hugging Face models API via hardened safe_urlopen
     try:
         import json
+        import urllib.error
+        import urllib.parse
 
-        with safe_urlopen(url) as resp:
-            if resp.status != 200:
-                raise HTTPException(status_code=502, detail="Failed to fetch search results from Hugging Face Hub.")
-            raw_data = json.loads(resp.read(1 << 20).decode("utf-8"))  # Limit response size to 1MB
-            
-            models = []
-            for item in raw_data:
-                model_id = str(item.get("id") or item.get("modelId") or "")
-                if not model_id:
-                    continue
-                models.append(
-                    HFModelMeta(
-                        id=model_id,
-                        author=item.get("author", model_id.split("/")[0] if "/" in model_id else ""),
-                        downloads=int(item.get("downloads", 0)),
-                        likes=int(item.get("likes", 0)),
-                        tags=item.get("tags", [])[:10],
-                        pipeline_tag=str(item.get("pipeline_tag", "")),
-                        last_modified=str(item.get("lastModified", "")),
-                        private=bool(item.get("private", False)),
+        from app.hf_guard import safe_urlopen
+
+        params: dict[str, str] = {
+            "limit": str(min(100, page * limit + 10)),
+            "filter": filter_tag or "text-generation",
+            "sort": sort_key,
+            "direction": "-1",
+        }
+        if query:
+            params["search"] = query
+        url = "https://huggingface.co/api/models?" + urllib.parse.urlencode(params)
+
+        with safe_urlopen(url, timeout=8.0) as http_resp:
+            if http_resp.status == 200:
+                raw_data = json.loads(http_resp.read(1 << 20).decode("utf-8"))
+                for it in raw_data:
+                    mid = str(it.get("id") or it.get("modelId") or "")
+                    if not mid:
+                        continue
+                    mid_lower = mid.lower()
+                    compat_lvl = (
+                        "High"
+                        if any(k in mid_lower for k in ("qwen", "llama", "gpt2", "mistral", "gemma", "phi", "deepseek"))
+                        else "Partial"
                     )
+                    models.append(
+                        HFModelMeta(
+                            id=mid,
+                            author=str(it.get("author") or (mid.split("/")[0] if "/" in mid else "")),
+                            downloads=int(it.get("downloads", 0)),
+                            likes=int(it.get("likes", 0)),
+                            tags=[str(t) for t in it.get("tags", [])][:10],
+                            pipeline_tag=str(it.get("pipeline_tag", "text-generation")),
+                            last_modified=str(it.get("lastModified", "")),
+                            private=bool(it.get("private", False)),
+                            gated=bool(it.get("gated", False)),
+                            library_name=str(it.get("library_name", "transformers")),
+                            compatibility_level=compat_lvl,
+                            level_number=4 if compat_lvl == "High" else 2,
+                            architecture=mid.split("/")[-1],
+                        )
+                    )
+
+                # If query was an exact model ID and not in the first results, fetch exact item
+                if query and "/" in query and _MODEL_ID_RE.fullmatch(query) and not any(m.id == query for m in models):
+                    try:
+                        exact_url = f"https://huggingface.co/api/models/{urllib.parse.quote(query, safe='/')}"
+                        with safe_urlopen(exact_url, timeout=5.0) as exact_resp:
+                            if exact_resp.status == 200:
+                                ex = json.loads(exact_resp.read(1 << 20).decode("utf-8"))
+                                ex_mid = str(ex.get("id") or query)
+                                models.insert(
+                                    0,
+                                    HFModelMeta(
+                                        id=ex_mid,
+                                        author=str(ex.get("author") or (ex_mid.split("/")[0] if "/" in ex_mid else "")),
+                                        downloads=int(ex.get("downloads", 0)),
+                                        likes=int(ex.get("likes", 0)),
+                                        tags=[str(t) for t in ex.get("tags", [])][:10],
+                                        pipeline_tag=str(ex.get("pipeline_tag", "text-generation")),
+                                        last_modified=str(ex.get("lastModified", "")),
+                                        private=bool(ex.get("private", False)),
+                                        gated=bool(ex.get("gated", False)),
+                                        library_name=str(ex.get("library_name", "transformers")),
+                                        compatibility_level="High",
+                                        level_number=4,
+                                        architecture=ex_mid.split("/")[-1],
+                                    ),
+                                )
+                    except (urllib.error.URLError, OSError, ValueError, KeyError):
+                        pass
+
+                total = len(models)
+                start_idx = (page - 1) * limit
+                page_models = models[start_idx : start_idx + limit]
+                resp = HubSearchResponse(query=query, limit=limit, page=page, total=total, sort=sort, models=page_models)
+                _hub_search_cache[cache_key] = (now, resp)
+                return resp
+    except (urllib.error.URLError, OSError, ValueError, KeyError) as exc:
+        logger.warning("Hub search failed for '%s': %s", query.replace("\n", ""), exc)
+
+    # Secondary: fallback to HfApi
+    try:
+        from huggingface_hub import HfApi
+
+        api = HfApi()
+        hub_results = list(
+            api.list_models(
+                search=query if query else None,
+                filter=filter_tag if filter_tag else None,
+                limit=min(50, page * limit),
+                sort=sort_key,
+                direction=-1,
+            )
+        )
+        for item in hub_results:
+            mid = str(item.id)
+            mid_lower = mid.lower()
+            compat_lvl = "High" if any(k in mid_lower for k in ("qwen", "llama", "gpt2", "mistral", "gemma", "phi", "deepseek")) else "Partial"
+            models.append(
+                HFModelMeta(
+                    id=mid,
+                    author=str(getattr(item, "author", "") or (mid.split("/")[0] if "/" in mid else "")),
+                    downloads=int(getattr(item, "downloads", 0) or 0),
+                    likes=int(getattr(item, "likes", 0) or 0),
+                    tags=[str(t) for t in (getattr(item, "tags", []) or [])][:10],
+                    pipeline_tag=str(getattr(item, "pipeline_tag", "") or "text-generation"),
+                    last_modified=str(getattr(item, "last_modified", "") or ""),
+                    private=bool(getattr(item, "private", False)),
+                    gated=bool(getattr(item, "gated", False)),
+                    library_name=str(getattr(item, "library_name", "") or "transformers"),
+                    compatibility_level=compat_lvl,
+                    level_number=4 if compat_lvl == "High" else 2,
+                    architecture=mid.split("/")[-1],
                 )
-            result = HFSearchResponse(query=query, limit=limit, models=models)
-            _hf_search_cache[cache_key] = (now, result)
-            return result
-    except (urllib.error.URLError, OSError, ValueError) as exc:
-        logger.warning("HF Hub search failed for '%s': %s", query.replace("\n", ""), exc)
-        # Return empty search result fallback on error or network offline
-        return HFSearchResponse(query=query, limit=limit, models=[])
+            )
+        total = len(models)
+        start_idx = (page - 1) * limit
+        resp = HubSearchResponse(query=query, limit=limit, page=page, total=total, sort=sort, models=models[start_idx : start_idx + limit])
+        _hub_search_cache[cache_key] = (now, resp)
+        return resp
+    except (OSError, ValueError, KeyError, RuntimeError) as exc:
+        logger.warning("HfApi secondary fallback search failed for '%s': %s", query.replace("\n", ""), exc)
+
+    return HubSearchResponse(query=query, limit=limit, page=page, total=0, sort=sort, models=[])
 
 
-@app.get("/api/hf/inspect", response_model=HFInspectResponse)
-@app.get("/api/hf/inspect/", response_model=HFInspectResponse)
-def hf_inspect(model_id: str) -> HFInspectResponse:
-    """Fetch HF model config.json and compute deterministic EffectiveCapabilities matrix without downloading model weights."""
-    from app.hf_guard import safe_urlopen
-
+def _inspect_hub_model_internal(model_id: str) -> ModelCompatibilityReport:
     model_id = (model_id or "").strip()
     if not _MODEL_ID_RE.fullmatch(model_id):
         raise HTTPException(status_code=400, detail="Invalid Hugging Face model ID format.")
 
     now = time.time()
-    if model_id in _hf_inspect_cache:
-        ts, cached_resp = _hf_inspect_cache[model_id]
+    if model_id in _hub_compat_cache:
+        ts, cached_rep = _hub_compat_cache[model_id]
         if now - ts < _CACHE_TTL_INSPECT:
-            return cached_resp
+            return cached_rep
 
+    import json
+    import urllib.error
+    import urllib.parse
+
+    from app.hf_guard import safe_urlopen
+
+    config_json: dict = {}
+    revision = "main"
+    gated: bool | str = False
+    private: bool = False
+    siblings: list[str] = []
+
+    # 1. Fetch metadata & sha via safe_urlopen
+    meta_url = "https://huggingface.co/api/models/" + urllib.parse.quote(model_id, safe="/")
     try:
-        import json
-        import urllib.parse
+        with safe_urlopen(meta_url, timeout=8.0) as resp:
+            if resp.status == 200:
+                meta_json = json.loads(resp.read(1 << 20).decode("utf-8"))
+                revision = meta_json.get("sha") or meta_json.get("revision") or "main"
+                gated = meta_json.get("gated", False)
+                private = meta_json.get("private", False)
+                siblings = [
+                    s.get("rfilename", "")
+                    for s in meta_json.get("siblings", [])
+                    if isinstance(s, dict) and "rfilename" in s
+                ]
+                if meta_json.get("config"):
+                    config_json = dict(meta_json["config"])
+    except urllib.error.HTTPError as meta_err:
+        if meta_err.code in (401, 403):
+            raise HTTPException(status_code=401, detail=f"Model '{model_id}' is gated or private.") from meta_err
+        if meta_err.code == 404:
+            raise HTTPException(status_code=404, detail=f"Model '{model_id}' not found on Hugging Face Hub.") from meta_err
+    except (ValueError, OSError, KeyError):
+        pass
 
-        # 1. Fetch commit revision SHA metadata
-        meta_url = "https://huggingface.co/api/models/" + urllib.parse.quote(model_id, safe="/")
-        revision = "main"
+    # 2. If config_json is empty, fetch config.json via safe_urlopen
+    if not config_json:
+        config_url = f"https://huggingface.co/{urllib.parse.quote(model_id, safe='/')}/raw/{urllib.parse.quote(revision, safe='')}/config.json"
         try:
-            with safe_urlopen(meta_url) as resp:
+            with safe_urlopen(config_url, timeout=8.0) as resp:
                 if resp.status == 200:
-                    meta_json = json.loads(resp.read(1 << 20).decode("utf-8"))
-                    revision = meta_json.get("sha") or meta_json.get("revision") or "main"
-        except urllib.error.HTTPError as meta_err:
-            if meta_err.code in (401, 403):
-                _hf_inspect_cache[model_id] = (now, None)  # type: ignore[assignment]  # negative cache
-                raise HTTPException(status_code=401, detail=f"Model '{model_id}' is gated or private.") from meta_err
-            if meta_err.code == 404:
-                _hf_inspect_cache[model_id] = (now, None)  # type: ignore[assignment]
-                raise HTTPException(status_code=404, detail=f"Model '{model_id}' not found on Hugging Face Hub.") from meta_err
-            # Other HTTP errors: fall through to the generic handler below.
-
-        # 2. Fetch config.json
-        config_url = "https://huggingface.co/" + urllib.parse.quote(model_id, safe="/") + "/raw/" + urllib.parse.quote(revision, safe="") + "/config.json"
-        try:
-            with safe_urlopen(config_url) as resp:
-                if resp.status != 200:
-                    _hf_inspect_cache[model_id] = (now, None)  # type: ignore[assignment]
-                    raise HTTPException(status_code=404, detail=f"Config for model '{model_id}' not found on Hugging Face Hub.")
-                config_json = json.loads(resp.read(1 << 20).decode("utf-8"))
+                    config_json = json.loads(resp.read(1 << 20).decode("utf-8"))
         except urllib.error.HTTPError as cfg_err:
             if cfg_err.code in (401, 403):
-                _hf_inspect_cache[model_id] = (now, None)  # type: ignore[assignment]
                 raise HTTPException(status_code=401, detail=f"Model '{model_id}' is gated or private.") from cfg_err
             if cfg_err.code == 404:
-                _hf_inspect_cache[model_id] = (now, None)  # type: ignore[assignment]
                 raise HTTPException(status_code=404, detail=f"Config for model '{model_id}' not found on Hugging Face Hub.") from cfg_err
-            raise
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Model inspection blocked by security policy.") from exc
+        except (urllib.error.URLError, OSError, KeyError):
+            pass
 
-        # 3. Select deterministic adapter & compute capabilities
-        adapter = select_model_adapter(config_json)
-        mod_caps = adapter.get_capabilities(config_json)
-        backend_caps = BackendCapabilities(
-            backend_name="hf_local",
-            can_capture_attention=True,
-            can_capture_hidden_states=True,
-            can_ablate=True,
-            can_patch=True,
-        )
-        runtime_caps = RuntimeCapabilities(device="cpu")
-        eff_caps = calculate_effective_capabilities(mod_caps, backend_caps, runtime_caps)
+    # 3. Fallback to HfApi if config_json still empty
+    if not config_json:
+        try:
+            from huggingface_hub import HfApi
 
-        result = HFInspectResponse(
-            model_id=model_id,
-            revision=revision,
-            architecture=mod_caps.architecture,
-            model_type=str(config_json.get("model_type", "")),
-            parameter_count=mod_caps.parameter_count,
-            max_context_length=mod_caps.max_context_length,
-            estimated_vram_gb=mod_caps.vram_estimate.estimated_vram_gb if mod_caps.vram_estimate else 2.0,
-            estimation_basis=mod_caps.vram_estimate.estimation_basis if mod_caps.vram_estimate else "",
-            compatibility_level=eff_caps.compatibility_level,
-            compatibility_reason=eff_caps.compatibility_reason,
-            capabilities=eff_caps.model_dump(),
-        )
-        _hf_inspect_cache[model_id] = (now, result)
-        return result
-    except HTTPException:
-        raise
-    except ValueError as exc:
-        logger.warning("HF inspection rejected for '%s': %s", model_id.replace("\n", ""), exc)
-        raise HTTPException(status_code=400, detail="Model inspection blocked by security policy.") from exc
-    except Exception as exc:
-        logger.error("HF inspection error for '%s': %s", model_id.replace("\n", ""), exc)
-        raise HTTPException(status_code=500, detail="Failed to inspect model.") from exc
+            api = HfApi()
+            info = api.model_info(model_id)
+            revision = info.sha or revision
+            gated = getattr(info, "gated", gated)
+            private = getattr(info, "private", private)
+            siblings = [s.rfilename for s in (info.siblings or [])] or siblings
+            if getattr(info, "config", None):
+                config_json = dict(info.config)
+        except (OSError, ValueError, KeyError, RuntimeError) as e:
+            logger.info("HfApi model_info fallback for %s: %s", model_id, e)
+
+    if not config_json:
+        raise HTTPException(status_code=404, detail=f"Config for model '{model_id}' not found on Hugging Face Hub.")
+
+    report = evaluate_model_compatibility(
+        model_id=model_id,
+        config=config_json,
+        revision=revision,
+        gated=gated,
+        private=private,
+        siblings=siblings,
+    )
+    _hub_compat_cache[model_id] = (now, report)
+    return report
+
+
+@app.get("/api/hub/models", response_model=HubSearchResponse)
+@app.get("/api/hub/models/", response_model=HubSearchResponse)
+def hub_models(
+    search: str = "",
+    limit: int = 20,
+    page: int = 1,
+    sort: str = "downloads",
+    filter: str = "text-generation",
+) -> HubSearchResponse:
+    """Search Hugging Face Hub with sorting, pagination, and compatibility metrics."""
+    return _fetch_hub_models_internal(query=search, limit=limit, page=page, sort=sort, filter_tag=filter)
+
+
+@app.get("/api/hf/search", response_model=HFSearchResponse)
+@app.get("/api/hf/search/", response_model=HFSearchResponse)
+def hf_search(query: str = "", limit: int = 10) -> HFSearchResponse:
+    """Search Hugging Face Hub for text generation models (backward compatible)."""
+    resp = _fetch_hub_models_internal(query=query, limit=limit, page=1, sort="downloads", filter_tag="text-generation")
+    return HFSearchResponse(query=query, limit=limit, models=resp.models)
+
+
+@app.get("/api/hub/models/{model_id:path}/compatibility", response_model=ModelCompatibilityReport)
+def hub_model_compatibility(model_id: str) -> ModelCompatibilityReport:
+    """Inspect model capabilities and return comprehensive 4-level compatibility report."""
+    return _inspect_hub_model_internal(model_id)
+
+
+@app.get("/api/hf/inspect", response_model=HFInspectResponse)
+@app.get("/api/hf/inspect/", response_model=HFInspectResponse)
+def hf_inspect(model_id: str) -> HFInspectResponse:
+    """Fetch HF model config.json and compute deterministic capabilities matrix without downloading weights."""
+    report = _inspect_hub_model_internal(model_id)
+    return HFInspectResponse(
+        model_id=report.model_id,
+        revision=report.revision,
+        architecture=report.architecture,
+        model_type=report.model_type,
+        parameter_count=report.parameter_count,
+        max_context_length=report.max_context_length,
+        estimated_vram_gb=report.vram_estimate.estimated_vram_gb,
+        estimation_basis=report.vram_estimate.estimation_basis,
+        compatibility_level=report.compatibility_level,
+        compatibility_reason=report.compatibility_reason,
+        capabilities=report.capabilities.model_dump(),
+        level_number=report.level_number,
+        level_name=report.level_name,
+        gated=report.gated,
+        private=report.private,
+        weight_formats=report.weight_formats,
+        supported_backends=report.supported_backends,
+        hardware=report.hardware.model_dump(),
+    )
 
 
 @app.get("/api/model/capabilities")
@@ -558,7 +730,6 @@ def hf_inspect(model_id: str) -> HFInspectResponse:
 async def model_capabilities() -> dict:
     """Return effective capabilities of currently loaded model."""
     eng = _require_engine()
-    from app.inference.adapters import select_model_adapter
     config_dict = {
         "architectures": [eng.model.__class__.__name__] if getattr(eng, "model", None) else ["Qwen2ForCausalLM"],
         "model_type": eng.model_type or "qwen2",
