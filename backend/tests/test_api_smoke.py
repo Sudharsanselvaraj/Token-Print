@@ -14,11 +14,12 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import app.main as app_main
 import pytest
-from app.main import _hf_inspect_cache, _hf_search_cache, app
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+
+import app.main as app_main
+from app.main import _hf_inspect_cache, _hf_search_cache, app
 
 client = TestClient(app)
 
