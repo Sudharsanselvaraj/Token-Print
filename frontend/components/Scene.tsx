@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, Suspense } from "react";
+import React, { useEffect, useRef, Suspense } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls, Environment, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
@@ -8,18 +8,27 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { useStore } from "@/lib/store";
 import { canvasEvents } from "@/lib/canvasEvents";
-import { SpatialArchitectureScene } from "./scenes/SpatialArchitectureScene";
-import GenerationScene from "./scenes/GenerationScene";
-import WalkthroughScene from "./scenes/WalkthroughScene";
 import { PostProcessingPipeline } from "./scenes/PostProcessingPipeline";
 import { GlobalCameraController } from "./camera/GlobalCameraController";
 import { cameraOverview } from "./scenes/ArchitectureLayout";
+
+// Code-split 3D scenes so only the active visualization bundle is fetched
+const SpatialArchitectureScene = React.lazy(() =>
+  import("./scenes/SpatialArchitectureScene").then((m) => ({ default: m.SpatialArchitectureScene }))
+);
+const GenerationScene = React.lazy(() => import("./scenes/GenerationScene"));
+const WalkthroughScene = React.lazy(() => import("./scenes/WalkthroughScene"));
 
 const N_LAYERS = 24;
 
 function DebugExpose() {
   const { scene, camera, gl } = useThree();
+  const frameCounter = useRef(0);
   useFrame(() => {
+    // Throttle scene traversal to once every 60 frames (~1 second) to prevent per-frame CPU spikes
+    frameCounter.current++;
+    if (frameCounter.current % 60 !== 0) return;
+
     let meshes = 0, instanced = 0, instances = 0;
     scene.traverse((o) => {
       const a = o as unknown as { isMesh?: boolean; isInstancedMesh?: boolean; count?: number };
