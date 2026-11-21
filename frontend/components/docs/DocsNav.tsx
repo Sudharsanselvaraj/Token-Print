@@ -176,6 +176,7 @@ export default function DocsNav({
                     <li key={page.slug} className="docs-nav-item">
                       <Link
                         href={`/docs/${page.slug}`}
+                        prefetch={false}
                         className={`docs-nav-link${active ? " docs-nav-link--active" : ""}`}
                         onClick={() => setMobileOpen(false)}
                       >
