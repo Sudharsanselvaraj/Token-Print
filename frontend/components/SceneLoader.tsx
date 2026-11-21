@@ -61,11 +61,15 @@ export default function SceneLoader() {
   const [available, setAvailable] = useState<boolean | null>(null);
   const [status, setStatus] = useState<"ok" | "lost">("ok");
   const [sceneKey, setSceneKey] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const restoreTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setAvailable(webglAvailable());
+    // Defer Canvas mount by one animation frame to allow AppShell DOM & controls to paint immediately
+    const frameId = requestAnimationFrame(() => setMounted(true));
     return () => {
+      cancelAnimationFrame(frameId);
       if (restoreTimer.current) clearTimeout(restoreTimer.current);
     };
   }, []);
@@ -114,11 +118,50 @@ export default function SceneLoader() {
 
   return (
     <WebGLErrorBoundary fallback={(err, reset) => renderFallback(err, reset)}>
-      <Scene
-        key={sceneKey}
-        onContextLost={onContextLost}
-        onContextRestored={onContextRestored}
-      />
+      {!mounted ? (
+        <div
+          className="canvas-loading-placeholder"
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "#000000",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              color: "#71717A",
+              fontSize: "12px",
+              fontFamily: "Inter, system-ui, sans-serif",
+              letterSpacing: "0.04em",
+            }}
+          >
+            <div
+              style={{
+                width: "14px",
+                height: "14px",
+                border: "2px solid #27272A",
+                borderTopColor: "#A1A1AA",
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+            <span>Initializing 3D viewport…</span>
+          </div>
+        </div>
+      ) : (
+        <Scene
+          key={sceneKey}
+          onContextLost={onContextLost}
+          onContextRestored={onContextRestored}
+        />
+      )}
       {status === "lost" && (
         <div className="webgl-lost">
           <span>Restoring WebGL Canvas…</span>
