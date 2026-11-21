@@ -3,6 +3,7 @@ import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
 import DocsPrevNext from "@/components/docs/DocsPrevNext";
 import DocsCode from "@/components/docs/DocsCode";
 import DocsCallout from "@/components/docs/DocsCallout";
+import DocsApiExplorer from "@/components/docs/DocsApiExplorer";
 
 export const metadata: Metadata = {
   title: "API Reference",
@@ -14,14 +15,14 @@ export default function ApiReferencePage() {
     <>
       <DocsBreadcrumb slug="api-reference" title="API Reference" />
       <h1>API Reference</h1>
-      <p className="docs-meta">Reference</p>
+      <p className="docs-meta">DEVELOPER &amp; REFERENCE</p>
 
       <p>
-        Base URL (dev): <code>http://localhost:8000</code>. All responses are JSON. CORS is
-        restricted to the local dev origin (<code>http://localhost:3000</code>, configurable via{" "}
-        <code>TOKENPRINT_FRONTEND_PORT</code>) and the deployed frontend origins (
-        <code>sudharsanselvaraj.github.io</code>, <code>tokenprint.in</code>).
+        Base URL (dev): <code>http://localhost:8000</code>. Production Hugging Face Space:{" "}
+        <code>https://sudharsan112321-tokenprint-backend.hf.space</code>. All responses are JSON.
       </p>
+
+      <DocsApiExplorer />
 
       <hr />
 
