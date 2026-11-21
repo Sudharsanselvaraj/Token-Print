@@ -44,6 +44,7 @@ jobs:
       - run: npm run build
         env:
           NEXT_DISABLE_BASEPATH: "1"
+          NEXT_PUBLIC_API_URL: "https://sudharsan112321-tokenprint-backend.hf.space"
 
       - name: Skip deploy when Pages is disabled
         if: ${{ github.event.repository.has_pages != true }}
