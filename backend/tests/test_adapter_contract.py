@@ -1,7 +1,6 @@
 """Standardized contract tests for all ModelAdapter implementations."""
 
 import pytest
-
 from app.inference.adapters.deepseek import DeepseekAdapter
 from app.inference.adapters.gemma import GemmaAdapter
 from app.inference.adapters.generic import GenericCausalLMAdapter
