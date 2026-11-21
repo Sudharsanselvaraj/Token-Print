@@ -6,9 +6,8 @@ import threading
 from types import SimpleNamespace
 
 import torch
-from torch import nn
-
 from app.model import ActivationEngine, ModelEngine, _pick_device
+from torch import nn
 
 
 class _TinyTokenizer:
