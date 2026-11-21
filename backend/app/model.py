@@ -564,6 +564,27 @@ class ModelEngine:
             raw = self._analyze_causal_lm(sentence)
         return self.adapter.process_analysis(raw)
 
+    def analyze_cpu_fallback(self, sentence: str) -> dict:
+        """Execute forward pass on CPU when GPU quota or CUDA is unavailable."""
+        with self._lock:
+            try:
+                if self.device != "cpu":
+                    self.device = "cpu"
+                    if self.model is not None:
+                        self.model.to("cpu")
+            except Exception:  # noqa: BLE001
+                from transformers import AutoModelForCausalLM
+                logger.info("Transferring model to CPU for resilient fallback...")
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_id,
+                    revision=self.revision,
+                    attn_implementation=self.attn_implementation,
+                    torch_dtype=torch.float32,
+                ).to("cpu")
+                self.model.eval()
+                self.device = "cpu"
+        return self.analyze(sentence)
+
     def _analyze_causal_lm(self, sentence: str) -> dict:
         """Decoder-only causal LM forward pass (tokens, attention, geometry)."""
         with self._lock:
