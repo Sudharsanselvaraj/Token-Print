@@ -20,6 +20,10 @@ const C = {
   green: "#5dad82",
   red: "#c96f6f",
   redBorder: "rgba(201,111,111,0.30)",
+  amber: "#eab308",
+  amberBorder: "rgba(234, 179, 8, 0.35)",
+  cyan: "#38bdf8",
+  purple: "#a78bfa",
 };
 
 const labelStyle: React.CSSProperties = {
@@ -32,8 +36,6 @@ const labelStyle: React.CSSProperties = {
 };
 
 // ─── Compact monochrome icon set (no external packages) ───────────────────────
-// Real official Hugging Face logo geometry (frontend/public/hf-logo.svg),
-// rendered as a light-gray monochrome mark for the TokenPrint dark theme.
 function HfLogo({ width = 32, height = 30 }: { width?: number; height?: number }) {
   const hair = "#d2d2d2";
   const fluff = "#b0b0b0";
@@ -96,6 +98,9 @@ const ICONS = {
   download: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4",
   cloud: "M3 15a4 4 0 004 4h9a5 5 0 001-9.9 5 5 0 00-9.5-1.4A4.002 4.002 0 003 15z",
   alert: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
+  external: "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6m4-3h6v6m-11 5L21 3",
+  refresh: "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15",
+  check: "M20 6L9 17l-5-5",
 };
 
 function Spinner({ size = 16 }: { size?: number }) {
@@ -114,26 +119,65 @@ function Spinner({ size = 16 }: { size?: number }) {
   );
 }
 
-// Semantic tone for compatibility states — used only for a small status dot,
-// so the pill itself stays neutral graphite (TokenPrint monochrome language).
 function compatTone(level: string) {
-  if (level === "High") return { dot: C.green };
+  if (level === "High" || level === "ADVANCED" || level === "INSTRUMENTED") return { dot: C.green };
   if (level === "Unsupported") return { dot: C.red };
   return { dot: C.textMuted };
 }
 
-function truncateMiddle(text: string, max = 12) {
-  if (text.length <= max) return text;
-  return `${text.slice(0, 6)}…${text.slice(-4)}`;
+function getLevelBadge(levelNumber?: number, levelName?: string) {
+  const num = levelNumber || 4;
+  switch (num) {
+    case 4:
+      return {
+        label: "LEVEL 4 — ADVANCED",
+        color: C.cyan,
+        bg: "rgba(56, 189, 248, 0.08)",
+        border: "rgba(56, 189, 248, 0.3)",
+      };
+    case 3:
+      return {
+        label: "LEVEL 3 — INSTRUMENTED",
+        color: C.green,
+        bg: "rgba(93, 173, 130, 0.08)",
+        border: "rgba(93, 173, 130, 0.3)",
+      };
+    case 2:
+      return {
+        label: "LEVEL 2 — LOADABLE",
+        color: C.purple,
+        bg: "rgba(167, 139, 250, 0.08)",
+        border: "rgba(167, 139, 250, 0.3)",
+      };
+    default:
+      return {
+        label: "LEVEL 1 — DISCOVERABLE",
+        color: C.textSecondary,
+        bg: "rgba(161, 161, 170, 0.08)",
+        border: "rgba(161, 161, 170, 0.25)",
+      };
+  }
 }
 
+function truncateMiddle(text: string, max = 14) {
+  if (!text || text.length <= max) return text || "";
+  return `${text.slice(0, 6)}…${text.slice(-5)}`;
+}
+
+// 12 capabilities ordered by architectural level and importance
 const CAPABILITY_ORDER: Array<[string, string]> = [
-  ["supports_attention", "ATTENTION"],
+  ["supports_attention", "ATTENTION MATRICES"],
   ["supports_hidden_states", "HIDDEN STATES"],
+  ["supports_residual_stream", "RESIDUAL STREAM"],
+  ["supports_logits", "VOCAB LOGITS"],
   ["supports_logit_lens", "LOGIT LENS"],
   ["supports_head_ablation", "HEAD ABLATION"],
   ["supports_layer_ablation", "LAYER ABLATION"],
   ["supports_activation_patch", "ACTIVATION PATCH"],
+  ["supports_moe_routing", "MOE ROUTING"],
+  ["supports_kv_cache", "KV CACHE"],
+  ["supports_tokenization", "TOKENIZATION"],
+  ["supports_text_generation", "TEXT GENERATION"],
 ];
 
 interface CapabilityRow {
@@ -154,12 +198,19 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
   const [curatedModels, setCuratedModels] = useState<CuratedModel[]>([]);
   const [curatedLoading, setCuratedLoading] = useState(false);
   const [curatedError, setCuratedError] = useState<string | null>(null);
+  const [curatedSelectedId, setCuratedSelectedId] = useState<string>("Qwen/Qwen2.5-0.5B-Instruct");
+
+  // Search Hub states
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<HFModelMeta[]>([]);
+  const [searchSort, setSearchSort] = useState<"downloads" | "likes" | "recently_updated">("downloads");
+  const [searchPage, setSearchPage] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchSelectedId, setSearchSelectedId] = useState<string | null>(null);
 
-  const [selectedModelId, setSelectedModelId] = useState<string>("Qwen/Qwen2.5-0.5B-Instruct");
+  // Active inspected model
+  const activeModelId = activeTab === "curated" ? curatedSelectedId : searchSelectedId;
   const [inspectData, setInspectData] = useState<HFInspectResponse | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectError, setInspectError] = useState<string | null>(null);
@@ -167,8 +218,9 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
   const [localHover, setLocalHover] = useState(false);
   const [closeHover, setCloseHover] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchRequestIdRef = useRef<number>(0);
 
-  // Escape to close + scroll lock while open.
+  // Escape to close + scroll lock
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -183,12 +235,22 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
     };
   }, [isOpen, onClose]);
 
-  // Focus the search input when switching to the Search Hub tab.
+  // Focus search input when opening Search Hub
   useEffect(() => {
-    if (activeTab === "search") searchInputRef.current?.focus();
+    if (activeTab === "search") {
+      searchInputRef.current?.focus();
+      // If switching to search and no search selection yet, select first result or clear
+      if (!searchSelectedId) {
+        if (searchResults.length > 0) {
+          setSearchSelectedId(searchResults[0].id);
+        } else if (!searchQuery.trim()) {
+          setInspectData(null);
+        }
+      }
+    }
   }, [activeTab]);
 
-  // Fetch curated models on mount (open once).
+  // Load curated models once on mount
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
@@ -197,7 +259,12 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
     fetchHFCurated()
       .then((data) => {
         if (cancelled) return;
-        if (data.models && Array.isArray(data.models)) setCuratedModels(data.models as CuratedModel[]);
+        if (data.models && Array.isArray(data.models)) {
+          setCuratedModels(data.models as CuratedModel[]);
+          if (!curatedSelectedId && data.models.length > 0) {
+            setCuratedSelectedId(data.models[0].id);
+          }
+        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -212,33 +279,61 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
     };
   }, [isOpen]);
 
-  // Debounced real HF Hub search.
+  // Debounced search with request ID counter to prevent race conditions
   useEffect(() => {
-    if (!searchQuery.trim() || activeTab !== "search") return;
+    if (activeTab !== "search") return;
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setSearchResults([]);
+      setSearchSelectedId(null);
+      setInspectData(null);
+      setIsSearching(false);
+      setSearchError(null);
+      return;
+    }
+
     setSearchError(null);
+    setIsSearching(true);
+    const reqId = ++searchRequestIdRef.current;
+
     const timer = setTimeout(() => {
-      setIsSearching(true);
-      searchHFModels(searchQuery, 12)
+      searchHFModels(trimmed, 12, searchSort, searchPage)
         .then((data) => {
-          setSearchResults(data.models || []);
+          if (reqId !== searchRequestIdRef.current) return;
+          const models = data.models || [];
+          setSearchResults(models);
           setIsSearching(false);
+          if (models.length > 0) {
+            setSearchSelectedId(models[0].id);
+          } else {
+            setSearchSelectedId(null);
+            setInspectData(null);
+          }
         })
         .catch((err) => {
+          if (reqId !== searchRequestIdRef.current) return;
           console.error("HF search error:", err);
           setSearchError(err instanceof Error ? err.message : "Search failed");
           setIsSearching(false);
+          setSearchSelectedId(null);
+          setInspectData(null);
         });
     }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery, activeTab]);
 
-  // Inspect capabilities whenever a model is selected.
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchSort, searchPage, activeTab]);
+
+  // Inspect capabilities whenever activeModelId changes
   useEffect(() => {
-    if (!isOpen || !selectedModelId) return;
+    if (!isOpen || !activeModelId) {
+      if (!activeModelId) setInspectData(null);
+      return;
+    }
     let cancelled = false;
     setIsInspecting(true);
     setInspectError(null);
-    inspectHFModel(selectedModelId)
+
+    inspectHFModel(activeModelId)
       .then((data: HFInspectResponse) => {
         if (cancelled) return;
         setInspectData(data);
@@ -248,19 +343,20 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
         if (cancelled) return;
         console.error("HF inspect error:", err);
         setInspectError(
-          `Failed to inspect model capabilities for ${selectedModelId}: ${err instanceof Error ? err.message : err}`
+          `Failed to inspect model capabilities for ${activeModelId}: ${err instanceof Error ? err.message : err}`
         );
         setIsInspecting(false);
       });
+
     return () => {
       cancelled = true;
     };
-  }, [isOpen, selectedModelId]);
+  }, [isOpen, activeModelId]);
 
   if (!isOpen) return null;
 
   const buildCapabilities = (data: HFInspectResponse): CapabilityRow[] => {
-    const rows: CapabilityRow[] = CAPABILITY_ORDER.map(([key, title]) => {
+    return CAPABILITY_ORDER.map(([key, title]) => {
       const cap = data.capabilities?.[key];
       if (cap && typeof cap === "object" && "supported" in cap) {
         return {
@@ -270,24 +366,16 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
           fromData: true,
         };
       }
-      return { title, supported: false, reason: "Not reported for this model." };
+      return { title, supported: false, reason: "Not available for this model." };
     });
-    const vram = data.capabilities?.vram_estimate;
-    rows.push({
-      title: "VRAM ESTIMATE",
-      supported: true,
-      reason:
-        vram && typeof vram === "object" && "estimation_basis" in vram && typeof vram.estimation_basis === "string"
-          ? vram.estimation_basis
-          : data.estimation_basis || "Derived from parameter count, architecture, and dtype.",
-      fromData: Boolean(vram),
-    });
-    return rows;
   };
 
-  const selectModel = (id: string) => {
-    setSelectedModelId(id);
-    if (activeTab === "search") setActiveTab("curated");
+  const handleSelectModel = (id: string) => {
+    if (activeTab === "curated") {
+      setCuratedSelectedId(id);
+    } else {
+      setSearchSelectedId(id);
+    }
   };
 
   return (
@@ -301,480 +389,694 @@ export function HFModelPicker({ isOpen = true, onClose = () => {}, onSelectModel
         aria-modal="true"
         aria-label="Hugging Face Model Explorer"
       >
-      <div className="hf-explorer-panel" style={{ background: C.bg, color: C.text, fontFamily: TOKENS.fontSans }}>
-        {/* ── Header ─────────────────────────────────────────────────────── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 12,
-            padding: "16px 20px 14px",
-            borderBottom: `1px solid ${C.border}`,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, minWidth: 0 }}>
-            <div
+        <div className="hf-explorer-panel" style={{ background: C.bg, color: C.text, fontFamily: TOKENS.fontSans }}>
+          {/* ── Header ─────────────────────────────────────────────────────── */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: "16px 20px 14px",
+              borderBottom: `1px solid ${C.border}`,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12, minWidth: 0 }}>
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 7,
+                  border: `1px solid ${C.borderStrong}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  background: "rgba(255,255,255,0.03)",
+                }}
+              >
+                <HfLogo width={30} height={28} />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    letterSpacing: "-0.01em",
+                    lineHeight: 1.2,
+                    color: C.text,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Hugging Face Model Explorer
+                </h2>
+                <p style={{ margin: "3px 0 0", fontSize: "11px", color: C.textMuted, lineHeight: 1.4 }}>
+                  Discover models, inspect internal capabilities, and evaluate TokenPrint compatibility
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              onMouseEnter={() => setCloseHover(true)}
+              onMouseLeave={() => setCloseHover(false)}
               style={{
-                width: 34,
-                height: 34,
-                borderRadius: 7,
-                border: `1px solid ${C.borderStrong}`,
+                width: 28,
+                height: 28,
+                borderRadius: 6,
+                border: `1px solid ${C.border}`,
+                background: closeHover ? C.surfaceHover : "transparent",
+                color: closeHover ? C.text : C.textMuted,
+                cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
-                background: "rgba(255,255,255,0.03)",
+                transition: "background 0.12s, color 0.12s",
               }}
             >
-              <HfLogo width={30} height={28} />
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  letterSpacing: "-0.01em",
-                  lineHeight: 1.2,
-                  color: C.text,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                Hugging Face Model Explorer
-              </h2>
-              <p style={{ margin: "3px 0 0", fontSize: "11px", color: C.textMuted, lineHeight: 1.4 }}>
-                Discover models, inspect internal capabilities, and evaluate TokenPrint compatibility
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            onMouseEnter={() => setCloseHover(true)}
-            onMouseLeave={() => setCloseHover(false)}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 6,
-              border: `1px solid ${C.border}`,
-              background: closeHover ? C.surfaceHover : "transparent",
-              color: closeHover ? C.text : C.textMuted,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              transition: "background 0.12s, color 0.12s",
-            }}
-          >
-            <Icon d={ICONS.x} size={14} />
-          </button>
-        </div>
-
-        {/* ── Body: two-column explorer ───────────────────────────────────── */}
-        <div className="hf-explorer-cols" style={{ flex: 1, minHeight: 0, display: "flex" }}>
-          {/* Left column — catalog / search */}
-          <div
-            style={{
-              width: "31%",
-              minWidth: 220,
-              maxWidth: 360,
-              borderRight: `1px solid ${C.border}`,
-              display: "flex",
-              flexDirection: "column",
-              minHeight: 0,
-            }}
-          >
-            {/* Segmented navigation */}
-            <div style={{ padding: "10px 12px 8px" }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 6,
-                  padding: 3,
-                  background: "rgba(255,255,255,0.02)",
-                }}
-              >
-                <button
-                  onClick={() => setActiveTab("curated")}
-                  style={{
-                    borderRadius: 4,
-                    padding: "6px 0",
-                    border: "none",
-                    fontSize: "10px",
-                    fontWeight: activeTab === "curated" ? 600 : 500,
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                    cursor: "pointer",
-                    background: activeTab === "curated" ? C.surfaceHover : "transparent",
-                    color: activeTab === "curated" ? C.text : C.textMuted,
-                    transition: "background 0.12s, color 0.12s",
-                  }}
-                >
-                  Curated
-                </button>
-                <button
-                  onClick={() => setActiveTab("search")}
-                  style={{
-                    borderRadius: 4,
-                    padding: "6px 0",
-                    border: "none",
-                    fontSize: "10px",
-                    fontWeight: activeTab === "search" ? 600 : 500,
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                    cursor: "pointer",
-                    background: activeTab === "search" ? C.surfaceHover : "transparent",
-                    color: activeTab === "search" ? C.text : C.textMuted,
-                    transition: "background 0.12s, color 0.12s",
-                  }}
-                >
-                  <Icon d={ICONS.search} size={11} /> Search Hub
-                </button>
-              </div>
-            </div>
-
-            {activeTab === "curated" ? (
-              <div style={{ display: "flex", flexDirection: "column", minHeight: 0, flex: 1 }}>
-                <div style={{ padding: "6px 12px 8px" }}>
-                  <span style={labelStyle}>Recommended Compatible Models</span>
-                </div>
-                <div
-                  style={{
-                    flex: 1,
-                    minHeight: 0,
-                    overflowY: "auto",
-                    padding: "0 12px 12px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  }}
-                >
-                  {curatedLoading ? (
-                    <div style={{ padding: "28px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: C.textMuted, fontSize: "11px" }}>
-                      <Spinner size={14} /> Loading curated models…
-                    </div>
-                  ) : curatedError ? (
-                    <div style={{ padding: "20px 8px", textAlign: "left", color: C.textMuted, fontSize: "11px", lineHeight: 1.5 }}>
-                      <div style={{ display: "flex", gap: 6, alignItems: "center", color: C.red, marginBottom: 4 }}>
-                        <Icon d={ICONS.alert} size={12} /> Curated list unavailable
-                      </div>
-                      {curatedError}
-                      <button
-                        onClick={() => setActiveTab("search")}
-                        style={{
-                          marginTop: 8,
-                          padding: "5px 10px",
-                          borderRadius: 5,
-                          border: `1px solid ${C.borderStrong}`,
-                          background: "transparent",
-                          color: C.textSecondary,
-                          fontSize: "10px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Try Search Hub instead
-                      </button>
-                    </div>
-                  ) : (
-                    curatedModels.map((m) => (
-                      <ModelRow
-                        key={m.id}
-                        id={m.id}
-                        description={m.description}
-                        family={m.family}
-                        minVram={m.minimum_memory_gb}
-                        recommended={m.recommended}
-                        selected={selectedModelId === m.id}
-                        onSelect={() => selectModel(m.id)}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", minHeight: 0, flex: 1, padding: "0 12px 12px" }}>
-                <div style={{ position: "relative", marginBottom: 8 }}>
-                  <div
-                    style={{
-                      position: "absolute",
-                      left: 10,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: C.textMuted,
-                      pointerEvents: "none",
-                    }}
-                  >
-                    <Icon d={ICONS.search} size={12} />
-                  </div>
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search Hugging Face Hub…"
-                    style={{
-                      width: "100%",
-                      padding: "8px 10px 8px 30px",
-                      background: "rgba(255,255,255,0.03)",
-                      border: `1px solid ${C.border}`,
-                      borderRadius: 6,
-                      fontSize: "11px",
-                      color: C.text,
-                      outline: "none",
-                      fontFamily: TOKENS.fontSans,
-                    }}
-                  />
-                </div>
-                <div
-                  style={{
-                    flex: 1,
-                    minHeight: 0,
-                    overflowY: "auto",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  }}
-                >
-                  {isSearching ? (
-                    <div style={{ padding: "28px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: C.textMuted, fontSize: "11px" }}>
-                      <Spinner size={14} /> Searching Hugging Face Hub…
-                    </div>
-                  ) : searchError ? (
-                    <div style={{ padding: "20px 8px", color: C.red, fontSize: "11px", lineHeight: 1.5 }}>
-                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
-                        <Icon d={ICONS.alert} size={12} /> Search failed
-                      </div>
-                      {searchError}
-                    </div>
-                  ) : searchResults.length > 0 ? (
-                    searchResults.map((item, idx) => (
-                      <ModelRow
-                        key={item.id}
-                        id={item.id}
-                        author={item.author}
-                        downloads={item.downloads}
-                        likes={item.likes}
-                        selected={selectedModelId === item.id}
-                        onSelect={() => setSelectedModelId(item.id)}
-                        compactSearch={idx > 6}
-                      />
-                    ))
-                  ) : (
-                    <div style={{ padding: "26px 8px", textAlign: "center", color: C.textMuted, fontSize: "11px", lineHeight: 1.6 }}>
-                      {searchQuery ? "No models found matching your query." : "Type a model name to search the HF Hub."}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+              <Icon d={ICONS.x} size={14} />
+            </button>
           </div>
 
-          {/* Right column — selected model detail / inspection */}
-          <div
-            style={{
-              flex: 1,
-              minWidth: 0,
-              padding: "16px 20px",
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column",
-              background: "rgba(255,255,255,0.01)",
-            }}
-          >
-            {isInspecting ? (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: C.textMuted, fontSize: "11px" }}>
-                <Spinner />
-                <span>Evaluating architecture &amp; capability matrix…</span>
-              </div>
-            ) : inspectError ? (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: C.red, fontSize: "11px", padding: "0 24px", textAlign: "center", lineHeight: 1.6 }}>
-                <Icon d={ICONS.alert} size={18} />
-                <span>{inspectError}</span>
-              </div>
-            ) : !inspectData ? (
-              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.textMuted, fontSize: "11px" }}>
-                Select a model on the left to inspect capabilities.
-              </div>
-            ) : (
-              <>
-                {/* Model identity */}
-                <div>
-                  <div style={{ fontFamily: TOKENS.fontMono, fontSize: "16px", fontWeight: 600, letterSpacing: "-0.01em", color: C.text, wordBreak: "break-word" }}>
-                    {inspectData.model_id}
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 8px", marginTop: 5, fontFamily: TOKENS.fontMono, fontSize: "10px", color: C.textMuted }}>
-                    <span>
-                      REV <span style={{ color: C.textSecondary }}>{truncateMiddle(inspectData.revision)}</span>
-                    </span>
-                    <span style={{ color: C.borderStrong }}>|</span>
-                    <span>
-                      ARCH <span style={{ color: C.textSecondary }}>{inspectData.architecture}</span>
-                    </span>
-                  </div>
-                </div>
-
-                {/* Compatibility badge */}
-                <div style={{ marginTop: 14 }}>
-                  <div
+          {/* ── Body: two-column explorer ───────────────────────────────────── */}
+          <div className="hf-explorer-cols" style={{ flex: 1, minHeight: 0, display: "flex" }}>
+            {/* Left column — catalog / search */}
+            <div
+              style={{
+                width: "32%",
+                minWidth: 240,
+                maxWidth: 380,
+                borderRight: `1px solid ${C.border}`,
+                display: "flex",
+                flexDirection: "column",
+                minHeight: 0,
+              }}
+            >
+              {/* Segmented navigation */}
+              <div style={{ padding: "10px 12px 8px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 6,
+                    padding: 3,
+                    background: "rgba(255,255,255,0.02)",
+                  }}
+                >
+                  <button
+                    onClick={() => setActiveTab("curated")}
                     style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      padding: "6px 12px",
-                      borderRadius: 6,
-                      background: "rgba(255,255,255,0.03)",
-                      border: `1px solid ${C.borderStrong}`,
-                      fontSize: "10.5px",
-                      fontWeight: 600,
+                      borderRadius: 4,
+                      padding: "6px 0",
+                      border: "none",
+                      fontSize: "10px",
+                      fontWeight: activeTab === "curated" ? 600 : 500,
                       letterSpacing: "0.06em",
                       textTransform: "uppercase",
-                      fontFamily: TOKENS.fontMono,
-                      color: C.textSecondary,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      cursor: "pointer",
+                      background: activeTab === "curated" ? C.surfaceHover : "transparent",
+                      color: activeTab === "curated" ? C.text : C.textMuted,
+                      transition: "background 0.12s, color 0.12s",
                     }}
                   >
-                    <span
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: compatTone(inspectData.compatibility_level).dot,
-                      }}
-                    />
-                    <span style={{ color: C.textMuted }}>TokenPrint Compatibility:</span>
-                    <span style={{ color: C.text }}>{inspectData.compatibility_level}</span>
+                    Curated
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("search")}
+                    style={{
+                      borderRadius: 4,
+                      padding: "6px 0",
+                      border: "none",
+                      fontSize: "10px",
+                      fontWeight: activeTab === "search" ? 600 : 500,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      cursor: "pointer",
+                      background: activeTab === "search" ? C.surfaceHover : "transparent",
+                      color: activeTab === "search" ? C.text : C.textMuted,
+                      transition: "background 0.12s, color 0.12s",
+                    }}
+                  >
+                    <Icon d={ICONS.search} size={11} /> Search Hub
+                  </button>
+                </div>
+              </div>
+
+              {activeTab === "curated" ? (
+                <div style={{ display: "flex", flexDirection: "column", minHeight: 0, flex: 1 }}>
+                  <div style={{ padding: "6px 12px 8px" }}>
+                    <span style={labelStyle}>Recommended Compatible Models</span>
+                  </div>
+                  <div
+                    style={{
+                      flex: 1,
+                      minHeight: 0,
+                      overflowY: "auto",
+                      padding: "0 12px 12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                    }}
+                  >
+                    {curatedLoading ? (
+                      <div style={{ padding: "28px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: C.textMuted, fontSize: "11px" }}>
+                        <Spinner size={14} /> Loading curated models…
+                      </div>
+                    ) : curatedError ? (
+                      <div style={{ padding: "20px 8px", textAlign: "left", color: C.textMuted, fontSize: "11px", lineHeight: 1.5 }}>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center", color: C.red, marginBottom: 4 }}>
+                          <Icon d={ICONS.alert} size={12} /> Curated list unavailable
+                        </div>
+                        {curatedError}
+                        <button
+                          onClick={() => setActiveTab("search")}
+                          style={{
+                            marginTop: 8,
+                            padding: "5px 10px",
+                            borderRadius: 5,
+                            border: `1px solid ${C.borderStrong}`,
+                            background: "transparent",
+                            color: C.textSecondary,
+                            fontSize: "10px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Try Search Hub instead
+                        </button>
+                      </div>
+                    ) : (
+                      curatedModels.map((m) => (
+                        <ModelRow
+                          key={m.id}
+                          id={m.id}
+                          description={m.description}
+                          family={m.family}
+                          minVram={m.minimum_memory_gb}
+                          recommended={m.recommended}
+                          selected={curatedSelectedId === m.id}
+                          onSelect={() => handleSelectModel(m.id)}
+                        />
+                      ))
+                    )}
                   </div>
                 </div>
-
-                {/* Capability statement */}
-                {inspectData.compatibility_reason && (
-                  <p
-                    style={{
-                      margin: "12px 0 0",
-                      paddingLeft: 10,
-                      borderLeft: `2px solid ${C.borderStrong}`,
-                      fontSize: "11.5px",
-                      lineHeight: 1.55,
-                      color: C.textSecondary,
-                    }}
-                  >
-                    {inspectData.compatibility_reason}
-                  </p>
-                )}
-
-                {/* Metric blocks */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginTop: 16 }}>
-                  <MetricBlock label="Params" value={inspectData.parameter_count ? `${(inspectData.parameter_count / 1e6).toFixed(1)}M` : "Unknown"} />
-                  <MetricBlock label="Max Context" value={inspectData.max_context_length ? `${inspectData.max_context_length.toLocaleString()} tokens` : "Unknown"} />
-                  <MetricBlock label="Est. VRAM" value={`~${inspectData.estimated_vram_gb} GB`} />
-                </div>
-
-                {/* Instrumentation capabilities */}
-                <div style={{ marginTop: 18 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", minHeight: 0, flex: 1, padding: "0 12px 12px" }}>
+                  <div style={{ position: "relative", marginBottom: 6 }}>
                     <div
                       style={{
-                        width: 18,
-                        height: 18,
-                        borderRadius: 4,
-                        border: `1px solid ${C.borderStrong}`,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: C.textSecondary,
-                        background: C.surface,
+                        position: "absolute",
+                        left: 10,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: C.textMuted,
+                        pointerEvents: "none",
                       }}
                     >
-                      <Icon d={ICONS.cpu} size={11} />
+                      <Icon d={ICONS.search} size={12} />
                     </div>
-                    <span style={{ ...labelStyle, color: C.textSecondary }}>Internal Instrumentation Capabilities</span>
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setSearchPage(1);
+                      }}
+                      placeholder="Search Hugging Face Hub…"
+                      style={{
+                        width: "100%",
+                        padding: "8px 10px 8px 30px",
+                        background: "rgba(255,255,255,0.03)",
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 6,
+                        fontSize: "11px",
+                        color: C.text,
+                        outline: "none",
+                        fontFamily: TOKENS.fontSans,
+                      }}
+                    />
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, marginTop: 10 }}>
-                    {buildCapabilities(inspectData).map((cap) => (
-                      <CapabilityCard key={cap.title} {...cap} />
+
+                  {/* Search filters toolbar */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 8,
+                      marginBottom: 8,
+                      fontSize: "10px",
+                      color: C.textMuted,
+                    }}
+                  >
+                    <span>Sort by:</span>
+                    <select
+                      value={searchSort}
+                      onChange={(e) => {
+                        setSearchSort(e.target.value as any);
+                        setSearchPage(1);
+                      }}
+                      style={{
+                        background: "rgba(255,255,255,0.03)",
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 4,
+                        color: C.textSecondary,
+                        fontSize: "10px",
+                        padding: "3px 6px",
+                        outline: "none",
+                        fontFamily: TOKENS.fontSans,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <option value="downloads">Most Downloads</option>
+                      <option value="likes">Most Likes</option>
+                      <option value="recently_updated">Recently Updated</option>
+                    </select>
+                  </div>
+
+                  <div
+                    style={{
+                      flex: 1,
+                      minHeight: 0,
+                      overflowY: "auto",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                    }}
+                  >
+                    {isSearching ? (
+                      <div style={{ padding: "28px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: C.textMuted, fontSize: "11px" }}>
+                        <Spinner size={14} /> Searching Hugging Face Hub…
+                      </div>
+                    ) : searchError ? (
+                      <div style={{ padding: "20px 8px", color: C.red, fontSize: "11px", lineHeight: 1.5 }}>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                          <Icon d={ICONS.alert} size={12} /> Search failed
+                        </div>
+                        {searchError}
+                        <button
+                          onClick={() => {
+                            setSearchPage(1);
+                            setSearchError(null);
+                          }}
+                          style={{
+                            marginTop: 8,
+                            padding: "4px 8px",
+                            borderRadius: 4,
+                            border: `1px solid ${C.borderStrong}`,
+                            background: "transparent",
+                            color: C.text,
+                            fontSize: "10px",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <Icon d={ICONS.refresh} size={10} /> Retry
+                        </button>
+                      </div>
+                    ) : searchResults.length > 0 ? (
+                      searchResults.map((item, idx) => (
+                        <ModelRow
+                          key={item.id}
+                          id={item.id}
+                          author={item.author}
+                          downloads={item.downloads}
+                          likes={item.likes}
+                          levelNumber={item.level_number}
+                          selected={searchSelectedId === item.id}
+                          onSelect={() => handleSelectModel(item.id)}
+                          compactSearch={idx > 5}
+                        />
+                      ))
+                    ) : (
+                      <div style={{ padding: "26px 8px", textAlign: "center", color: C.textMuted, fontSize: "11px", lineHeight: 1.6 }}>
+                        {searchQuery ? "No models found matching your query." : "Type a model name to search the HF Hub."}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pagination footer */}
+                  {searchResults.length > 0 && (
+                    <div
+                      style={{
+                        paddingTop: 8,
+                        marginTop: 4,
+                        borderTop: `1px solid ${C.border}`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        fontSize: "10px",
+                        color: C.textMuted,
+                      }}
+                    >
+                      <button
+                        disabled={searchPage <= 1}
+                        onClick={() => setSearchPage((p) => Math.max(1, p - 1))}
+                        style={{
+                          padding: "3px 8px",
+                          borderRadius: 4,
+                          border: `1px solid ${searchPage <= 1 ? "transparent" : C.border}`,
+                          background: "transparent",
+                          color: searchPage <= 1 ? C.textDisabled : C.textSecondary,
+                          cursor: searchPage <= 1 ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        Prev
+                      </button>
+                      <span>Page {searchPage}</span>
+                      <button
+                        disabled={searchResults.length < 12}
+                        onClick={() => setSearchPage((p) => p + 1)}
+                        style={{
+                          padding: "3px 8px",
+                          borderRadius: 4,
+                          border: `1px solid ${searchResults.length < 12 ? "transparent" : C.border}`,
+                          background: "transparent",
+                          color: searchResults.length < 12 ? C.textDisabled : C.textSecondary,
+                          cursor: searchResults.length < 12 ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Right column — selected model detail / inspection */}
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                padding: "16px 20px",
+                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column",
+                background: "rgba(255,255,255,0.01)",
+              }}
+            >
+              {isInspecting ? (
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: C.textMuted, fontSize: "11px" }}>
+                  <Spinner />
+                  <span>Evaluating architecture &amp; capability matrix…</span>
+                </div>
+              ) : inspectError ? (
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: C.red, fontSize: "11px", padding: "0 24px", textAlign: "center", lineHeight: 1.6 }}>
+                  <Icon d={ICONS.alert} size={18} />
+                  <span>{inspectError}</span>
+                </div>
+              ) : !inspectData ? (
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, color: C.textMuted, fontSize: "11.5px" }}>
+                  <Icon d={ICONS.search} size={20} />
+                  <span>{activeTab === "search" ? "Search the Hugging Face Hub on the left to inspect capabilities." : "Select a model on the left to inspect capabilities."}</span>
+                </div>
+              ) : (
+                <>
+                  {/* Model identity */}
+                  <div>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                      <div style={{ fontFamily: TOKENS.fontMono, fontSize: "16px", fontWeight: 600, letterSpacing: "-0.01em", color: C.text, wordBreak: "break-word" }}>
+                        {inspectData.model_id}
+                      </div>
+                      <a
+                        href={`https://huggingface.co/${inspectData.model_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="View repository on Hugging Face"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                          padding: "4px 8px",
+                          borderRadius: 4,
+                          border: `1px solid ${C.border}`,
+                          color: C.textSecondary,
+                          fontSize: "10px",
+                          textDecoration: "none",
+                          fontFamily: TOKENS.fontMono,
+                          flexShrink: 0,
+                          background: "rgba(255,255,255,0.02)",
+                        }}
+                      >
+                        <span>HF Hub</span>
+                        <Icon d={ICONS.external} size={10} />
+                      </a>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 8px", marginTop: 5, fontFamily: TOKENS.fontMono, fontSize: "10px", color: C.textMuted }}>
+                      <span>
+                        REV <span style={{ color: C.textSecondary }}>{truncateMiddle(inspectData.revision)}</span>
+                      </span>
+                      <span style={{ color: C.borderStrong }}>|</span>
+                      <span>
+                        ARCH <span style={{ color: C.textSecondary }}>{inspectData.architecture}</span>
+                      </span>
+                      {inspectData.gated && (
+                        <>
+                          <span style={{ color: C.borderStrong }}>|</span>
+                          <span style={{ color: C.amber, fontWeight: 600 }}>GATED REPOSITORY</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Compatibility & Level Badges */}
+                  <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                    {/* Level Badge */}
+                    {(() => {
+                      const lvl = getLevelBadge(inspectData.level_number, inspectData.level_name);
+                      return (
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            padding: "5px 10px",
+                            borderRadius: 5,
+                            background: lvl.bg,
+                            border: `1px solid ${lvl.border}`,
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                            fontFamily: TOKENS.fontMono,
+                            color: lvl.color,
+                          }}
+                        >
+                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: lvl.color }} />
+                          {lvl.label}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Compatibility Rating */}
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "5px 10px",
+                        borderRadius: 5,
+                        background: "rgba(255,255,255,0.03)",
+                        border: `1px solid ${C.borderStrong}`,
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        fontFamily: TOKENS.fontMono,
+                        color: C.textSecondary,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: compatTone(inspectData.compatibility_level).dot,
+                        }}
+                      />
+                      <span style={{ color: C.textMuted }}>Compatibility:</span>
+                      <span style={{ color: C.text }}>{inspectData.compatibility_level}</span>
+                    </div>
+
+                    {/* Weight Formats Badges */}
+                    {inspectData.weight_formats && inspectData.weight_formats.map((fmt) => (
+                      <span
+                        key={fmt}
+                        style={{
+                          fontSize: "9px",
+                          fontFamily: TOKENS.fontMono,
+                          padding: "3px 7px",
+                          borderRadius: 4,
+                          border: `1px solid ${C.border}`,
+                          color: C.textMuted,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {fmt}
+                      </span>
                     ))}
                   </div>
-                </div>
-              </>
-            )}
+
+                  {/* Compatibility reason statement */}
+                  {inspectData.compatibility_reason && (
+                    <p
+                      style={{
+                        margin: "12px 0 0",
+                        paddingLeft: 10,
+                        borderLeft: `2px solid ${C.borderStrong}`,
+                        fontSize: "11.5px",
+                        lineHeight: 1.55,
+                        color: C.textSecondary,
+                      }}
+                    >
+                      {inspectData.compatibility_reason}
+                    </p>
+                  )}
+
+                  {/* Metric blocks */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginTop: 16 }}>
+                    <MetricBlock label="Params" value={inspectData.parameter_count ? `${(inspectData.parameter_count / 1e6).toFixed(1)}M` : "Unknown"} />
+                    <MetricBlock label="Max Context" value={inspectData.max_context_length ? `${inspectData.max_context_length.toLocaleString()} tokens` : "Unknown"} />
+                    <MetricBlock label="Est. VRAM" value={`~${inspectData.estimated_vram_gb} GB`} />
+                  </div>
+
+                  {/* Hardware feasibility banner */}
+                  {inspectData.hardware && (
+                    <div
+                      style={{
+                        marginTop: 12,
+                        padding: "8px 12px",
+                        borderRadius: 6,
+                        border: `1px solid ${inspectData.hardware.zerogpu_feasible ? "rgba(93, 173, 130, 0.25)" : C.amberBorder}`,
+                        background: inspectData.hardware.zerogpu_feasible ? "rgba(93, 173, 130, 0.04)" : "rgba(234, 179, 8, 0.04)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        fontSize: "10.5px",
+                        color: C.textSecondary,
+                      }}
+                    >
+                      <Icon d={inspectData.hardware.zerogpu_feasible ? ICONS.check : ICONS.alert} size={13} />
+                      <span>{inspectData.hardware.notes}</span>
+                    </div>
+                  )}
+
+                  {/* 12 Instrumentation capabilities */}
+                  <div style={{ marginTop: 18 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div
+                        style={{
+                          width: 18,
+                          height: 18,
+                          borderRadius: 4,
+                          border: `1px solid ${C.borderStrong}`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: C.textSecondary,
+                          background: C.surface,
+                        }}
+                      >
+                        <Icon d={ICONS.cpu} size={11} />
+                      </div>
+                      <span style={{ ...labelStyle, color: C.textSecondary }}>12 Architectural &amp; Instrumentation Capabilities</span>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, marginTop: 10 }}>
+                      {buildCapabilities(inspectData).map((cap) => (
+                        <CapabilityCard key={cap.title} {...cap} />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* ── Footer actions ──────────────────────────────────────────────── */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 10,
+              padding: "12px 20px",
+              borderTop: `1px solid ${C.border}`,
+              background: "rgba(255,255,255,0.015)",
+            }}
+          >
+            <button
+              disabled
+              title="Cloud ZeroGPU execution active for supported causal models"
+              style={{
+                padding: "8px 16px",
+                borderRadius: 6,
+                border: `1px solid ${C.border}`,
+                background: "transparent",
+                color: C.textDisabled,
+                fontSize: "11px",
+                fontWeight: 500,
+                letterSpacing: "0.02em",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                cursor: "not-allowed",
+                fontFamily: TOKENS.fontSans,
+              }}
+            >
+              <Icon d={ICONS.cloud} size={13} /> Cloud GPU (ZeroGPU)
+            </button>
+            <button
+              onClick={() => {
+                if (activeModelId) {
+                  if (onSelectModel) onSelectModel(activeModelId);
+                  onClose();
+                } else {
+                  onClose();
+                }
+              }}
+              disabled={!activeModelId}
+              onMouseEnter={() => setLocalHover(true)}
+              onMouseLeave={() => setLocalHover(false)}
+              style={{
+                padding: "8px 18px",
+                borderRadius: 6,
+                border: `1px solid ${localHover ? "#52525b" : C.borderStrong}`,
+                background: localHover ? "#222226" : C.surfaceHover,
+                color: C.text,
+                fontSize: "11.5px",
+                fontWeight: 600,
+                letterSpacing: "0.02em",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                cursor: activeModelId ? "pointer" : "not-allowed",
+                opacity: activeModelId ? 1 : 0.5,
+                transition: "background 0.12s, border-color 0.12s",
+                fontFamily: TOKENS.fontSans,
+              }}
+            >
+              <Icon d={ICONS.download} size={13} /> Use Locally
+            </button>
           </div>
         </div>
-
-        {/* ── Footer actions ──────────────────────────────────────────────── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: 10,
-            padding: "12px 20px",
-            borderTop: `1px solid ${C.border}`,
-            background: "rgba(255,255,255,0.015)",
-          }}
-        >
-          <button
-            disabled
-            title="Cloud execution arrives in Phase 2"
-            style={{
-              padding: "8px 16px",
-              borderRadius: 6,
-              border: `1px solid ${C.border}`,
-              background: "transparent",
-              color: C.textDisabled,
-              fontSize: "11px",
-              fontWeight: 500,
-              letterSpacing: "0.02em",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 7,
-              cursor: "not-allowed",
-              fontFamily: TOKENS.fontSans,
-            }}
-          >
-            <Icon d={ICONS.cloud} size={13} /> Run in Cloud (Phase 2)
-          </button>
-          <button
-            onClick={() => {
-              if (onSelectModel && selectedModelId) onSelectModel(selectedModelId);
-              else onClose();
-            }}
-            onMouseEnter={() => setLocalHover(true)}
-            onMouseLeave={() => setLocalHover(false)}
-            style={{
-              padding: "8px 18px",
-              borderRadius: 6,
-              border: `1px solid ${localHover ? "#52525b" : C.borderStrong}`,
-              background: localHover ? "#222226" : C.surfaceHover,
-              color: C.text,
-              fontSize: "11.5px",
-              fontWeight: 600,
-              letterSpacing: "0.02em",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 7,
-              cursor: "pointer",
-              transition: "background 0.12s, border-color 0.12s",
-              fontFamily: TOKENS.fontSans,
-            }}
-          >
-            <Icon d={ICONS.download} size={13} /> Use Locally
-          </button>
-        </div>
       </div>
-    </div>
     </ModalPortal>
   );
 }
@@ -789,6 +1091,7 @@ function ModelRow({
   author,
   downloads,
   likes,
+  levelNumber,
   selected,
   onSelect,
   compactSearch = false,
@@ -801,6 +1104,7 @@ function ModelRow({
   author?: string;
   downloads?: number;
   likes?: number;
+  levelNumber?: number;
   selected: boolean;
   onSelect: () => void;
   compactSearch?: boolean;
@@ -819,6 +1123,7 @@ function ModelRow({
     border: `1px solid ${C.borderStrong}`,
     whiteSpace: "nowrap" as const,
   };
+
   return (
     <div
       role="button"
@@ -870,6 +1175,20 @@ function ModelRow({
             {badge}
           </span>
         )}
+        {levelNumber && levelNumber === 4 && !recommended && (
+          <span
+            style={{
+              ...badgeStyle,
+              borderRadius: 4,
+              padding: "1px 5px",
+              color: C.cyan,
+              borderColor: "rgba(56, 189, 248, 0.3)",
+              flexShrink: 0,
+            }}
+          >
+            LVL 4
+          </span>
+        )}
       </div>
       {!compactSearch && (description || family || minVram) && (
         <>
@@ -916,7 +1235,7 @@ function ModelRow({
           )}
         </>
       )}
-      {compactSearch && (author != null || downloads != null || likes != null) && (
+      {(author != null || downloads != null || likes != null) && (
         <div
           style={{
             marginTop: 4,
@@ -927,7 +1246,7 @@ function ModelRow({
             color: C.textMuted,
           }}
         >
-          {author ? <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "40%" }}>{author}</span> : null}
+          {author ? <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "45%" }}>{author}</span> : null}
           {downloads != null ? <span>↓ {downloads.toLocaleString()}</span> : null}
           {likes != null ? <span>♥ {likes.toLocaleString()}</span> : null}
         </div>
