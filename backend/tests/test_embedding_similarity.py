@@ -22,10 +22,11 @@ transformers = pytest.importorskip("transformers")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from starlette.testclient import TestClient
+
 import app.main as main_module
 from app.adapters import get_model_adapter
 from app.model import ModelEngine, TokenizedTooLong
-from starlette.testclient import TestClient
 
 WORDS = [
     "the", "a", "cat", "dog", "sat", "on", "mat", "rug", "stock", "market",
@@ -221,8 +222,9 @@ class TestSimilarityEndpoint:
 
 def test_response_schema_only_allows_encoder_mode():
     """The endpoint only serves encoder models, and the contract says so."""
-    from app.schemas import SimilarityResponse
     from pydantic import ValidationError
+
+    from app.schemas import SimilarityResponse
 
     base = {
         "model": "m",
