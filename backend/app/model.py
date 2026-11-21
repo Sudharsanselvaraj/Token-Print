@@ -348,6 +348,11 @@ class ModelEngine:
         self._timing_handles: list = []
         self._register_layer_timing_hooks()
 
+    @property
+    def is_loaded(self) -> bool:
+        """Check whether the model weights and tokenizer/processor are initialized and ready."""
+        return self.model is not None and (self.tokenizer is not None or self.mode == "vision")
+
     def _layer_list(self):
         """Return the ModuleList of transformer layers regardless of mode."""
         if self.mode == "encoder":
