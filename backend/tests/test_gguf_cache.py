@@ -30,12 +30,11 @@ for _mod in _HEAVY_MODS:
 # Add backend directory to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import pytest
-from starlette.testclient import TestClient
-
 import app.main as _main_module
+import pytest
 from app.gguf_cache import DEFAULT_MAX_GGUF_ENGINES, GGUFEngineCache
 from app.main import GGUF_DIR, app
+from starlette.testclient import TestClient
 
 # ---------------------------------------------------------------------------
 # Helpers & Mocks
