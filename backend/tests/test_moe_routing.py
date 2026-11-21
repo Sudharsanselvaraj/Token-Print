@@ -17,8 +17,6 @@ import types
 from unittest.mock import MagicMock
 
 import torch
-from torch import nn
-
 from app.inference.adapters.deepseek import DeepseekAdapter
 from app.inference.adapters.gemma import GemmaAdapter
 from app.inference.adapters.generic import GenericCausalLMAdapter
@@ -28,6 +26,7 @@ from app.inference.adapters.mistral import MistralAdapter
 from app.inference.adapters.mixtral import MixtralAdapter
 from app.inference.adapters.qwen import QwenAdapter
 from app.model import ActivationEngine, ModelEngine
+from torch import nn
 
 # ---------------------------------------------------------------------------
 # 1. Adapter Contract and Capability Tests
