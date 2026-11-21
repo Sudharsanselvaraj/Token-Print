@@ -174,11 +174,27 @@ class HFModelMeta(BaseModel):
     pipeline_tag: str = ""
     last_modified: str = ""
     private: bool = False
+    gated: bool | str = False
+    library_name: str = ""
+    compatibility_level: str = "High"
+    level_number: int = 4
+    parameter_count: int | None = None
+    estimated_vram_gb: float | None = None
+    architecture: str = "Unknown"
 
 
 class HFSearchResponse(BaseModel):
     query: str
     limit: int
+    models: list[HFModelMeta]
+
+
+class HubSearchResponse(BaseModel):
+    query: str
+    limit: int
+    page: int = 1
+    total: int = 0
+    sort: str = "downloads"
     models: list[HFModelMeta]
 
 
@@ -194,6 +210,13 @@ class HFInspectResponse(BaseModel):
     compatibility_level: Literal["High", "Partial", "Basic", "Unsupported"] = "High"
     compatibility_reason: str = ""
     capabilities: dict = Field(default_factory=dict)
+    level_number: int = 4
+    level_name: str = "ADVANCED"
+    gated: bool | str = False
+    private: bool = False
+    weight_formats: list[str] = Field(default_factory=list)
+    supported_backends: list[str] = Field(default_factory=list)
+    hardware: dict = Field(default_factory=dict)
 
 
 class SimilaritySentence(BaseModel):
