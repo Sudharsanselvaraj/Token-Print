@@ -158,3 +158,37 @@ To satisfy Hugging Face's Gradio SDK configuration without Docker:
 4. **Frontend Configuration:**
    - Set `NEXT_PUBLIC_API_URL=https://sudharsan112321-tokenprint-backend.hf.space` for production builds.
    - Keep local fallback `http://localhost:8000` for development.
+
+---
+
+## 7. Post-Deployment Stabilization Sprint Audit
+
+Following live deployment to `sudharsan112321/tokenprint-backend`, a forensic stabilization pass resolved verified source-level risks:
+
+### 1. `UnboundLocalError` Resolution in `HFLocalBackend.analyze`
+- **Root Cause:** When `hf_space_analyze` succeeded on the ZeroGPU path, `eng = self._get_engine()` was bypassed, causing `UnboundLocalError` when evaluating `resp.provenance`.
+- **Fix:** `eng = self._get_engine()` is now assigned unconditionally at function entry, guaranteeing safe access for provenance metadata.
+
+### 2. Ready State & Health Check Realism
+- **Root Cause:** The deployed `HFLocalBackend.health_check()` previously evaluated `eng.is_loaded or True`, masking engine readiness failures.
+- **Fix:** Added an explicit `@property def is_loaded(self) -> bool` to `ModelEngine` verifying that both `self.model` and `self.tokenizer` are initialized. `health_check()` now fails closed if the model is not ready.
+
+### 3. Dedicated ZeroGPU Execution Path for `/ws/generate`
+- **Root Cause:** Streaming token generation yielded frames inside a background thread without being scoped to a ZeroGPU execution slice.
+- **Fix:** Added top-level `hf_space_generate_steps` decorated with `@spaces.GPU(duration=60)`. When ZeroGPU is present, the decode loop executes with NVIDIA CUDA acceleration and streams frames across the backpressure queue with fallback to CPU.
+
+### 4. Lifecycle Integration on Gradio 6 ASGI
+- **Root Cause:** Gradio 6 launches its own Starlette ASGI application without invoking FastAPI lifespan handlers.
+- **Fix:** Attached `@demo.app.on_event("startup")` and `@demo.app.on_event("shutdown")` lifecycle handlers to cleanly pre-warm `ModelEngine` at container boot and release PyTorch GPU weights and LRU caches upon termination.
+
+### 5. Explicit Error Classification (Replacing Blind Fallback)
+- **Root Cause:** Catch-all `except Exception:` masked input validation errors (`TokenizedTooLong`, `ValueError`) as GPU failures.
+- **Fix:** Implemented `is_gpu_or_quota_error(exc)` in `app.inference.error_classification`. Only genuine GPU exceptions (`ZeroGPUQuotaExceeded`, `CUDAOutOfMemory`, `CUDARuntimeError`, runner IPC timeouts) trigger CPU fallback; client errors are propagated as `400` / `422`.
+
+### 6. Sanitized Production Error Responses
+- **Root Cause:** Exception stack traces were formatted into HTTP 500 error strings, disclosing internal file system paths.
+- **Fix:** Server logs full stack traces internally (`logger.exception(...)`), while client responses return sanitized error details (`Inference execution failed: <Type>`).
+
+### 7. Deployment Reconciliation & Model Compatibility Registry
+- **Deployment Traceability:** Deployed Space revision synchronized to Git commit `55e07e6`.
+- **Model Verification Matrix:** Implemented `app.inference.compatibility_registry` exposing verification statuses across candidate checkpoints (`Qwen/Qwen2.5-0.5B-Instruct`, `gpt2`, `TinyLlama/TinyLlama-1.1B-Chat-v1.0`). Unsupported heavy models are explicitly documented as unsupported.
