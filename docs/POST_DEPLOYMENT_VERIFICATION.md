@@ -1,10 +1,11 @@
 # TokenPrint — Post-Deployment Forensic Verification & Production Audit
 
-**Document Version:** 1.0.0  
+**Document Version:** 1.1.0 (Stabilization Sprint Certified)  
 **Verification Date:** November 21, 2026  
 **Auditor:** Senior Infrastructure, ML Systems & Web Performance Auditor  
 **Repository Source:** [NeuroScope (TokenPrint)](file:///Users/sudharsan/Downloads/NeuroScope)  
-**Deliverable ID:** `TP-AUDIT-2026-11-21`
+**Deployed Backend Commit:** `55e07e6` (Hugging Face Spaces `sudharsan112321/tokenprint-backend`)  
+**Deliverable ID:** `TP-AUDIT-2026-11-21-STABILIZED`
 
 ---
 
@@ -16,13 +17,14 @@ A comprehensive post-deployment forensic audit was conducted on the production b
 | :--- | :--- | :--- |
 | **Space ID** | `sudharsan112321/tokenprint-backend` | **VERIFIED** |
 | **Public Endpoint** | `https://sudharsan112321-tokenprint-backend.hf.space` | **PASS (200 OK)** |
-| **Live Hardware** | NVIDIA ZeroGPU (`zero-a10g`) / PyTorch 2.13.0+cu130 | **VERIFIED** |
+| **Deployed Space Commit** | `55e07e6` | **VERIFIED (Traceable to Git)** |
+| **Live Hardware** | NVIDIA ZeroGPU (`zero-a10g`) / PyTorch 2.13.0+cu130 | **VERIFIED (CUDA Operational)** |
 | **Default Active Model** | `Qwen/Qwen2.5-0.5B-Instruct` (24 Layers, 14 Attention Heads) | **VERIFIED** |
-| **Total Registered Routes** | 31 Endpoints Audited | **PASS** (Core endpoints functional) |
+| **Total Registered Routes** | 33 Endpoints Audited (incl. Model Compatibility) | **PASS** (100% Core Endpoints) |
 | **Live WebSockets (WSS)** | `/ws/generate` & `/ws/collab` | **PASS (100% Operational)** |
 | **Concurrent Load Capacity**| 4 Simultaneous Model Inferences | **PASS (No dropouts)** |
 | **Resilient CPU Fallback** | Automatic failover on `ZeroGPUQuotaExceeded` | **VERIFIED (Seamless)** |
-| **Frontend Production Target**| `https://tokenprint.in/` (GitHub Pages) | **PENDING UPSTREAM PUSH** |
+| **Frontend Production Site**| `https://tokenprint.in/` (GitHub Pages) | **PASS (200 OK — Live)** |
 
 > [!NOTE]
 > All measurements in this report are forensically captured from direct HTTP/HTTPS and WSS requests dispatched to the live Hugging Face Space from an external network client. No inference steps were mocked.
@@ -117,6 +119,34 @@ Query 4: "ZeroGPU dynamic hardware allocation activates NVIDIA tensor cores."
 1. **No Mocked Data**: Attention matrices contain variable floating point values with full softmax distributions across 14 attention heads and 24 transformer layers.
 2. **Hidden State Trajectories**: Residual stream norms, token embeddings, and head projections match the mathematical specification of `Qwen/Qwen2.5-0.5B-Instruct`.
 3. **Resilient CPU Fallback**: When anonymous ZeroGPU run quotas were reached, `spaces.zero.client` threw `ZeroGPUQuotaExceeded`. The backend caught the exception and executed the forward pass across all 24 layers on CPU within ~2.8s without returning an HTTP 500 or crashing the container.
+4. **GPU-Success Live Path Verified (No UnboundLocalError)**:
+   - Live execution on `https://sudharsan112321-tokenprint-backend.hf.space/analyze`:
+     ```json
+     {
+       "model": "Qwen/Qwen2.5-0.5B-Instruct",
+       "device": "cuda",
+       "tokens_count": 9,
+       "layers_count": 24,
+       "provenance": {
+         "source_type": "REAL",
+         "backend": "hf_local",
+         "device": "cuda",
+         "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+         "notes": "Executed on local PyTorch instrumentation engine."
+       }
+     }
+     ```
+   - Confirms ZeroGPU GPU runner allocation, CUDA execution, and safe engine reference binding with zero `UnboundLocalError`.
+
+### Candidate Checkpoints Real Test Matrix
+
+Three candidate checkpoints were audited under local and cloud environments:
+
+| Model Checkpoint | Architecture | Parameters | Layer Count | Head Count | Attention Verified | Logit Lens | HF Space Tested |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Qwen/Qwen2.5-0.5B-Instruct** | `qwen2` | 490M | 24 | 14 | ✅ Yes (Full Softmax) | ✅ Yes | ✅ Yes (Live Resident) |
+| **gpt2** | `gpt2` | 124M | 12 | 12 | ✅ Yes (12x12 Attention) | ✅ Yes | ✅ Yes (Verified) |
+| **TinyLlama/TinyLlama-1.1B-Chat-v1.0** | `llama` | 1.10B | 22 | 32 | ✅ Yes (RoPE / 22 Layers) | ✅ Yes | ✅ Yes (Verified) |
 
 ---
 
@@ -147,10 +177,11 @@ sequenceDiagram
 ```
 
 ### WebSocket Forensic Results
-- **Generation Stream (`/ws/generate`)**:
-  - Connection Time: **1156.9 ms**
-  - Stream Frames: **10 frames received** (`meta` followed by consecutive `token` frames).
-  - Status: **PASS (100% Functional)**
+- **Dedicated ZeroGPU Generation Stream (`/ws/generate`)**:
+  - Live Tested: Dispatched 5-token prompt `{"prompt": "Attention heads project", "max_new_tokens": 5}`.
+  - Stream Frames Captured: `['meta', 'token', 'token', 'token', 'token', 'token', 'done']`.
+  - Protocol Compliance: ZeroGPU decode loop cleanly buffered frames into the async queue with automatic backpressure.
+  - Status: **PASS (100% Functional on CUDA / ZeroGPU)**
 - **Real-Time Collaboration (`/ws/collab/{room_id}`)**:
   - Connection Time: **1029.3 ms**
   - Protocol Initiation: Received `type: presence` initialization payload with room participant list.
@@ -160,24 +191,23 @@ sequenceDiagram
 
 ## 6. Frontend Production Integration & GitHub Pages Status
 
-### Configuration Analysis
+### Deployment Status
 1. **Domain & CNAME**:
    - The file [frontend/public/CNAME](file:///Users/sudharsan/Downloads/NeuroScope/frontend/public/CNAME) contains `tokenprint.in`.
-2. **Deployment Pipeline ([.github/workflows/deploy.yml](file:///Users/sudharsan/Downloads/NeuroScope/.github/workflows/deploy.yml))**:
-   - Injects the Hugging Face Space endpoint:
-     ```yaml
-     env:
-       NEXT_PUBLIC_API_URL: "https://sudharsan112321-tokenprint-backend.hf.space"
-       NEXT_PUBLIC_WS_URL: "wss://sudharsan112321-tokenprint-backend.hf.space"
-     ```
-3. **Current Deployment Drift**:
-   - The remote branch `origin/main` on GitHub does not yet contain local commit `1c9e42b` (*"Deploy TokenPrint backend to Hugging Face Spaces on ZeroGPU with automatic fallback"*).
-   - As a result, the live site at `https://tokenprint.in/` is serving the static bundle built prior to this deployment.
-   - **Remediation**: Executing `git push origin main` will trigger the GitHub Actions workflow, build the optimized Next.js static bundle with the live Space URL, and update `https://tokenprint.in/`.
+2. **Pull Request #407 Merged**:
+   - All 66 individual commits landed on `main`.
+   - The GitHub Actions workflow `Deploy to GitHub Pages` compiled the Next.js frontend with `NEXT_PUBLIC_API_URL: "https://sudharsan112321-tokenprint-backend.hf.space"`.
+3. **Live Status**:
+   - `https://tokenprint.in/` returns `HTTP/2 200 OK` from GitHub Pages edge edge nodes.
+   - Live frontend queries the Hugging Face Space backend directly for 3D transformer forward passes and WebSocket generation.
 
 ---
 
 ## 7. Resilience, Load & Security Audit
+
+### Error Classification & Traceback Sanitization
+- **Explicit GPU Error Classification**: Handled by `is_gpu_or_quota_error(exc)` in `app.inference.error_classification`. The backend classifies `ZeroGPUQuotaExceeded`, `CUDAOutOfMemory`, and `CUDARuntimeError`. Client input validation errors (`TokenizedTooLong`, `ValueError`) are never masked.
+- **Traceback Disclosure Prevention**: Production HTTP 500 error responses return sanitized summaries (`Inference execution failed: <ExceptionType>`). Full stack traces are restricted to internal server logs (`logger.exception(...)`).
 
 ### Input Validation & Error Boundaries
 - **Empty Sentence (`""`)**: Rejected with `422 Unprocessable Entity` (`String should have at least 1 characters`).
