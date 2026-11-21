@@ -7,6 +7,7 @@ from typing import Any
 
 from app.inference.base import InferenceBackend
 from app.inference.capabilities import BackendCapabilities
+from app.inference.error_classification import is_gpu_or_quota_error
 from app.schemas import AnalyzeResponse, ProvenanceInfo
 
 logger = logging.getLogger("tokenprint.inference.hf_local")
@@ -55,15 +56,22 @@ class HFLocalBackend(InferenceBackend):
         main_mod = sys.modules.get("__main__")
         runner = getattr(main_mod, "hf_space_analyze", None)
         raw = None
+        eng = self._get_engine()
         if runner is not None:
             try:
                 raw = runner(sentence)
-            except Exception as exc:  # noqa: BLE001
-                logger.warning("ZeroGPU execution unavailable (%s). Falling back to CPU.", exc)
-                eng = self._get_engine()
-                raw = eng.analyze_cpu_fallback(sentence)
+            except Exception as exc:
+                should_fallback, error_category = is_gpu_or_quota_error(exc)
+                if should_fallback:
+                    logger.warning(
+                        "ZeroGPU execution unavailable (%s: %s). Falling back to CPU.",
+                        error_category,
+                        exc,
+                    )
+                    raw = eng.analyze_cpu_fallback(sentence)
+                else:
+                    raise
         else:
-            eng = self._get_engine()
             raw = eng.analyze(sentence)
 
         resp = AnalyzeResponse(**raw) if isinstance(raw, dict) else raw
@@ -75,8 +83,8 @@ class HFLocalBackend(InferenceBackend):
             resp.provenance = ProvenanceInfo(
                 source_type="REAL",
                 backend="hf_local",
-                device=resp.device or "cpu",
-                model_id=resp.model,
+                device=resp.device or getattr(eng, "device", "cpu"),
+                model_id=resp.model or getattr(eng, "model_id", "local_hf_model"),
                 model_revision=model_rev,
                 notes="Executed on local PyTorch instrumentation engine.",
             )
@@ -100,11 +108,10 @@ class HFLocalBackend(InferenceBackend):
         except Exception:  # noqa: BLE001 - health checks must fail closed.
             return False
 
-        # ModelEngine eagerly loads its model in __init__ and does not currently
-        # expose an `is_loaded` property. Prefer an explicit boolean readiness
-        # flag if a future engine implementation provides one; otherwise inspect
-        # the actual model reference instead of assuming the backend is healthy.
         loaded_flag = getattr(eng, "is_loaded", None)
         if isinstance(loaded_flag, bool):
             return loaded_flag
-        return getattr(eng, "model", None) is not None
+        model_obj = getattr(eng, "model", None)
+        tok_obj = getattr(eng, "tokenizer", None)
+        mode = getattr(eng, "mode", "causal_lm")
+        return model_obj is not None and (tok_obj is not None or mode == "vision")
