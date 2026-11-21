@@ -3,7 +3,6 @@
   <img src=".github/assets/tokenprint-logo.png" alt="TokenPrint" width="220" />
 </p>
 
-<h1 align="center">TokenPrint</h1>
 
 <p align="center">
   <b>Watch your model think.</b><br />
