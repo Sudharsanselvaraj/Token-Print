@@ -1,6 +1,7 @@
 """Tests for strict, versioned trace parsing."""
 
 import pytest
+
 from app.trace import TRACE_VERSION, parse_trace
 
 
@@ -78,8 +79,9 @@ def test_parse_trace_rejects_invalid_done_type():
 
 
 def test_replay_endpoint_returns_400_for_malformed_nested_field():
-    from app.main import app
     from fastapi.testclient import TestClient
+
+    from app.main import app
 
     trace = _valid_trace()
     trace["meta"] = []
