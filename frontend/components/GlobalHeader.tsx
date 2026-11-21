@@ -45,12 +45,18 @@ function GlobalHeaderInner() {
         {/* Left: Brand Logo */}
         <Link href="/" className="landing-nav-brand" onClick={close} aria-label="TokenPrint home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={assetUrl("/tokenprint-logo.png")}
-            alt="TokenPrint"
-            className="brand-logo"
-            style={{ height: "36px", width: "auto" }}
-          />
+          <picture>
+            <source srcSet={assetUrl("/tokenprint-logo.webp")} type="image/webp" />
+            <img
+              src={assetUrl("/tokenprint-logo.png")}
+              alt="TokenPrint"
+              className="brand-logo"
+              width={154}
+              height={36}
+              style={{ height: "36px", width: "auto" }}
+              decoding="async"
+            />
+          </picture>
         </Link>
 
         {/* Nav links (desktop) */}
