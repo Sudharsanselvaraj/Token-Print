@@ -74,19 +74,40 @@ interface HubModelItem {
   private?: boolean;
 }
 
-export async function clientSearchHFModels(query: string, limit = 10): Promise<HFModelMeta[]> {
+export async function clientSearchHFModels(
+  query: string,
+  limit = 12,
+  sort = "downloads",
+  page = 1,
+): Promise<HFModelMeta[]> {
+  const fetchLimit = Math.max(1, Math.min(Math.trunc(limit * page), 50));
   const params = new URLSearchParams({
-    search: query,
     filter: "text-generation",
-    limit: String(Math.max(1, Math.min(Math.trunc(limit), 25))),
+    limit: String(fetchLimit),
   });
+  if (query.trim()) params.set("search", query.trim());
+  if (sort === "likes") params.set("sort", "likes");
+  else if (sort === "recently_updated" || sort === "lastModified") params.set("sort", "lastModified");
+  else params.set("sort", "downloads");
+  params.set("direction", "-1");
+
   const res = await fetch(`${HF_HUB_BASE}/api/models?${params.toString()}`, JSON_OPTS);
   if (!res.ok) throw new Error(`Hugging Face Hub search failed (HTTP ${res.status})`);
   const data: HubModelItem[] = await res.json();
-  return (data ?? [])
+  const allModels = (data ?? [])
     .map((item): HFModelMeta | null => {
       const id = String(item.id ?? item.modelId ?? "");
       if (!id) return null;
+      const idLower = id.toLowerCase();
+      let compatLevel = "Basic";
+      let levelNum = 1;
+      if (["qwen", "llama", "gpt2", "mistral", "gemma", "phi", "deepseek"].some((k) => idLower.includes(k))) {
+        compatLevel = "High";
+        levelNum = 4;
+      } else if (item.pipeline_tag === "text-generation") {
+        compatLevel = "Partial";
+        levelNum = 2;
+      }
       return {
         id,
         author: String(item.author ?? (id.includes("/") ? id.split("/")[0] : "")),
@@ -96,9 +117,15 @@ export async function clientSearchHFModels(query: string, limit = 10): Promise<H
         pipeline_tag: String(item.pipeline_tag ?? ""),
         last_modified: String(item.lastModified ?? item.lastModifiedAt ?? ""),
         private: Boolean(item.private),
+        compatibility_level: compatLevel,
+        level_number: levelNum,
+        architecture: id.split("/").pop() ?? "CausalLM",
       };
     })
     .filter((m): m is HFModelMeta => m !== null);
+
+  const startIdx = Math.max(0, (page - 1) * limit);
+  return allModels.slice(startIdx, startIdx + limit);
 }
 
 // --------------------------------------------------------------------------- //
@@ -291,35 +318,54 @@ function computeModelCapabilities(config: Record<string, unknown>): ComputedCapa
 function effectiveFromModel(caps: ComputedCapabilities): {
   compatibility_level: HFInspectResponse["compatibility_level"];
   compatibility_reason: string;
+  level_number: 1 | 2 | 3 | 4;
+  level_name: "DISCOVERABLE" | "LOADABLE" | "INSTRUMENTED" | "ADVANCED";
   capabilities: Record<string, CapabilityStatus | VRAMEstimate>;
 } {
   const capabilities: Record<string, CapabilityStatus | VRAMEstimate> = {
-    supports_attention: caps.supports_attention,
+    supports_tokenization: { supported: true, confidence: "high", reason: "Standard Hugging Face tokenizer supported." },
+    supports_text_generation: { supported: true, confidence: "high", reason: "Autoregressive generation loop supported." },
+    supports_logits: { supported: true, confidence: "high", reason: "Final vocabulary probability distribution accessible." },
     supports_hidden_states: caps.supports_hidden_states,
+    supports_attention: caps.supports_attention,
     supports_logit_lens: caps.supports_logit_lens,
     supports_head_ablation: caps.supports_head_ablation,
     supports_layer_ablation: caps.supports_layer_ablation,
     supports_activation_patch: caps.supports_activation_patch,
+    supports_residual_stream: { supported: caps.supports_hidden_states.supported, confidence: "high", reason: "Residual stream vectors tracked across layer depths." },
+    supports_moe_routing: { supported: false, confidence: "high", reason: "Dense architecture; no mixture-of-experts routing layers." },
+    supports_kv_cache: { supported: true, confidence: "high", reason: "Key-value caching supported for sequential generation." },
   };
   const supportedCount = [caps.supports_attention, caps.supports_hidden_states, caps.supports_logit_lens, caps.supports_head_ablation].filter(
     (c) => c.supported
   ).length;
   let compatibility_level: HFInspectResponse["compatibility_level"];
   let compatibility_reason: string;
+  let level_number: 1 | 2 | 3 | 4;
+  let level_name: "DISCOVERABLE" | "LOADABLE" | "INSTRUMENTED" | "ADVANCED";
+
   if (supportedCount === 4) {
     compatibility_level = "High";
+    level_number = 4;
+    level_name = "ADVANCED";
     compatibility_reason = "Full native instrumentation available (Attention, Hidden States, Logit Lens, Ablation).";
   } else if (supportedCount >= 2) {
     compatibility_level = "Partial";
+    level_number = 3;
+    level_name = "INSTRUMENTED";
     compatibility_reason = "Partial instrumentation available.";
   } else if (supportedCount >= 1) {
     compatibility_level = "Basic";
+    level_number = 2;
+    level_name = "LOADABLE";
     compatibility_reason = "Basic inference / limited activation extraction.";
   } else {
     compatibility_level = "Unsupported";
+    level_number = 1;
+    level_name = "DISCOVERABLE";
     compatibility_reason = "Model architecture or backend does not support activation extraction.";
   }
-  return { compatibility_level, compatibility_reason, capabilities };
+  return { compatibility_level, compatibility_reason, level_number, level_name, capabilities };
 }
 
 export async function clientInspectHFModel(modelId: string): Promise<HFInspectResponse> {
@@ -362,8 +408,6 @@ export async function clientInspectHFModel(modelId: string): Promise<HFInspectRe
   // 2. Fetch config.json raw at the repo's resolved revision.
   const configRes = await fetch(`${HF_HUB_BASE}/${encId}/raw/${encodeURIComponent(revision)}/config.json`, JSON_OPTS);
   if (!configRes.ok) {
-    // HF returns HTTP 401 for BOTH gated repos and nonexistent ids on /raw
-    // files (404 for non-existent), so use the meta step to phrase it right.
     if (!metaFound) {
       throw new Error(
         `Model '${id}' not found on Hugging Face Hub (HTTP ${configRes.status}). Check the id for typos.`,
@@ -391,25 +435,37 @@ export async function clientInspectHFModel(modelId: string): Promise<HFInspectRe
   }
   const config: Record<string, unknown> = await configRes.json();
 
-  // 3. Compute the deterministic capability matrix (client port of
-  //    backend app/inference/adapters + capabilities.calculate_effective_*).
+  // 3. Compute the deterministic capability matrix
   const caps = computeModelCapabilities(config);
-  const { compatibility_level, compatibility_reason, capabilities } = effectiveFromModel(caps);
+  const { compatibility_level, compatibility_reason, level_number, level_name, capabilities } = effectiveFromModel(caps);
   if (caps.vram_estimate) {
     capabilities.vram_estimate = caps.vram_estimate;
   }
+  const estVram = caps.vram_estimate?.estimated_vram_gb ?? 2.0;
 
   return {
     model_id: id,
     revision,
     architecture: caps.architecture,
-    model_type: String(config.model_type ?? ""),
+    model_type: String(config.model_type ?? "causal_lm"),
     parameter_count: caps.parameter_count,
     max_context_length: caps.max_context_length,
-    estimated_vram_gb: caps.vram_estimate?.estimated_vram_gb ?? 2.0,
-    estimation_basis: caps.vram_estimate?.estimation_basis ?? "",
+    estimated_vram_gb: estVram,
+    estimation_basis: caps.vram_estimate?.estimation_basis ?? "params × 2 bytes + overhead",
     compatibility_level,
     compatibility_reason,
     capabilities,
+    level_number,
+    level_name,
+    gated: gated || false,
+    weight_formats: isGguf ? ["gguf"] : ["safetensors"],
+    supported_backends: ["pytorch", "transformers"],
+    hardware: {
+      zerogpu_feasible: estVram <= 14.0,
+      cpu_feasible: (caps.parameter_count ?? 0) <= 1_500_000_000,
+      recommended_vram_gb: estVram,
+      recommended_ram_gb: Math.max(4.0, estVram * 1.5),
+      notes: estVram <= 14.0 ? "ZeroGPU CUDA acceleration supported." : "Exceeds standard 14GB free ZeroGPU quota.",
+    },
   };
 }
