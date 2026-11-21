@@ -6,7 +6,6 @@ import sys
 from unittest.mock import MagicMock
 
 import pytest
-
 from app.inference.backends.hf_local import HFLocalBackend
 from app.schemas import AnalyzeResponse
 
