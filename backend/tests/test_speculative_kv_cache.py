@@ -4,9 +4,8 @@ from itertools import pairwise
 from unittest.mock import MagicMock
 
 import torch
-from torch import nn
-
 from app.model import ActivationEngine, GenerationState, ModelEngine
+from torch import nn
 
 
 class DummyCache:
