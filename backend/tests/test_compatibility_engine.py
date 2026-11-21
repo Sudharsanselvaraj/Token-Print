@@ -12,8 +12,6 @@ Verifies:
 from __future__ import annotations
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app.inference.compatibility_engine import (
     calculate_vram_estimate,
     evaluate_hardware_feasibility,
@@ -27,6 +25,7 @@ from app.main import (
     _hub_search_cache,
     app,
 )
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
