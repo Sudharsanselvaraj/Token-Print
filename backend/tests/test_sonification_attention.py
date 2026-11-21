@@ -79,9 +79,8 @@ def test_custom_model_without_output_attentions_generates_successfully():
     import types
     from unittest.mock import MagicMock
 
-    from torch import nn
-
     from app.model import ActivationEngine
+    from torch import nn
 
     class SyntheticNoAttnModel(nn.Module):
         def __init__(self):
