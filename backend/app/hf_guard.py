@@ -14,6 +14,7 @@ reported on ``backend/app/main.py``:
 """
 
 import ipaddress
+import os
 import re
 import socket
 import urllib.error
@@ -92,14 +93,17 @@ def safe_urlopen(url: str, timeout: float = 10.0):
         addrinfos = socket.getaddrinfo(parsed.hostname, parsed.port or 443, type=socket.SOCK_STREAM)
     except OSError as exc:
         raise ValueError(f"Could not resolve host '{parsed.hostname}': {exc}") from exc
+    is_hf_space = bool(os.getenv("SPACE_ID"))
     seen = set()
     for addr in addrinfos:
         ip = ipaddress.ip_address(addr[4][0])
         seen.add(str(ip))
-        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved:
+        if ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved or addr[4][0].startswith("169.254."):
+            raise ValueError(f"Resolved address {ip} is not permitted")
+        if (not is_hf_space or parsed.hostname not in HF_ALLOWED_HOSTS) and (
+            ip.is_private or any(ip in net for net in _BLOCKED_NETS)
+        ):
             raise ValueError(f"Resolved address {ip} is not a public address")
-        if any(ip in net for net in _BLOCKED_NETS):
-            raise ValueError(f"Resolved address {ip} is in a blocked network")
     if not seen:
         raise ValueError(f"Could not resolve any address for '{parsed.hostname}'")
 
