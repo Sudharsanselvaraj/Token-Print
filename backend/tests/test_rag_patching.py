@@ -10,10 +10,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pytest
 import torch
-from torch import nn
-
 from app.ablation import ActivationPatch, PositionActivationPatch
 from app.reduce import causal_chunk_scores
+from torch import nn
 
 
 class DummyLayer(nn.Module):
