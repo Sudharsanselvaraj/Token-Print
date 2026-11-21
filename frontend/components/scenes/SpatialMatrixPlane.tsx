@@ -24,6 +24,24 @@ interface SpatialMatrixPlaneProps {
   detailLevel?: "lod0" | "lod1" | "lod2";
 }
 
+// Shared static geometry for instanced dots across all 168 matrix planes
+const sharedDotGeo = new THREE.CircleGeometry(0.048, 6);
+
+// Shared cache for slab box and edges geometries by dimensions to eliminate redundant geometry allocations
+const geoCache = new Map<string, { boxGeo: THREE.BoxGeometry; edgesGeo: THREE.EdgesGeometry }>();
+
+function getBoxAndEdgesGeo(w: number, h: number, depth: number) {
+  const key = `${w}_${h}_${depth}`;
+  let item = geoCache.get(key);
+  if (!item) {
+    const boxGeo = new THREE.BoxGeometry(w, h, depth);
+    const edgesGeo = new THREE.EdgesGeometry(boxGeo);
+    item = { boxGeo, edgesGeo };
+    geoCache.set(key, item);
+  }
+  return item;
+}
+
 function MatrixDots({
   w,
   h,
@@ -47,8 +65,6 @@ function MatrixDots({
   const numCols = Math.min(cols, 18);
   const totalDots = numRows * numCols;
   const meshRef = React.useRef<THREE.InstancedMesh>(null);
-
-  const dotGeo = React.useMemo(() => new THREE.CircleGeometry(0.048, 6), []);
 
   React.useLayoutEffect(() => {
     if (!meshRef.current) return;
@@ -84,15 +100,9 @@ function MatrixDots({
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   }, [w, h, numRows, numCols, data, accentColor, activeHighlight, totalDots]);
 
-  React.useEffect(() => {
-    return () => {
-      dotGeo.dispose();
-    };
-  }, [dotGeo]);
-
   return (
     <group position={[-w / 2 + 0.22, h / 2 - 0.22, depth / 2 + 0.03]}>
-      <instancedMesh ref={meshRef} args={[dotGeo, undefined, totalDots]}>
+      <instancedMesh ref={meshRef} args={[sharedDotGeo, undefined, totalDots]}>
         <meshBasicMaterial transparent opacity={0.8} />
       </instancedMesh>
     </group>
@@ -125,15 +135,8 @@ export const SpatialMatrixPlane = React.memo(function SpatialMatrixPlane({
   const [w, h] = size;
   const [hovered, setHovered] = useState(false);
 
-  const boxGeo = React.useMemo(() => new THREE.BoxGeometry(w, h, depth), [w, h, depth]);
-  const edgesGeo = React.useMemo(() => new THREE.EdgesGeometry(boxGeo), [boxGeo]);
-
-  React.useEffect(() => {
-    return () => {
-      boxGeo.dispose();
-      edgesGeo.dispose();
-    };
-  }, [boxGeo, edgesGeo]);
+  // Reuse shared cached geometry by dimensions across all layers
+  const { boxGeo, edgesGeo } = getBoxAndEdgesGeo(w, h, depth);
 
   const isHighlighted = activeHighlight || selected;
   const bodyOpacity   = highlightOpacity ?? (isHighlighted ? 0.98 : hovered ? 0.92 : 0.85);
