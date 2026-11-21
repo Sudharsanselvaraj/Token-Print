@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import * as THREE from "three";
 import { Billboard, Text } from "@react-three/drei";
 import { useStore } from "@/lib/store";
 import { phaseInfo } from "@/lib/playback";
@@ -10,6 +11,9 @@ const CELL_H = 0.18;
 const CELL_D = 0.18;
 const GAP = 0.04;
 const MAX_CACHE = 32;
+
+// Shared unit geometry across all 1,536 cache cell meshes
+const sharedCellBoxGeo = new THREE.BoxGeometry(CELL_W, CELL_H, CELL_D);
 
 export default function KvCacheVolume({
   nLayers,
@@ -140,6 +144,7 @@ export default function KvCacheVolume({
                     return (
                       <mesh
                         key={z}
+                        geometry={sharedCellBoxGeo}
                         position={[0, 0, zPos]}
                         onPointerOver={(e) => {
                           e.stopPropagation();
@@ -154,7 +159,6 @@ export default function KvCacheVolume({
                           useStore.getState().setSelectedTensor(`model.layers.${l}.self_attn.k_proj.cache[pos=${c}]`);
                         }}
                       >
-                        <boxGeometry args={[CELL_W, CELL_H, CELL_D]} />
                         <meshStandardMaterial
                           color={color}
                           emissive={emissive}
