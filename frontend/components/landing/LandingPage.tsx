@@ -8,13 +8,13 @@ import { Code2, GitBranch, Layers, Play } from "lucide-react";
 import { ComputationalHeroVisual, MicroDotGridVisual, MicroTargetIcon, MicroLightningIcon } from "./LandingVisuals";
 import { Reveal } from "./LandingMotion";
 import { InspectFlowSection } from "./InspectFlowSection";
-import { TraceGallerySection } from "./TraceGallerySection";
 import { GithubIcon } from "./GithubIcon";
 import { ECOSYSTEM_STACK } from "./EcosystemLogos";
 
 const SHOWCASE_CELLS = [
   {
-    img: "/backgrounds/col1_arch.png",
+    img: "/backgrounds/col1_arch.webp",
+    pngFallback: "/backgrounds/col1_arch.png",
     alt: "Understand the architecture",
     imgClass: "arch-img",
     icon: <Layers size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />,
@@ -26,7 +26,8 @@ const SHOWCASE_CELLS = [
     meta: ["LAYERS", "HIDDEN STATE", "MODEL TOPOLOGY"],
   },
   {
-    img: "/backgrounds/col2_attn.png",
+    img: "/backgrounds/col2_attn.webp",
+    pngFallback: "/backgrounds/col2_attn.png",
     alt: "See attention unfold",
     imgClass: "attn-img",
     icon: <GitBranch size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />,
@@ -38,7 +39,8 @@ const SHOWCASE_CELLS = [
     meta: ["Q / K / V", "ROPE", "ATTENTION WEIGHTS"],
   },
   {
-    img: "/backgrounds/col3_gen.png",
+    img: "/backgrounds/col3_gen.webp",
+    pngFallback: "/backgrounds/col3_gen.png",
     alt: "Watch generation happen",
     imgClass: "gen-img",
     icon: <Play size={14} strokeWidth={1.5} className="text-[#A1A1AA]" />,
@@ -107,7 +109,8 @@ export function LandingPage() {
             <div className="landing-strip-track">
               {[...ECOSYSTEM_STACK, ...ECOSYSTEM_STACK, ...ECOSYSTEM_STACK].map((item, idx) => (
                 <div key={`${item.id}-${idx}`} className="landing-strip-item" title={item.name}>
-                  {item.svg}
+                  <span className="landing-strip-icon">{item.svg}</span>
+                  <span className="landing-strip-name">{item.name}</span>
                 </div>
               ))}
             </div>
@@ -284,11 +287,17 @@ export function LandingPage() {
                   onClick={() => handleShowcaseSelect(i)}
                 >
                   <div className={`marshal-cell-visual-area ${isRevealed ? "revealed" : ""}`}>
-                    <img
-                      src={assetUrl(c.img)}
-                      alt={c.alt}
-                      className={`marshal-cell-img ${c.imgClass}`}
-                    />
+                    <picture>
+                      <source srcSet={assetUrl(c.img)} type="image/webp" />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={assetUrl(c.pngFallback)}
+                        alt={c.alt}
+                        loading="lazy"
+                        decoding="async"
+                        className={`marshal-cell-img ${c.imgClass}`}
+                      />
+                    </picture>
                     <div className="marshal-cell-info">
                       <h4 className="marshal-cell-info-title">{c.infoTitle}</h4>
                       <p className="marshal-cell-info-p">{c.infoPara}</p>
@@ -312,9 +321,6 @@ export function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* 4. Curated Trace Gallery Showcase */}
-      <TraceGallerySection />
 
       {/* 5. Final Editorial Statement + Large Computational Wave Visual */}
       <section className="landing-closing-section">
@@ -353,8 +359,19 @@ export function LandingPage() {
           <div className="landing-footer-cols">
             <div className="footer-col-brand">
               <Link href="/">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={assetUrl("/tokenprint-logo.png")} alt="TokenPrint" style={{ height: "30px", width: "auto" }} />
+                <picture>
+                  <source srcSet={assetUrl("/tokenprint-logo.webp")} type="image/webp" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={assetUrl("/tokenprint-logo.png")}
+                    alt="TokenPrint"
+                    width={130}
+                    height={30}
+                    loading="lazy"
+                    decoding="async"
+                    style={{ height: "30px", width: "auto" }}
+                  />
+                </picture>
               </Link>
               <p>Interactive LLM & Transformer Visual Debugger.</p>
             </div>
@@ -366,7 +383,6 @@ export function LandingPage() {
                 <li><Link href="/app?mode=generation">Generation</Link></li>
                 <li><Link href="/app?mode=walkthrough">Walkthrough</Link></li>
                 <li><Link href="/app?mode=debugger">Debugger</Link></li>
-                <li><a href="#trace-gallery">Trace Gallery</a></li>
               </ul>
             </div>
 
