@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useStore } from "@/lib/store";
 import { backendIdentity, captureIntervention } from "@/lib/experiments";
-import { fetchDebugSnapshot, type DebugAnalyzeResponse } from "@/lib/api";
+import { fetchDebugSnapshot, type DebugAnalyzeResponse, API_URL } from "@/lib/api";
 
 export default function AblationPanel() {
   const data = useStore((s) => s.data);
@@ -49,7 +49,7 @@ export default function AblationPanel() {
       for (const [k, v] of Object.entries(heads)) {
         if (v.size > 0) zeroHeads[k] = [...v];
       }
-      const ablatedRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/ablate/analyze`, {
+      const ablatedRes = await fetch(`${API_URL}/ablate/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
