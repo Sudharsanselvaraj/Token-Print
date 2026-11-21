@@ -13,12 +13,19 @@ export function ComputationalHeroVisual() {
 
   return (
     <div className="landing-hero-visual-wrapper" aria-hidden="true">
-      {/* High-fidelity 3D Point-Cloud Tensor Background Image from user */}
-      <img
-        src={assetUrl("/backgrounds/hero-pointcloud.png")}
-        alt="TokenPrint computational 3D tensor field"
-        className="landing-hero-bg-img"
-      />
+      {/* High-fidelity 3D Point-Cloud Tensor Background Image with WebP acceleration & priority loading */}
+      <picture>
+        <source srcSet={assetUrl("/backgrounds/hero-pointcloud.webp")} type="image/webp" />
+        <img
+          src={assetUrl("/backgrounds/hero-pointcloud.png")}
+          alt="TokenPrint computational 3D tensor field"
+          className="landing-hero-bg-img"
+          width={1800}
+          height={1000}
+          fetchPriority="high"
+          decoding="async"
+        />
+      </picture>
 
       {/* Layered SVG animation points over top for subtle deterministic motion */}
       <svg className="landing-hero-svg-overlay" viewBox="0 0 900 500" fill="none">
