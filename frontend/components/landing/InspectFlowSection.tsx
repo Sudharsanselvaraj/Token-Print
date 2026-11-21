@@ -7,13 +7,23 @@ import { GithubIcon } from "./GithubIcon";
 import { assetUrl } from "@/lib/assets";
 
 function ImageVisual({ tag, src }: { tag: string; src: string }) {
+  const webpSrc = src.replace(/\.(png|jpg|jpeg)$/, ".webp");
   return (
     <div className="marshal-tile-visual image-visual">
       <div className="marshal-visual-header overlaid">
         <span className="tech-visual-tag">{tag}</span>
         <span className="marshal-plus">+</span>
       </div>
-      <img src={assetUrl(src)} alt="" className="marshal-tile-img" />
+      <picture>
+        <source srcSet={assetUrl(webpSrc)} type="image/webp" />
+        <img
+          src={assetUrl(src)}
+          alt=""
+          className="marshal-tile-img"
+          loading="lazy"
+          decoding="async"
+        />
+      </picture>
     </div>
   );
 }
