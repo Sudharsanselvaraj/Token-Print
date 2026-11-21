@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useState, useRef } from "react";
+import dynamic from "next/dynamic";
 import { useStore, restoreFromUrl } from "@/lib/store";
 import { useSearchParams } from "next/navigation";
 import { assetUrl } from "@/lib/assets";
@@ -14,23 +15,25 @@ import RightPanel from "./ui/RightPanel";
 import BottomBar from "./ui/BottomBar";
 import GenerationWorkspaceOverlay from "./ui/GenerationWorkspaceOverlay";
 import PredictionTimeline from "./ui/PredictionTimeline";
-import DebugInspector from "./ui/DebugInspector";
-import HeadInspector from "./ui/HeadInspector";
-import DataExport from "./ui/DataExport";
-import TimingReadout from "./ui/TimingReadout";
-import ConfigDiff from "./ui/ConfigDiff";
 import TokenDetailView from "./ui/TokenDetailView";
-import DistributionPanel from "./ui/DistributionPanel";
-import TileView from "./ui/TileView";
-import DebuggerPane from "./ui/DebuggerPane";
-import TraceGallery from "./ui/TraceGallery";
-import { HFModelPicker } from "./ui/HFModelPicker";
 import { ContextualExplanationOverlay } from "./ui/ContextualExplanationOverlay";
 import { DevDiagnosticsHUD } from "./ui/DevDiagnosticsHUD";
-import { CollabCursorOverlay } from "./collab/CollabCursorOverlay";
 import { fmtShape } from "@/lib/format";
 import { roleLabel } from "@/lib/tensorName";
 import { useKeyboard } from "@/lib/useKeyboard";
+
+// Code-split heavy modals, overlays, and non-critical inspector panes
+const DebuggerPane = dynamic(() => import("./ui/DebuggerPane"), { ssr: false });
+const TileView = dynamic(() => import("./ui/TileView"), { ssr: false });
+const TraceGallery = dynamic(() => import("./ui/TraceGallery"), { ssr: false });
+const HFModelPicker = dynamic(() => import("./ui/HFModelPicker").then((m) => m.HFModelPicker), { ssr: false });
+const CollabCursorOverlay = dynamic(() => import("./collab/CollabCursorOverlay").then((m) => m.CollabCursorOverlay), { ssr: false });
+const DebugInspector = dynamic(() => import("./ui/DebugInspector"), { ssr: false });
+const HeadInspector = dynamic(() => import("./ui/HeadInspector"), { ssr: false });
+const DataExport = dynamic(() => import("./ui/DataExport"), { ssr: false });
+const TimingReadout = dynamic(() => import("./ui/TimingReadout"), { ssr: false });
+const DistributionPanel = dynamic(() => import("./ui/DistributionPanel"), { ssr: false });
+const ConfigDiff = dynamic(() => import("./ui/ConfigDiff"), { ssr: false });
 
 export default function AppShell() {
   const loadArchitecture = useStore((s) => s.loadArchitecture);
