@@ -27,7 +27,6 @@ if hasattr(sys.stderr, "reconfigure"):
 
 import torch
 import torch.nn.functional as F
-
 from app.ablation import ActivationPatch
 from app.model import ModelEngine
 from app.reduce import causal_chunk_scores
