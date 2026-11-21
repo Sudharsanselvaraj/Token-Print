@@ -41,6 +41,8 @@ import {
   Camera,
   FlaskConical,
   ToggleRight,
+  ShieldCheck,
+  Cpu,
 } from "lucide-react";
 
 interface DocsNavProps {
@@ -48,11 +50,12 @@ interface DocsNavProps {
   setMobileOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   searchQuery?: string;
   setSearchQuery?: (q: string) => void;
+  onOpenSearchModal?: () => void;
 }
 
 // Individual icon per page slug
 const PAGE_ICONS: Record<string, React.ReactNode> = {
-  // Getting Started
+  // Platform
   "introduction":              <BookOpen size={15} strokeWidth={1.5} />,
   "research":                  <BookOpen size={15} strokeWidth={1.5} />,
   "installation":              <Download size={15} strokeWidth={1.5} />,
@@ -60,36 +63,39 @@ const PAGE_ICONS: Record<string, React.ReactNode> = {
   "your-first-trace":          <Play size={15} strokeWidth={1.5} />,
   "loading-a-model":           <Upload size={15} strokeWidth={1.5} />,
   "understanding-the-interface": <LayoutDashboard size={15} strokeWidth={1.5} />,
-  // Core Concepts
-  "concepts/tokens":           <Hash size={15} strokeWidth={1.5} />,
-  "concepts/embeddings":       <Layers size={15} strokeWidth={1.5} />,
-  "concepts/transformer-layers": <Brain size={15} strokeWidth={1.5} />,
-  "concepts/rmsnorm":          <ScanLine size={15} strokeWidth={1.5} />,
+  "using/model-explorer":      <Search size={15} strokeWidth={1.5} />,
+  "using/3d-architecture":     <Box size={15} strokeWidth={1.5} />,
+  "using/camera-system":       <Camera size={15} strokeWidth={1.5} />,
+  "using/generation":          <MessageSquare size={15} strokeWidth={1.5} />,
+  "using/walkthrough":         <Map size={15} strokeWidth={1.5} />,
+  // Model Ecosystem
+  "compatibility-matrix":      <ShieldCheck size={15} strokeWidth={1.5} />,
+  "using/browser-inference":   <ToggleRight size={15} strokeWidth={1.5} />,
+  // Mechanistic Interpretability
   "concepts/attention":        <Eye size={15} strokeWidth={1.5} />,
   "concepts/qkv":              <Shuffle size={15} strokeWidth={1.5} />,
   "concepts/gqa":              <Network size={15} strokeWidth={1.5} />,
   "concepts/rope":             <RotateCcw size={15} strokeWidth={1.5} />,
   "concepts/softmax":          <TrendingUp size={15} strokeWidth={1.5} />,
+  "concepts/rmsnorm":          <ScanLine size={15} strokeWidth={1.5} />,
   "concepts/mlp-swiglu":       <GitBranch size={15} strokeWidth={1.5} />,
   "concepts/residual-streams": <GitMerge size={15} strokeWidth={1.5} />,
   "concepts/kv-cache":         <Database size={15} strokeWidth={1.5} />,
   "concepts/logits":           <BarChart2 size={15} strokeWidth={1.5} />,
   "concepts/decoding":         <Dice5 size={15} strokeWidth={1.5} />,
-  // Using TokenPrint
-  "using/model-explorer":      <Search size={15} strokeWidth={1.5} />,
-  "using/3d-architecture":     <Box size={15} strokeWidth={1.5} />,
-  "using/camera-system":       <Camera size={15} strokeWidth={1.5} />,
-  "using/generation":          <MessageSquare size={15} strokeWidth={1.5} />,
-  "using/browser-inference":   <ToggleRight size={15} strokeWidth={1.5} />,
-  "using/walkthrough":         <Map size={15} strokeWidth={1.5} />,
-  "using/experiments":         <FlaskConical size={15} strokeWidth={1.5} />,
+  "concepts/tokens":           <Hash size={15} strokeWidth={1.5} />,
+  "concepts/embeddings":       <Layers size={15} strokeWidth={1.5} />,
+  "concepts/transformer-layers": <Brain size={15} strokeWidth={1.5} />,
   "using/debugger":            <Bug size={15} strokeWidth={1.5} />,
-  // Reference
+  "using/experiments":         <FlaskConical size={15} strokeWidth={1.5} />,
+  // Developer & Architecture
+  "architecture":              <Cpu size={15} strokeWidth={1.5} />,
   "api-reference":             <Code2 size={15} strokeWidth={1.5} />,
   "trace-schema":              <FileJson size={15} strokeWidth={1.5} />,
-  "keyboard-shortcuts":        <Keyboard size={15} strokeWidth={1.5} />,
   "configuration":             <Settings size={15} strokeWidth={1.5} />,
   "verification":              <CheckCircle size={15} strokeWidth={1.5} />,
+  // Community & Project
+  "keyboard-shortcuts":        <Keyboard size={15} strokeWidth={1.5} />,
   "contributing":              <Users size={15} strokeWidth={1.5} />,
   "changelog":                 <Clock size={15} strokeWidth={1.5} />,
 };
@@ -99,6 +105,7 @@ export default function DocsNav({
   setMobileOpen,
   searchQuery = "",
   setSearchQuery,
+  onOpenSearchModal,
 }: DocsNavProps) {
   const pathname = usePathname();
   const [localQuery, setLocalQuery] = useState("");
@@ -133,7 +140,7 @@ export default function DocsNav({
         aria-label="Documentation sidebar navigation"
       >
         {/* Search Input Box */}
-        <div className="docs-nav-search-box">
+        <div className="docs-nav-search-box relative flex items-center">
           <Search
             className="docs-nav-search-icon"
             size={13}
@@ -141,19 +148,28 @@ export default function DocsNav({
           />
           <input
             type="text"
-            className="docs-nav-search-input"
-            placeholder="Search..."
+            className="docs-nav-search-input pr-8"
+            placeholder="Search docs..."
             value={query}
             onChange={(e) => handleQueryChange(e.target.value)}
             aria-label="Filter documentation pages"
           />
-          {query && (
+          {query ? (
             <button
               className="docs-nav-search-clear"
               onClick={() => handleQueryChange("")}
               aria-label="Clear search"
             >
               <X size={11} strokeWidth={2} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenSearchModal}
+              className="absolute right-2 px-1 py-0.5 rounded text-[10px] font-mono text-slate-500 border border-slate-800 bg-slate-900/60 hover:text-slate-300"
+              title="Open search modal (Cmd+K)"
+            >
+              ⌘K
             </button>
           )}
         </div>
