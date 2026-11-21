@@ -199,12 +199,20 @@ export const CardCarousel: React.FC<CardCarouselProps> = ({
                     <div className="group relative flex flex-col overflow-hidden rounded-[20px] border border-white/15 bg-[#0C0D10] shadow-xl transition-all duration-300 hover:border-white/35 hover:shadow-[0_8px_30px_rgba(255,255,255,0.06)]">
                       {/* Slide Image visual */}
                       <div className="relative aspect-[16/10] w-full overflow-hidden bg-black/60">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={assetUrl(item.src)}
-                          alt={item.alt}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
+                        <picture>
+                          <source
+                            srcSet={assetUrl(item.src.replace(/\.(png|jpg|jpeg)$/, ".webp"))}
+                            type="image/webp"
+                          />
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={assetUrl(item.src)}
+                            alt={item.alt}
+                            loading="lazy"
+                            decoding="async"
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        </picture>
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0C0D10] via-transparent to-black/20" />
                         
                         {item.badge && (
