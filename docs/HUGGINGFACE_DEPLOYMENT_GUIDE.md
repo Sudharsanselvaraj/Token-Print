@@ -135,7 +135,7 @@ anyio>=4.0.0
 
 ---
 
-## 5. ZeroGPU Integration & Automatic CPU Fallback
+## 5. ZeroGPU Integration, Generation Runner & Lifecycles
 
 To support ZeroGPU dynamically without crashing on local or CPU environments:
 1. **Dynamic Detection:**
@@ -147,9 +147,28 @@ To support ZeroGPU dynamically without crashing on local or CPU environments:
        HAS_ZEROGPU = False
    ```
 2. **Selective Decorator Wrapping:**
-   The `@spaces.GPU` decorator is applied exclusively to compute-heavy forward-pass operations (such as interactive generation and token analysis). Metadata, health check, and architecture endpoints execute on CPU without consuming GPU quota.
-3. **Hardware Fallback:**
-   If GPU quota is exhausted or if the Space transitions to CPU, `Qwen/Qwen2.5-0.5B-Instruct` executes on CPU in ~120ms per token, ensuring 100% service uptime.
+   The `@spaces.GPU(duration=60)` decorator is applied exclusively to compute-heavy forward-pass operations and generation:
+   - `hf_space_analyze`: Computes 24-layer forward pass and attention.
+   - `hf_space_debug_analyze`: Extracts layer intermediate activation snapshots.
+   - `hf_space_ablate`: Runs attention head / layer ablation passes.
+   - `hf_space_patch`: Runs activation patching between sentences.
+   - `hf_space_generate_steps`: Runs the complete autoregressive decode loop within the ZeroGPU slice, returning frame sequences for streaming across the WebSocket queue.
+3. **Explicit Error Classification & CPU Failover:**
+   If GPU quota is exhausted or if CUDA OOM occurs, `is_gpu_or_quota_error(exc)` traps the error category and seamlessly executes on CPU fallback via `eng.analyze_cpu_fallback(sentence)`. Client errors (`TokenizedTooLong`, `ValueError`) are never masked.
+4. **FastAPI Lifecycle on Gradio ASGI:**
+   Startup and shutdown hooks are attached directly to the active Starlette ASGI application:
+   ```python
+   @demo.app.on_event("startup")
+   async def on_startup():
+       if app_main.engine is None:
+           app_main.engine = ModelEngine()
+
+   @demo.app.on_event("shutdown")
+   async def on_shutdown():
+       if hasattr(app_main, "_gguf_cache"):
+           app_main._gguf_cache.clear()
+       app_main.engine = None
+   ```
 
 ---
 
