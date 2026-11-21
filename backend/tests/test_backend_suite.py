@@ -14,7 +14,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import numpy as np
 import pytest
-
 from app.reduce import (
     WORLD_HALF,
     causal_chunk_scores,
