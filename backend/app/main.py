@@ -136,6 +136,9 @@ app.add_middleware(
         "https://tokenprint.in",
         "https://www.tokenprint.in",
         "https://api.tokenprint.in",
+        # Hugging Face Space & proxy origins
+        "https://sudharsan112321-tokenprint-backend.hf.space",
+        "https://hf.space",
     ],
     allow_methods=["*"],
     allow_headers=["*"],
@@ -568,15 +571,15 @@ async def model_capabilities() -> dict:
 async def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
     _require_engine()
     try:
-        # Route analyze call through InferenceBackendRegistry
-        import anyio
-
         backend = backend_registry.get_backend("hf_local")
-        resp = await anyio.to_thread.run_sync(
-            asyncio.run, backend.analyze(req.sentence)
-        )
+        resp = await backend.analyze(req.sentence)
     except TokenizedTooLong as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        import traceback
+        tb = traceback.format_exc()
+        logger.error("Analyze failed: %s\n%s", exc, tb)
+        raise HTTPException(status_code=500, detail=f"{type(exc).__name__}: {exc}\n{tb}") from exc
     return resp
 
 
@@ -644,12 +647,20 @@ async def rag_analyze(req: RagAnalyzeRequest) -> RagAnalyzeResponse:
             detail="Could not map query text to tokens in composed RAG prompt.",
         )
 
-    import anyio
-
-    try:
-        data = await anyio.to_thread.run_sync(eng.analyze, prompt)
-    except TokenizedTooLong as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    import sys
+    main_mod = sys.modules.get("__main__")
+    runner = getattr(main_mod, "hf_space_analyze", None)
+    if runner is not None:
+        try:
+            data = runner(prompt)
+        except TokenizedTooLong as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    else:
+        import anyio
+        try:
+            data = await anyio.to_thread.run_sync(eng.analyze, prompt)
+        except TokenizedTooLong as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     attribution_result = chunk_attribution(
         attention=data["attention"],
@@ -706,6 +717,17 @@ async def debug_analyze(req: AnalyzeRequest) -> dict:
     """Same as POST /analyze but also returns a ``debug_snapshot`` dict mapping
     module paths to sampled float arrays of their outputs."""
     eng = _require_engine()
+    import sys
+    main_mod = sys.modules.get("__main__")
+    runner = getattr(main_mod, "hf_space_debug_analyze", None)
+    if runner is not None:
+        try:
+            return runner(req.sentence)
+        except TokenizedTooLong as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("ZeroGPU debug analyze failed (%s), running on CPU fallback.", exc)
+
     import anyio
 
     try:
@@ -720,6 +742,17 @@ async def ablate_analyze(req: AblateRequest) -> dict:
     """Run the forward pass with selected attention heads or layers ablated
     (zeroed out). Returns the same structure as /analyze."""
     eng = _require_engine()
+    import sys
+    main_mod = sys.modules.get("__main__")
+    runner = getattr(main_mod, "hf_space_ablate", None)
+    if runner is not None:
+        try:
+            return runner(req.sentence, list(req.zero_layers), req.zero_heads)
+        except TokenizedTooLong as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("ZeroGPU ablate failed (%s), running on CPU fallback.", exc)
+
     import anyio
 
     def run():
@@ -744,6 +777,17 @@ async def patch_analyze(req: PatchRequest) -> dict:
     captured states. Returns the patched analysis plus the clean (unpatched)
     and source analyses for comparison."""
     eng = _require_engine()
+    import sys
+    main_mod = sys.modules.get("__main__")
+    runner = getattr(main_mod, "hf_space_patch", None)
+    if runner is not None:
+        try:
+            return runner(req.sentence, req.source_sentence, list(req.patch_layers))
+        except TokenizedTooLong as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("ZeroGPU patch failed (%s), running on CPU fallback.", exc)
+
     import anyio
 
     def run():
