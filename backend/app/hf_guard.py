@@ -96,14 +96,10 @@ def safe_urlopen(url: str, timeout: float = 10.0):
     for addr in addrinfos:
         ip = ipaddress.ip_address(addr[4][0])
         seen.add(str(ip))
-        if ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved:
-            raise ValueError(f"Resolved address {ip} is not permitted")
-        # Block cloud metadata service (169.254.0.0/16) and loopback addresses
-        if any(ip in net for net in (ipaddress.ip_network("169.254.0.0/16"), ipaddress.ip_network("127.0.0.0/8"))):
-            raise ValueError(f"Resolved address {ip} is in a blocked network")
-        # If the host is not an allowed Hugging Face domain, enforce strictly public addresses
-        if parsed.hostname not in HF_ALLOWED_HOSTS and (ip.is_private or any(ip in net for net in _BLOCKED_NETS)):
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved:
             raise ValueError(f"Resolved address {ip} is not a public address")
+        if any(ip in net for net in _BLOCKED_NETS):
+            raise ValueError(f"Resolved address {ip} is in a blocked network")
     if not seen:
         raise ValueError(f"Could not resolve any address for '{parsed.hostname}'")
 
