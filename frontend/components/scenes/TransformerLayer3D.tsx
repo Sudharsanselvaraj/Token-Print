@@ -47,6 +47,10 @@ function isBlockActive(blockId: string, activeOpKind: string | null | undefined)
   return OP_KIND_TO_BLOCK[activeOpKind] === blockId;
 }
 
+// Hoist shared bounding frame geometries across all 24 transformer layers
+const sharedFrameBoxGeo = new THREE.BoxGeometry(14, 11, 4);
+const sharedFrameEdgesGeo = new THREE.EdgesGeometry(sharedFrameBoxGeo);
+
 export const TransformerLayer3D = React.memo(function TransformerLayer3D({
   position,
   layerIndex,
@@ -67,16 +71,8 @@ export const TransformerLayer3D = React.memo(function TransformerLayer3D({
 }: TransformerLayer3DProps) {
   const l = layerIndex;
 
-  // Layer bounding frame geometries (exclusively owned by this instance)
-  const frameBoxGeo = useMemo(() => new THREE.BoxGeometry(14, 11, 4), []);
-  const frameEdgesGeo = useMemo(() => new THREE.EdgesGeometry(frameBoxGeo), [frameBoxGeo]);
-
-  React.useEffect(() => {
-    return () => {
-      frameBoxGeo.dispose();
-      frameEdgesGeo.dispose();
-    };
-  }, [frameBoxGeo, frameEdgesGeo]);
+  const frameBoxGeo = sharedFrameBoxGeo;
+  const frameEdgesGeo = sharedFrameEdgesGeo;
 
   const handleOp = (opKind: string, tensorName?: string) => {
     const opId = `op_l${l}_${opKind}`;
