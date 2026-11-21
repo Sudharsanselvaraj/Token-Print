@@ -39,6 +39,12 @@ from .ablation import Ablation
 from .collab import collab_manager
 from .gguf_cache import GGUFEngineCache
 from .gguf_engine import GGUF_ENGINE_AVAILABLE, GGUFEngine
+from .inference.compatibility_registry import (
+    ModelVerificationRecord,
+    get_model_verification,
+    list_compatibility_records,
+)
+from .inference.error_classification import is_gpu_or_quota_error
 from .model import ModelEngine, TokenizedTooLong
 from .reduce import chunk_attribution, query_self_attribution, ungrounded_flags
 from .schemas import (
@@ -567,6 +573,25 @@ async def model_capabilities() -> dict:
     return eff.model_dump()
 
 
+@app.get("/api/model/compatibility", response_model=list[ModelVerificationRecord])
+@app.get("/api/model/compatibility/", response_model=list[ModelVerificationRecord])
+async def model_compatibility() -> list[ModelVerificationRecord]:
+    """Return explicit model compatibility and verification registry across architectures."""
+    return list_compatibility_records()
+
+
+@app.get("/api/model/compatibility/{model_id:path}")
+async def model_compatibility_detail(model_id: str) -> dict:
+    """Return compatibility verification record for a specific model."""
+    rec = get_model_verification(model_id)
+    if rec is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model '{model_id}' is not in the verification registry.",
+        )
+    return rec.model_dump()
+
+
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
     _require_engine()
@@ -576,10 +601,11 @@ async def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
     except TokenizedTooLong as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
-        import traceback
-        tb = traceback.format_exc()
-        logger.error("Analyze failed: %s\n%s", exc, tb)
-        raise HTTPException(status_code=500, detail=f"{type(exc).__name__}: {exc}\n{tb}") from exc
+        logger.exception("Analyze failed.")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Inference execution failed: {type(exc).__name__}.",
+        ) from exc
     return resp
 
 
@@ -725,8 +751,16 @@ async def debug_analyze(req: AnalyzeRequest) -> dict:
             return runner(req.sentence)
         except TokenizedTooLong as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("ZeroGPU debug analyze failed (%s), running on CPU fallback.", exc)
+        except Exception as exc:
+            should_fallback, error_category = is_gpu_or_quota_error(exc)
+            if should_fallback:
+                logger.warning(
+                    "ZeroGPU debug analyze unavailable (%s: %s), running on CPU fallback.",
+                    error_category,
+                    exc,
+                )
+            else:
+                raise
 
     import anyio
 
@@ -750,8 +784,16 @@ async def ablate_analyze(req: AblateRequest) -> dict:
             return runner(req.sentence, list(req.zero_layers), req.zero_heads)
         except TokenizedTooLong as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("ZeroGPU ablate failed (%s), running on CPU fallback.", exc)
+        except Exception as exc:
+            should_fallback, error_category = is_gpu_or_quota_error(exc)
+            if should_fallback:
+                logger.warning(
+                    "ZeroGPU ablate unavailable (%s: %s), running on CPU fallback.",
+                    error_category,
+                    exc,
+                )
+            else:
+                raise
 
     import anyio
 
@@ -785,8 +827,16 @@ async def patch_analyze(req: PatchRequest) -> dict:
             return runner(req.sentence, req.source_sentence, list(req.patch_layers))
         except TokenizedTooLong as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("ZeroGPU patch failed (%s), running on CPU fallback.", exc)
+        except Exception as exc:
+            should_fallback, error_category = is_gpu_or_quota_error(exc)
+            if should_fallback:
+                logger.warning(
+                    "ZeroGPU patch unavailable (%s: %s), running on CPU fallback.",
+                    error_category,
+                    exc,
+                )
+            else:
+                raise
 
     import anyio
 
@@ -890,11 +940,64 @@ async def ws_generate(ws: WebSocket) -> None:
                     decoding_mode=decoding_mode,
                 )
             else:
-                frames = engine.generate_steps(
-                    prompt, max_new_tokens, top_k, use_chat_template, include_catalog,
-                    decoding_mode, window_size, draft_gamma, needle,
-                    temperature, top_p, seed,
-                )
+                import sys
+                main_mod = sys.modules.get("__main__")
+                gen_runner = getattr(main_mod, "hf_space_generate_steps", None)
+                if gen_runner is not None:
+                    try:
+                        frames = gen_runner(
+                            prompt=prompt,
+                            max_new_tokens=max_new_tokens,
+                            top_k=top_k,
+                            use_chat_template=use_chat_template,
+                            include_catalog=include_catalog,
+                            decoding_mode=decoding_mode,
+                            window_size=window_size,
+                            draft_gamma=draft_gamma,
+                            needle=needle,
+                            temperature=temperature,
+                            top_p=top_p,
+                            seed=seed,
+                        )
+                    except Exception as exc:
+                        should_fallback, error_category = is_gpu_or_quota_error(exc)
+                        if should_fallback:
+                            logger.warning(
+                                "ZeroGPU generation unavailable (%s: %s). Falling back to CPU generation.",
+                                error_category,
+                                exc,
+                            )
+                            frames = engine.generate_steps(
+                                prompt,
+                                max_new_tokens,
+                                top_k,
+                                use_chat_template,
+                                include_catalog,
+                                decoding_mode,
+                                window_size,
+                                draft_gamma,
+                                needle,
+                                temperature,
+                                top_p,
+                                seed,
+                            )
+                        else:
+                            raise
+                else:
+                    frames = engine.generate_steps(
+                        prompt,
+                        max_new_tokens,
+                        top_k,
+                        use_chat_template,
+                        include_catalog,
+                        decoding_mode,
+                        window_size,
+                        draft_gamma,
+                        needle,
+                        temperature,
+                        top_p,
+                        seed,
+                    )
             for frame in frames:
                 if stop_event.is_set():
                     return
