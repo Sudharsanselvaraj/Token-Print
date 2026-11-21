@@ -17,6 +17,9 @@ const nextConfig = {
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },
+  experimental: {
+    optimizePackageImports: ["lucide-react", "@react-three/drei", "three"],
+  },
   ...(repo ? { basePath: `/${repo}`, assetPrefix: `/${repo}` } : {}),
   env: {
     // Mirrors the basePath decision so UI asset refs resolve under /Token-Print
