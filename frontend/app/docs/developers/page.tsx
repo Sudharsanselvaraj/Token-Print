@@ -11,21 +11,24 @@ export const metadata: Metadata = {
 
 export default function DevelopersPage() {
   return (
-    <div className="space-y-16">
+    <div className="space-y-14">
       {/* Hero Header */}
       <div>
-        <h1 className="text-[52px] sm:text-[60px] font-semibold tracking-[-0.03em] text-[var(--text)] mb-3">
+        <div className="text-[11.5px] uppercase font-mono tracking-wider text-[var(--docs-accent)] mb-2 font-medium">
+          DEVELOPER DOCUMENTATION
+        </div>
+        <h1 className="text-[40px] leading-[1.1] font-semibold tracking-[-0.02em] text-[var(--docs-heading)] mb-3">
           TokenPrint Developers
         </h1>
-        <p className="text-[19px] text-[var(--muted)] font-normal max-w-2xl leading-relaxed">
+        <p className="text-[15px] text-[var(--docs-text-secondary)] font-normal max-w-2xl leading-relaxed">
           Build integrations with TokenPrint REST endpoints, streaming WebSocket channels, and model inspection hooks.
         </p>
       </div>
 
       {/* Getting Started Section */}
       <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-[20px] font-medium text-[var(--text)] tracking-tight">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-[20px] font-semibold text-[var(--docs-heading)] tracking-tight">
             Getting Started
           </h2>
         </div>
@@ -64,8 +67,8 @@ export default function DevelopersPage() {
 
       {/* Developer Guides */}
       <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-[20px] font-medium text-[var(--text)] tracking-tight">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-[20px] font-semibold text-[var(--docs-heading)] tracking-tight">
             Guides & Tooling
           </h2>
         </div>
@@ -93,12 +96,12 @@ export default function DevelopersPage() {
       </section>
 
       {/* Interactive API Explorer */}
-      <section className="pt-8 border-t border-[var(--border)]">
+      <section className="pt-8 border-t border-[var(--docs-border)]">
         <div className="mb-6">
-          <h2 className="text-[24px] font-medium text-[var(--text)] tracking-tight mb-2">
+          <h2 className="text-[24px] font-semibold text-[var(--docs-heading)] tracking-tight mb-2">
             API Explorer
           </h2>
-          <p className="text-[15px] text-[var(--muted)]">
+          <p className="text-[15px] text-[var(--docs-text-secondary)]">
             Explore live request contracts and response schemas directly against your local backend.
           </p>
         </div>

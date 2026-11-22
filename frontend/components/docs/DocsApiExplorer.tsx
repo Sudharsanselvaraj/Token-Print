@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Copy, Check, TerminalWindow, Globe } from "@phosphor-icons/react";
+import { Copy, Check, Terminal, Globe } from "lucide-react";
 
 export interface ApiEndpointDoc {
   method: "GET" | "POST" | "WEBSOCKET";
@@ -189,7 +189,7 @@ export default function DocsApiExplorer() {
       {/* Top Header */}
       <div className="px-5 py-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--sidebar)]">
         <div className="flex items-center gap-2">
-          <Globe size={16} weight="fill" className="text-[var(--muted)]" />
+          <Globe size={16} className="text-[var(--muted)]" strokeWidth={1.5} />
           <h3 className="text-[13px] font-medium text-[var(--text)] tracking-tight">
             FastAPI Live Route Explorer
           </h3>
@@ -256,7 +256,7 @@ export default function DocsApiExplorer() {
                   onClick={() => handleCopy(currentCode)}
                   className="text-[var(--muted)] hover:text-[var(--text)] p-1 text-[12px] flex items-center gap-1"
                 >
-                  {copied ? <Check size={12} weight="bold" /> : <Copy size={12} weight="fill" />}
+                  {copied ? <Check size={12} strokeWidth={2} /> : <Copy size={12} strokeWidth={1.5} />}
                   <span>{copied ? "Copied" : "Copy"}</span>
                 </button>
               </div>

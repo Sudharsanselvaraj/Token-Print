@@ -10,21 +10,24 @@ export const metadata: Metadata = {
 
 export default function DocsHomePage() {
   return (
-    <div className="space-y-16">
+    <div className="space-y-14">
       {/* Hero Header */}
       <div>
-        <h1 className="text-[52px] sm:text-[60px] font-semibold tracking-[-0.03em] text-[var(--text)] mb-3">
+        <div className="text-[11.5px] uppercase font-mono tracking-wider text-[var(--docs-accent)] mb-2 font-medium">
+          TOKENPRINT DOCUMENTATION
+        </div>
+        <h1 className="text-[40px] leading-[1.1] font-semibold tracking-[-0.02em] text-[var(--docs-heading)] mb-3">
           TokenPrint Docs
         </h1>
-        <p className="text-[19px] text-[var(--muted)] font-normal max-w-2xl leading-relaxed">
-          Watch your model think. An open-source 3D visual debugger for transformers with real forward-pass telemetry.
+        <p className="text-[15px] text-[var(--docs-text-secondary)] font-normal max-w-2xl leading-relaxed">
+          Watch your model think. Explore transformer internals, model execution and mechanistic interpretability with real forward-pass telemetry.
         </p>
       </div>
 
       {/* Popular Section */}
       <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-[20px] font-medium text-[var(--text)] tracking-tight">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-[20px] font-semibold text-[var(--docs-heading)] tracking-tight">
             Popular
           </h2>
         </div>
@@ -67,8 +70,8 @@ export default function DocsHomePage() {
 
       {/* Explore TokenPrint Section */}
       <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-[20px] font-medium text-[var(--text)] tracking-tight">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-[20px] font-semibold text-[var(--docs-heading)] tracking-tight">
             Explore TokenPrint
           </h2>
         </div>

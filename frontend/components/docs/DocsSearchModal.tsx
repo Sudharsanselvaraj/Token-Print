@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { MagnifyingGlass, FileText, ArrowRight, X, Command } from "@phosphor-icons/react";
+import { Search, FileText, ArrowRight, X, Terminal } from "lucide-react";
 import { ALL_DOC_PAGES, getSectionForSlug } from "@/lib/docsNav";
 import LinearIcon from "./LinearIcon";
 
@@ -80,8 +80,8 @@ export default function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProp
       {/* Modal Card */}
       <div className="relative w-full max-w-2xl rounded-[14px] border border-[var(--border-strong)] bg-[var(--card)] shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150">
         {/* Search Input Bar */}
-        <div className="flex items-center px-4 py-3.5 border-b border-[var(--border)] gap-3 bg-[var(--sidebar)]">
-          <MagnifyingGlass size={18} weight="bold" className="text-[var(--muted)]" />
+        <div className="flex items-center px-4 py-3.5 border-b border-[var(--docs-border)] gap-3 bg-[var(--docs-surface)]">
+          <Search size={16} strokeWidth={1.5} className="text-[var(--docs-text-muted)]" />
           <input
             ref={inputRef}
             type="text"
@@ -91,14 +91,14 @@ export default function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProp
               setActiveIndex(0);
             }}
             placeholder="Search documentation, guides, and API endpoints..."
-            className="flex-1 bg-transparent border-none text-[15px] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none"
+            className="flex-1 bg-transparent border-none text-[14px] text-[var(--docs-heading)] placeholder-[var(--docs-text-muted)] focus:outline-none"
           />
           <button
             onClick={onClose}
-            className="text-[var(--muted)] hover:text-[var(--text)] transition-colors p-1"
+            className="text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] transition-colors p-1"
             aria-label="Close search modal"
           >
-            <X size={16} weight="bold" />
+            <X size={15} strokeWidth={1.5} />
           </button>
         </div>
 
@@ -130,7 +130,7 @@ export default function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProp
                   >
                     <div className="flex items-center gap-3 truncate">
                       <span className={active ? "text-white" : "text-[var(--muted)]"}>
-                        <LinearIcon name={page.icon} size={16} weight="fill" />
+                        <LinearIcon name={page.icon} size={16} />
                       </span>
                       <span className="font-medium truncate">{page.title}</span>
                       {section && (
@@ -139,7 +139,7 @@ export default function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProp
                         </span>
                       )}
                     </div>
-                    {active && <ArrowRight size={14} weight="bold" className="text-[var(--muted)] flex-shrink-0" />}
+                    {active && <ArrowRight size={14} className="text-[var(--muted)] flex-shrink-0" strokeWidth={1.5} />}
                   </button>
                 );
               })}
@@ -148,15 +148,14 @@ export default function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProp
         </div>
 
         {/* Footer shortcuts */}
-        <div className="px-4 py-2.5 border-t border-[var(--border)] bg-[var(--sidebar)] flex items-center justify-between text-[12px] font-mono text-[var(--muted)]">
+        <div className="px-4 py-2 border-t border-[var(--docs-border)] bg-[var(--docs-surface)] flex items-center justify-between text-[11.5px] font-mono text-[var(--docs-text-muted)]">
           <div className="flex items-center gap-3">
             <span>&uarr;&darr; Navigate</span>
             <span>&crarr; Select</span>
             <span>ESC Close</span>
           </div>
           <div className="flex items-center gap-1">
-            <Command size={12} weight="bold" />
-            <span>K</span>
+            <span>⌘K</span>
           </div>
         </div>
       </div>

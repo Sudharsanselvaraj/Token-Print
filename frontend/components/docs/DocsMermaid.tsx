@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useId } from "react";
-import { Copy, Check, MagnifyingGlassPlus, MagnifyingGlassMinus, ArrowClockwise, Warning } from "@phosphor-icons/react";
+import { Copy, Check, ZoomIn, ZoomOut, RotateCw, AlertTriangle } from "lucide-react";
 
 interface DocsMermaidProps {
   chart: string;
@@ -29,14 +29,14 @@ export default function DocsMermaid({ chart, title, className = "" }: DocsMermai
           theme: "dark",
           themeVariables: {
             darkMode: true,
-            background: "#0a0a0b",
-            primaryColor: "#111113",
-            primaryTextColor: "#ededef",
-            primaryBorderColor: "#1f1f23",
-            lineColor: "#2a2a30",
-            secondaryColor: "#18181b",
-            tertiaryColor: "#111113",
-            edgeLabelBackground: "#111113",
+            background: "#09090b",
+            primaryColor: "#101013",
+            primaryTextColor: "#f4f4f5",
+            primaryBorderColor: "#27272d",
+            lineColor: "#34343c",
+            secondaryColor: "#151519",
+            tertiaryColor: "#101013",
+            edgeLabelBackground: "#101013",
             fontSize: "13px",
             fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
           },
@@ -76,48 +76,52 @@ export default function DocsMermaid({ chart, title, className = "" }: DocsMermai
   const handleResetZoom = () => setScale(1);
 
   return (
-    <div className={`my-8 rounded-[12px] border border-[var(--border)] bg-[var(--card)] overflow-hidden ${className}`}>
+    <div className={`my-8 rounded-[10px] border border-[var(--docs-border)] bg-[var(--docs-surface)] overflow-hidden ${className}`}>
       {/* Title & Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)] bg-[var(--sidebar)] text-[13px]">
-        <span className="font-mono text-[var(--muted)] font-normal">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--docs-border)] bg-[var(--docs-surface-elevated)] text-[13px]">
+        <span className="font-mono text-[var(--docs-text-muted)] font-normal">
           {title || "Architecture Diagram"}
         </span>
 
         <div className="flex items-center gap-1">
           <button
             onClick={handleZoomIn}
-            className="p-1 rounded text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            className="p-1 rounded text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] transition-colors"
             title="Zoom In"
             aria-label="Zoom in diagram"
           >
-            <MagnifyingGlassPlus size={16} weight="bold" />
+            <ZoomIn className="w-4 h-4" strokeWidth={1.5} />
           </button>
           <button
             onClick={handleZoomOut}
-            className="p-1 rounded text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            className="p-1 rounded text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] transition-colors"
             title="Zoom Out"
             aria-label="Zoom out diagram"
           >
-            <MagnifyingGlassMinus size={16} weight="bold" />
+            <ZoomOut className="w-4 h-4" strokeWidth={1.5} />
           </button>
           <button
             onClick={handleResetZoom}
-            className="p-1 rounded text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            className="p-1 rounded text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] transition-colors"
             title="Reset Zoom"
             aria-label="Reset zoom"
           >
-            <ArrowClockwise size={16} weight="bold" />
+            <RotateCw className="w-4 h-4" strokeWidth={1.5} />
           </button>
 
-          <div className="w-px h-3.5 bg-[var(--border)] mx-1" />
+          <div className="w-px h-3.5 bg-[var(--docs-border)] mx-1" />
 
           <button
             onClick={handleCopySource}
-            className="flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-mono text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            className="flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-mono text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] transition-colors"
             title="Copy Mermaid Code"
             aria-label="Copy diagram source"
           >
-            {copied ? <Check size={13} weight="bold" /> : <Copy size={13} weight="fill" />}
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-emerald-400" strokeWidth={1.5} />
+            ) : (
+              <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />
+            )}
             <span>{copied ? "Copied" : "Source"}</span>
           </button>
         </div>
@@ -126,11 +130,11 @@ export default function DocsMermaid({ chart, title, className = "" }: DocsMermai
       {/* SVG Canvas Container */}
       <div
         ref={containerRef}
-        className="p-6 overflow-x-auto flex items-center justify-center min-h-[180px] bg-[var(--bg)]"
+        className="p-6 overflow-x-auto flex items-center justify-center min-h-[180px] bg-[var(--docs-bg)]"
       >
         {error ? (
           <div className="flex items-center gap-2 p-3 rounded-lg border border-red-900/30 bg-red-950/20 text-red-400 text-xs font-mono">
-            <Warning size={16} weight="fill" />
+            <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" strokeWidth={1.5} />
             <span>Mermaid Render Error: {error}</span>
           </div>
         ) : svgContent ? (
@@ -140,7 +144,7 @@ export default function DocsMermaid({ chart, title, className = "" }: DocsMermai
             dangerouslySetInnerHTML={{ __html: svgContent }}
           />
         ) : (
-          <div className="text-[13px] font-mono text-[var(--muted)] animate-pulse">
+          <div className="text-[13px] font-mono text-[var(--docs-text-muted)] animate-pulse">
             Rendering diagram...
           </div>
         )}

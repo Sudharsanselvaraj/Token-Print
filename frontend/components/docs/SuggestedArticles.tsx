@@ -3,15 +3,14 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ALL_DOC_PAGES, getPrevNext, DocPage } from "@/lib/docsNav";
 import LinearIcon from "./LinearIcon";
 
 export default function SuggestedArticles() {
   const pathname = usePathname();
   const cleanSlug = pathname.replace(/^\/docs\/?/, "").replace(/\/$/, "");
-  const isDevelopers = pathname.startsWith("/docs/developers") || pathname === "/docs/api-reference";
-  const { prev, next } = getPrevNext(cleanSlug, isDevelopers);
+  const { prev, next } = getPrevNext(cleanSlug);
 
   // Pick 3 related suggestions that are not the current page
   const otherPages = ALL_DOC_PAGES.filter(
@@ -22,27 +21,27 @@ export default function SuggestedArticles() {
   const suggestions: DocPage[] = otherPages.slice(offset, offset + 3);
 
   return (
-    <footer className="mt-20 pt-10 border-t border-[var(--border)] select-none">
+    <footer className="mt-16 pt-8 border-t border-[var(--docs-border)] select-none">
       {/* Suggested articles section */}
-      <div className="mb-12">
-        <h3 className="text-[14px] font-medium text-[var(--muted)] tracking-tight mb-4">
+      <div className="mb-10">
+        <h3 className="text-[12px] font-semibold uppercase tracking-[0.05em] text-[var(--docs-text-muted)] mb-3">
           Suggested articles
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {suggestions.map((p) => (
             <Link
               key={p.slug}
               href={`/docs/${p.slug}`}
-              className="group p-4 rounded-[12px] border border-[var(--border)] bg-[var(--card)] hover:border-[var(--border-strong)] transition-colors flex flex-col justify-between"
+              className="group p-3.5 rounded-lg border border-[var(--docs-border)] bg-[var(--docs-surface)] hover:border-[var(--docs-border-strong)] hover:bg-[var(--docs-surface-hover)] transition-all no-underline flex flex-col justify-between"
             >
               <div>
-                <div className="w-7 h-7 rounded-md bg-[#18181b] border border-[var(--border)] flex items-center justify-center text-[var(--muted)] group-hover:text-[var(--text)] transition-colors mb-3">
-                  <LinearIcon name={p.icon} size={15} weight="fill" />
+                <div className="w-6 h-6 rounded bg-[var(--docs-surface-elevated)] border border-[var(--docs-border)] flex items-center justify-center text-[var(--docs-text-muted)] group-hover:text-[var(--docs-heading)] transition-colors mb-2.5">
+                  <LinearIcon name={p.icon} size={13} strokeWidth={1.5} />
                 </div>
-                <h4 className="text-[15px] font-medium text-[var(--text)] mb-1 group-hover:text-white transition-colors line-clamp-1">
+                <h4 className="text-[13.5px] font-semibold text-[var(--docs-heading)] mb-1 group-hover:text-white transition-colors line-clamp-1">
                   {p.title}
                 </h4>
-                <p className="text-[13px] leading-relaxed text-[var(--muted)] line-clamp-2">
+                <p className="text-[12px] leading-relaxed text-[var(--docs-text-secondary)] line-clamp-2">
                   {p.description || "Learn how to use this feature in TokenPrint."}
                 </p>
               </div>
@@ -55,14 +54,14 @@ export default function SuggestedArticles() {
       {(prev || next) && (
         <nav
           aria-label="Previous and next documentation pages"
-          className="flex items-center justify-between pt-6 border-t border-[var(--border)]"
+          className="flex items-center justify-between pt-5 border-t border-[var(--docs-border)]"
         >
           {prev ? (
             <Link
               href={`/docs/${prev.slug}`}
-              className="group flex items-center gap-2 text-[14px] text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+              className="flex items-center gap-2 text-[12.5px] font-medium text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] transition-colors no-underline group"
             >
-              <ArrowLeft size={16} weight="bold" />
+              <ArrowLeft size={13} strokeWidth={1.5} className="group-hover:-translate-x-0.5 transition-transform" />
               <span>{prev.title}</span>
             </Link>
           ) : (
@@ -72,10 +71,10 @@ export default function SuggestedArticles() {
           {next ? (
             <Link
               href={`/docs/${next.slug}`}
-              className="group flex items-center gap-2 text-[14px] text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+              className="flex items-center gap-2 text-[12.5px] font-medium text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] transition-colors no-underline group"
             >
               <span>{next.title}</span>
-              <ArrowRight size={16} weight="bold" />
+              <ArrowRight size={13} strokeWidth={1.5} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
           ) : (
             <div />

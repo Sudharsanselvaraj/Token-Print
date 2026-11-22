@@ -89,19 +89,19 @@ export default function DocsOnThisPage() {
 
   return (
     <nav
-      className="w-[230px] flex-shrink-0 select-none"
+      className="w-[200px] flex-shrink-0 select-none"
       aria-label="Table of contents"
     >
-      <div className="sticky top-24 space-y-3">
-        <p className="text-[13px] font-medium text-[var(--muted)] tracking-tight">
+      <div className="sticky top-20 space-y-2.5">
+        <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-[var(--docs-text-muted)]">
           On this page
         </p>
 
-        {/* 1px track with short white active bar */}
-        <div ref={navRef} className="relative border-l border-[var(--border)] py-1">
+        {/* 1px track with subtle active bar */}
+        <div ref={navRef} className="relative border-l border-[var(--docs-border)] py-0.5">
           {indicatorHeight > 0 && (
             <div
-              className="absolute -left-px w-[2px] bg-white rounded-full transition-all duration-200 pointer-events-none"
+              className="absolute -left-px w-[2px] bg-[var(--docs-heading)] rounded-full transition-all duration-150 pointer-events-none"
               style={{
                 top: `${indicatorTop}px`,
                 height: `${indicatorHeight}px`,
@@ -109,7 +109,7 @@ export default function DocsOnThisPage() {
             />
           )}
 
-          <ul className="space-y-1">
+          <ul className="space-y-0.5">
             {headings.map((h) => {
               const active = activeId === h.id;
               return (
@@ -126,12 +126,12 @@ export default function DocsOnThisPage() {
                         history.pushState(null, "", `#${h.id}`);
                       }
                     }}
-                    className={`block py-1 text-[14.5px] leading-snug transition-colors duration-150 ${
-                      h.level === 3 ? "pl-5 text-[13.5px]" : "pl-3.5"
+                    className={`block py-1 text-[13px] leading-snug no-underline transition-colors duration-150 ${
+                      h.level === 3 ? "pl-5 text-[12px]" : "pl-3"
                     } ${
                       active
-                        ? "text-[var(--text)] font-medium"
-                        : "text-[var(--muted)] hover:text-[var(--text)]"
+                        ? "text-[var(--docs-heading)] font-medium"
+                        : "text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)]"
                     }`}
                   >
                     {h.text}

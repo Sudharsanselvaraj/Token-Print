@@ -7,7 +7,7 @@ interface ImagePanelProps {
   src: string; // path to webp or png in /docs/
   alt: string;
   caption?: string;
-  annotation?: string; // Optional callout annotation on side
+  annotation?: string; // Optional callout annotation
   width?: number;
   height?: number;
   priority?: boolean;
@@ -23,36 +23,33 @@ export default function ImagePanel({
   priority = false,
 }: ImagePanelProps) {
   return (
-    <figure className="my-10 select-none">
-      <div className="relative w-full rounded-[20px] lg:rounded-[24px] bg-[#101012] border border-[var(--border)] overflow-hidden shadow-2xl p-4 sm:p-6 lg:p-8">
-        {/* Optional bracket annotation */}
+    <figure className="my-7 select-none">
+      <div className="relative w-full rounded-lg bg-[var(--docs-surface)] border border-[var(--docs-border)] overflow-hidden p-2 sm:p-3">
+        {/* Monospace bracket annotation */}
         {annotation && (
-          <div className="absolute top-6 left-6 z-10 max-w-xs flex items-start gap-2.5">
-            <div className="w-1.5 h-6 border-l-2 border-t-2 border-[var(--border-strong)] mt-0.5" />
-            <p className="text-[13.5px] leading-relaxed text-[var(--muted)] font-normal">
+          <div className="px-2 py-1 mb-2 flex items-center gap-2">
+            <span className="font-mono text-[11px] text-[var(--docs-text-muted)] tracking-wider">
               {annotation}
-            </p>
+            </span>
           </div>
         )}
 
-        {/* Scaled UI screenshot with offset and edge gradient fade */}
-        <div className="relative w-full aspect-[16/9] overflow-hidden rounded-[14px] bg-[#09090b] border border-[var(--border)]">
-          <div className="absolute inset-0 [mask-image:linear-gradient(to_bottom,black_85%,transparent_100%)] [mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
-            <Image
-              src={src}
-              alt={alt}
-              width={width}
-              height={height}
-              priority={priority}
-              loading={priority ? undefined : "lazy"}
-              className="w-full h-full object-cover object-left-top"
-            />
-          </div>
+        {/* Clean technical image container with object-fit: contain */}
+        <div className="relative w-full aspect-[16/9] overflow-hidden rounded bg-[#09090b] border border-[var(--docs-border)] flex items-center justify-center">
+          <Image
+            src={src}
+            alt={alt}
+            width={width}
+            height={height}
+            priority={priority}
+            loading={priority ? undefined : "lazy"}
+            className="w-full h-full object-contain"
+          />
         </div>
       </div>
 
       {caption && (
-        <figcaption className="mt-3 text-center text-[13.5px] text-[var(--muted)]">
+        <figcaption className="mt-2 text-center text-[12px] text-[var(--docs-text-muted)]">
           {caption}
         </figcaption>
       )}

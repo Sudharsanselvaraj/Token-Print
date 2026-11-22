@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
-import { Check, X, MagnifyingGlass, ShieldCheck } from "@phosphor-icons/react";
+import { Check, X, Search, ShieldCheck } from "lucide-react";
 import { BRANDS } from "@/lib/brands";
 
 export interface ModelCompatRow {
@@ -178,14 +178,14 @@ export default function DocsCompatibilityMatrix() {
   const renderCheck = (val: boolean) => {
     if (val) {
       return (
-        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[var(--border)] text-white">
-          <Check size={11} weight="bold" />
+        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[var(--docs-surface-elevated)] border border-[var(--docs-border)] text-white">
+          <Check className="w-2.5 h-2.5" strokeWidth={2.5} />
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[var(--card)] text-[var(--faint)]">
-        <X size={11} weight="bold" />
+      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[var(--docs-surface)] text-[var(--docs-text-muted)]">
+        <X className="w-2.5 h-2.5" strokeWidth={2.5} />
       </span>
     );
   };
@@ -194,28 +194,28 @@ export default function DocsCompatibilityMatrix() {
     switch (status) {
       case "fully_operational":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono bg-[var(--card)] border border-[var(--border)] text-white">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono bg-[var(--docs-surface)] border border-[var(--docs-border)] text-[var(--docs-heading)]">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             Verified
           </span>
         );
       case "partially_supported":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono bg-[var(--card)] border border-[var(--border)] text-[var(--muted)]">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono bg-[var(--docs-surface)] border border-[var(--docs-border)] text-[var(--docs-text-secondary)]">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
             Partial
           </span>
         );
       case "unsupported":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono bg-[var(--card)] border border-[var(--border)] text-[var(--faint)]">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono bg-[var(--docs-surface)] border border-[var(--docs-border)] text-[var(--docs-text-muted)]">
             <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
             Unsupported
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono bg-[var(--card)] border border-[var(--border)] text-[var(--muted)]">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono bg-[var(--docs-surface)] border border-[var(--docs-border)] text-[var(--docs-text-secondary)]">
             Experimental
           </span>
         );
@@ -223,39 +223,39 @@ export default function DocsCompatibilityMatrix() {
   };
 
   return (
-    <div className="my-8 rounded-[12px] border border-[var(--border)] bg-[var(--card)] overflow-hidden">
+    <div className="my-8 rounded-[10px] border border-[var(--docs-border)] bg-[var(--docs-surface)] overflow-hidden">
       {/* Header Bar */}
-      <div className="p-4 sm:p-5 border-b border-[var(--border)] bg-[var(--sidebar)]">
+      <div className="p-4 sm:p-5 border-b border-[var(--docs-border)] bg-[var(--docs-surface-elevated)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <ShieldCheck size={18} weight="fill" className="text-[var(--muted)]" />
-              <h3 className="text-[13px] font-medium text-[var(--text)] tracking-tight">
+              <ShieldCheck className="w-4 h-4 text-[var(--docs-accent)]" strokeWidth={1.5} />
+              <h3 className="text-[13px] font-medium text-[var(--docs-heading)] tracking-tight">
                 Model Verification Matrix
               </h3>
             </div>
-            <p className="text-[13px] text-[var(--muted)] mt-1">
+            <p className="text-[13px] text-[var(--docs-text-secondary)] mt-1">
               Evidence-based compatibility verified across resident forward hooks, ZeroGPU execution, and local runtimes.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="relative">
-              <MagnifyingGlass size={14} weight="bold" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--docs-text-muted)]" strokeWidth={1.5} />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Filter models or features..."
-                className="pl-8 pr-3 py-1.5 rounded-md bg-[var(--bg)] border border-[var(--border)] text-[12.5px] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--border-strong)] w-48 sm:w-60"
+                className="pl-8 pr-3 py-1.5 rounded-md bg-[var(--docs-bg)] border border-[var(--docs-border)] text-[12.5px] text-[var(--docs-heading)] placeholder-[var(--docs-text-muted)] focus:outline-none focus:border-[var(--docs-border-strong)] w-48 sm:w-60"
               />
             </div>
           </div>
         </div>
 
         {/* Family Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 mt-4 pt-3 border-t border-[var(--border)]">
-          <span className="text-[11px] font-mono text-[var(--muted)] mr-1">Family:</span>
+        <div className="flex flex-wrap items-center gap-1.5 mt-4 pt-3 border-t border-[var(--docs-border)]">
+          <span className="text-[11px] font-mono text-[var(--docs-text-muted)] mr-1">Family:</span>
           {families.map((fam) => {
             const brand = BRANDS[fam.toLowerCase()];
             return (
@@ -264,8 +264,8 @@ export default function DocsCompatibilityMatrix() {
                 onClick={() => setSelectedFamily(fam)}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[12px] font-mono transition-colors ${
                   selectedFamily === fam
-                    ? "bg-[var(--border)] text-[var(--text)] font-medium"
-                    : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40"
+                    ? "bg-[var(--docs-surface-hover)] border border-[var(--docs-border-strong)] text-[var(--docs-heading)] font-medium"
+                    : "text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] hover:bg-[var(--docs-surface-hover)]/40"
                 }`}
               >
                 {brand?.iconPath && (
@@ -282,7 +282,7 @@ export default function DocsCompatibilityMatrix() {
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-[var(--border)] bg-[var(--sidebar)] text-[11px] font-mono uppercase tracking-wider text-[var(--muted)]">
+            <tr className="border-b border-[var(--docs-border)] bg-[var(--docs-surface-elevated)] text-[11px] font-mono uppercase tracking-wider text-[var(--docs-text-muted)]">
               <th className="py-3 px-4">Model Checkpoint</th>
               <th className="py-3 px-3 text-center">Recognized</th>
               <th className="py-3 px-3 text-center">Loaded</th>
@@ -293,10 +293,10 @@ export default function DocsCompatibilityMatrix() {
               <th className="py-3 px-4">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--border)] text-[13px] font-mono">
+          <tbody className="divide-y divide-[var(--docs-border)] text-[13px] font-mono">
             {filteredData.map((row) => (
-              <tr key={row.model_id} className="hover:bg-[var(--sidebar)]/50 transition-colors">
-                <td className="py-3.5 px-4 font-semibold text-[var(--text)]">
+              <tr key={row.model_id} className="hover:bg-[var(--docs-surface-elevated)]/50 transition-colors">
+                <td className="py-3.5 px-4 font-semibold text-[var(--docs-heading)]">
                   {row.model_id}
                 </td>
                 <td className="py-3.5 px-3 text-center">{renderCheck(row.architecture_recognized)}</td>

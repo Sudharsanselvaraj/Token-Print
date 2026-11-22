@@ -65,13 +65,13 @@ export default function DocsAppShell({ children }: { children: React.ReactNode }
   }, []);
 
   return (
-    <div className="docs-shell flex h-screen w-screen overflow-hidden bg-[var(--bg)] text-[var(--text)]">
+    <div className="docs-shell flex h-screen w-screen overflow-hidden bg-[var(--docs-bg)] text-[var(--docs-text)]">
       <DocsSearchModal
         isOpen={searchModalOpen}
         onClose={() => setSearchModalOpen(false)}
       />
 
-      {/* Left Sidebar (285px) */}
+      {/* Left Sidebar (260px) */}
       <DocsNav
         mobileOpen={mobileOpen}
         setMobileOpen={setMobileOpen}
@@ -80,27 +80,30 @@ export default function DocsAppShell({ children }: { children: React.ReactNode }
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
-        <TopBar onToggleMobileNav={() => setMobileOpen((v) => !v)} />
+        <TopBar
+          onToggleMobileNav={() => setMobileOpen((v) => !v)}
+          onOpenSearch={() => setSearchModalOpen(true)}
+        />
 
         <main
           id="docs-main-content"
-          className="flex-1 overflow-y-auto scrollbar-none"
+          className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--docs-border)]"
         >
           {isOverviewPage ? (
             /* Wide layout for Docs Home & Developers Home */
-            <div className="max-w-[1280px] mx-auto py-12 px-6 lg:px-12">
+            <div className="max-w-[1200px] mx-auto py-10 px-6 lg:px-10">
               <article className="docs-content">{children}</article>
             </div>
           ) : (
             /* Three-column layout for standard articles */
-            <div className="max-w-[1100px] mx-auto py-12 px-6 lg:px-10 flex gap-12 xl:gap-16 justify-between items-start">
-              <div className="flex-1 min-w-0 max-w-[720px]">
+            <div className="max-w-[1040px] mx-auto py-8 px-6 lg:px-8 flex gap-8 xl:gap-12 justify-between items-start">
+              <div className="flex-1 min-w-0 max-w-[740px]">
                 <article className="docs-content">{children}</article>
                 <SuggestedArticles />
               </div>
 
               {/* Right rail TOC (hidden below 1100px) */}
-              <aside className="w-[230px] hidden xl:block flex-shrink-0">
+              <aside className="w-[200px] hidden xl:block flex-shrink-0">
                 <DocsOnThisPage />
               </aside>
             </div>
