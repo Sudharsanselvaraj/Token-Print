@@ -43,6 +43,7 @@ flowchart TD
 TokenPrint runs inside a Gradio-based Space container on Hugging Face Spaces:
 - **SDK**: Gradio 6.11.0
 - **App File**: `app.py`
+- **Console UI**: `console_ui.py` (custom dark theme, hardware telemetry grid, collapsible JSON, interactive token chip visualizer)
 - **Routing Integration**: Prepending FastAPI routes to Gradio ASGI router to circumvent Gradio 6 SSR route interception.
 - **Dynamic GPU Allocation**: `@spaces.GPU(duration=60)` wraps CUDA-intensive inference operations (`analyze`, `debug_analyze`, `generate_steps`).
 - **Resilient CPU Fallback**: When `ZeroGPUQuotaExceeded` occurs or CUDA hardware is unavailable, the backend automatically diverts execution to `cpu_fallback` without dropping client connections.
