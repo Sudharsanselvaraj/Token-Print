@@ -6848,6 +6848,44 @@ body.docs-page-active {
   flex-direction: row !important;
 }
 
+/* Reset button element styling inside docs shell to eliminate browser buttonface & outset */
+.docs-shell button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+  box-shadow: none;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Reset list element styling inside docs shell (Table of Contents, nav lists) */
+.docs-shell ul,
+.docs-shell ol {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.docs-shell li {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Hide Next.js dev indicator portal in dev mode */
+nextjs-portal,
+[data-nextjs-toast],
+[data-nextjs-dev-overlay],
+#nextjs-dev-overlay {
+  display: none !important;
+}
+
 /* Remove all underlines by default across documentation */
 .docs-shell a,
 .docs-shell a:hover,

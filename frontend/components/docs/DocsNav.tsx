@@ -106,7 +106,7 @@ export default function DocsNav({
 
         <button
           onClick={onOpenSearchModal}
-          className="w-8 h-8 rounded-md border border-[var(--docs-border)] flex items-center justify-center text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] hover:border-[var(--docs-border-strong)] transition-colors duration-150"
+          className="w-8 h-8 rounded-md border border-[var(--docs-border)] bg-transparent flex items-center justify-center text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] hover:border-[var(--docs-border-strong)] transition-colors duration-150"
           aria-label="Search documentation (⌘K)"
           title="Search (⌘K)"
         >
@@ -125,7 +125,7 @@ export default function DocsNav({
               <button
                 type="button"
                 onClick={() => toggleGroup(section.id)}
-                className="w-full px-2 py-1 flex items-center justify-between text-[11.5px] font-semibold uppercase tracking-[0.06em] text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] transition-colors duration-150 text-left"
+                className="w-full px-2 py-1.5 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] transition-colors duration-150 text-left bg-transparent border-0 select-none"
               >
                 <span>{section.label}</span>
                 <span className="text-[var(--docs-text-muted)]">
@@ -150,12 +150,12 @@ export default function DocsNav({
                           href={`/docs/${page.slug}`}
                           ref={active ? activeItemRef : null}
                           onClick={() => setMobileOpen(false)}
-                          className={`h-[34px] px-2.5 flex items-center gap-2.5 rounded-md text-[13px] font-[450] no-underline transition-colors duration-150 ${
+                          className={`h-[32px] px-2.5 flex items-center gap-2.5 rounded-md text-[13px] font-[450] no-underline transition-colors duration-150 ${
                             active
-                              ? "text-[var(--docs-heading)] bg-[var(--docs-surface-elevated)] border-l-2 border-[var(--docs-accent)]"
+                              ? "text-white bg-[var(--docs-surface-hover)] font-medium"
                               : parentActive
                               ? "text-[var(--docs-heading)]"
-                              : "text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] hover:bg-[var(--docs-surface-hover)]"
+                              : "text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] hover:bg-[var(--docs-surface-hover)]/60"
                           }`}
                         >
                           {page.icon && (

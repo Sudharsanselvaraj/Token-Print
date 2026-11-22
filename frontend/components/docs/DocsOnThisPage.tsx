@@ -89,10 +89,10 @@ export default function DocsOnThisPage() {
 
   return (
     <nav
-      className="w-[200px] flex-shrink-0 select-none"
+      className="w-full select-none"
       aria-label="Table of contents"
     >
-      <div className="sticky top-20 space-y-2.5">
+      <div className="space-y-2.5">
         <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-[var(--docs-text-muted)]">
           On this page
         </p>
@@ -109,11 +109,11 @@ export default function DocsOnThisPage() {
             />
           )}
 
-          <ul className="space-y-0.5">
+          <ul className="space-y-0.5 list-none p-0 m-0">
             {headings.map((h) => {
               const active = activeId === h.id;
               return (
-                <li key={h.id}>
+                <li key={h.id} className="list-none p-0 m-0">
                   <a
                     href={`#${h.id}`}
                     data-heading-id={h.id}

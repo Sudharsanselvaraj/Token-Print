@@ -166,10 +166,11 @@ export default function TopBar({ onToggleMobileNav, onOpenSearch }: TopBarProps)
 
         {/* Split Copy Page Button */}
         <div className="relative" ref={dropdownRef}>
-          <div className="inline-flex rounded-md border border-[var(--docs-border)] bg-[var(--docs-surface)] overflow-hidden">
+          <div className="inline-flex items-center rounded-md border border-[var(--docs-border)] bg-[var(--docs-surface)] overflow-hidden">
             <button
+              type="button"
               onClick={handleCopyMarkdown}
-              className="h-8 px-2.5 text-[12px] font-medium text-[var(--docs-heading)] hover:bg-[var(--docs-surface-hover)] transition-colors flex items-center gap-1.5"
+              className="h-8 px-2.5 text-[12px] font-medium text-[var(--docs-heading)] bg-transparent border-0 hover:bg-[var(--docs-surface-hover)] transition-colors flex items-center gap-1.5"
             >
               {copied ? (
                 <Check size={13} className="text-[var(--docs-semantic-success)]" />
@@ -179,8 +180,9 @@ export default function TopBar({ onToggleMobileNav, onOpenSearch }: TopBarProps)
               <span>{copied ? "Copied" : "Copy"}</span>
             </button>
             <button
+              type="button"
               onClick={() => setDropdownOpen((v) => !v)}
-              className="h-8 px-1.5 border-l border-[var(--docs-border)] text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] hover:bg-[var(--docs-surface-hover)] transition-colors flex items-center justify-center"
+              className="h-8 px-1.5 border-0 border-l border-[var(--docs-border)] bg-transparent text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] hover:bg-[var(--docs-surface-hover)] transition-colors flex items-center justify-center"
               aria-label="Copy options"
             >
               <ChevronDown size={12} strokeWidth={1.5} />

@@ -96,15 +96,17 @@ export default function DocsAppShell({ children }: { children: React.ReactNode }
             </div>
           ) : (
             /* Three-column layout for standard articles */
-            <div className="max-w-[1040px] mx-auto py-8 px-6 lg:px-8 flex gap-8 xl:gap-12 justify-between items-start">
+            <div className="max-w-[1040px] mx-auto py-8 px-6 lg:px-8 flex gap-8 xl:gap-12 justify-between items-stretch">
               <div className="flex-1 min-w-0 max-w-[740px]">
                 <article className="docs-content">{children}</article>
                 <SuggestedArticles />
               </div>
 
-              {/* Right rail TOC (hidden below 1100px) */}
-              <aside className="w-[200px] hidden xl:block flex-shrink-0">
-                <DocsOnThisPage />
+              {/* Right rail TOC — locked sticky while reading */}
+              <aside className="w-[200px] hidden xl:block flex-shrink-0 self-stretch">
+                <div className="sticky top-8">
+                  <DocsOnThisPage />
+                </div>
               </aside>
             </div>
           )}
