@@ -6798,20 +6798,20 @@ body.docs-page-active {
   color-scheme: dark !important;
 }
 
-/* ── TokenPrint Docs Centralized Dark-Only Design Tokens ─────────── */
+/* ── TokenPrint Docs Centralized Dark-Only Design Tokens (Linear Style) ─────────── */
 :root {
-  --docs-bg: #09090b;
-  --docs-surface: #101013;
-  --docs-surface-elevated: #151519;
-  --docs-surface-hover: #1c1c21;
+  --docs-bg: #08090a;
+  --docs-surface: #121316;
+  --docs-surface-elevated: #16171a;
+  --docs-surface-hover: #1c1d22;
 
-  --docs-border: #27272d;
-  --docs-border-strong: #34343c;
+  --docs-border: rgba(255, 255, 255, 0.08);
+  --docs-border-strong: rgba(255, 255, 255, 0.16);
 
-  --docs-heading: #f4f4f5;
-  --docs-text: #d1d1d6;
-  --docs-text-secondary: #a1a1aa;
-  --docs-text-muted: #777780;
+  --docs-heading: #ffffff;
+  --docs-text: #c4c7cf;
+  --docs-text-secondary: #8a8f98;
+  --docs-text-muted: #70757e;
 
   --docs-accent: #a78bfa;
   --docs-accent-soft: rgba(167, 139, 250, 0.12);

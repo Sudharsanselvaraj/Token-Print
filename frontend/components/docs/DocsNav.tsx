@@ -10,6 +10,7 @@ import {
   DocSection,
   DocPage,
 } from "@/lib/docsNav";
+import LinearIcon from "./LinearIcon";
 
 interface DocsNavProps {
   mobileOpen: boolean;
@@ -36,15 +37,17 @@ export default function DocsNav({
     return page.children?.some((child) => child.slug === cleanPath) || false;
   };
 
-  const isDevSection = pathname.includes("/developers") || pathname.includes("/api-reference");
+  const isDevActive = pathname.includes("/developers");
+  const isApiActive = pathname.includes("/api-reference");
+  const isDocsActive = !isDevActive && !isApiActive;
 
   const navContent = (
-    <aside className="w-[248px] h-full flex flex-col bg-[var(--docs-bg)] border-r border-[var(--docs-border)] select-none">
-      {/* Top Bar: Brand + Search trigger */}
-      <div className="h-[52px] px-3.5 flex items-center justify-between border-b border-[var(--docs-border)] flex-shrink-0">
+    <aside className="w-[270px] h-full flex flex-col bg-[#08090a] border-r border-white/[0.07] select-none">
+      {/* Top Bar: Brand + Circular Search Trigger (Linear Docs Style) */}
+      <div className="h-[52px] px-4 flex items-center justify-between border-b border-white/[0.07] flex-shrink-0">
         <Link
           href="/docs"
-          className="flex items-center gap-2 group no-underline"
+          className="flex items-center gap-2.5 group no-underline"
           aria-label="TokenPrint Docs Home"
         >
           <div className="w-[18px] h-[18px] relative flex-shrink-0">
@@ -56,21 +59,18 @@ export default function DocsNav({
               className="object-contain"
             />
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[13.5px] font-semibold text-white tracking-tight">
-              TokenPrint
-            </span>
-            <span className="text-zinc-600 text-xs font-light">/</span>
-            <span className="text-[12px] text-zinc-400 font-medium">
+          <div className="flex items-center gap-2">
+            <span className="text-[14px] font-semibold text-white tracking-tight">
               Docs
             </span>
           </div>
         </Link>
 
+        {/* Circular Search Button (Linear Docs 32px round button) */}
         <button
           type="button"
           onClick={onOpenSearchModal}
-          className="w-7 h-7 rounded-md border border-[var(--docs-border)] bg-transparent flex items-center justify-center text-zinc-400 hover:text-white hover:border-[var(--docs-border-strong)] transition-colors duration-150 cursor-pointer"
+          className="w-8 h-8 rounded-full border border-white/10 bg-transparent hover:border-white/20 hover:bg-white/[0.04] flex items-center justify-center text-[#8a8f98] hover:text-white transition-colors duration-150 cursor-pointer"
           aria-label="Search documentation (⌘K)"
           title="Search (⌘K)"
         >
@@ -78,44 +78,16 @@ export default function DocsNav({
         </button>
       </div>
 
-      {/* Mode Switcher Segmented Control (Lori / Linear Docs Style) */}
-      <div className="px-2.5 pt-2.5 pb-2 border-b border-[var(--docs-border)]">
-        <div className="flex items-center p-0.5 rounded-lg bg-[var(--docs-surface)] border border-[var(--docs-border)]">
-          <Link
-            href="/docs"
-            onClick={() => setMobileOpen(false)}
-            className={`flex-1 py-1 text-center rounded-[6px] text-[11.5px] font-medium transition-all no-underline ${
-              !isDevSection
-                ? "bg-[var(--docs-surface-hover)] text-white shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            Guides
-          </Link>
-          <Link
-            href="/docs/developers"
-            onClick={() => setMobileOpen(false)}
-            className={`flex-1 py-1 text-center rounded-[6px] text-[11.5px] font-medium transition-all no-underline ${
-              isDevSection
-                ? "bg-[var(--docs-surface-hover)] text-white shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            Developers &amp; API
-          </Link>
-        </div>
-      </div>
-
-      {/* Scrolling Navigation Tree (Lori / Linear Docs Typography-First Style) */}
-      <div className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-4 scrollbar-thin scrollbar-thumb-[var(--docs-border)]">
+      {/* Scrolling Navigation Tree with Linear Glyphs */}
+      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4 scrollbar-thin scrollbar-thumb-white/10">
         {DOCS_SECTIONS.map((section: DocSection) => (
           <div key={section.id} className="space-y-0.5">
-            {/* Clean Section Heading without accordion button or chevrons */}
-            <div className="px-2 pt-2.5 pb-1 text-[12px] font-medium text-zinc-400 select-none tracking-tight">
+            {/* Clean Section Heading in sentence-case */}
+            <div className="px-2 pt-2.5 pb-1 text-[12px] font-medium text-[#70757e] select-none tracking-tight">
               {section.label}
             </div>
 
-            {/* Items in section */}
+            {/* Items with Linear-style filled/stroke glyphs */}
             <div className="space-y-0.5">
               {section.pages.map((page: DocPage) => {
                 const active = isPageActive(page.slug);
@@ -127,17 +99,28 @@ export default function DocsNav({
                       href={`/docs/${page.slug}`}
                       ref={active ? activeItemRef : null}
                       onClick={() => setMobileOpen(false)}
-                      className={`h-[28px] px-2.5 flex items-center justify-between rounded-md text-[12px] font-[450] no-underline transition-colors duration-150 ${
+                      className={`h-[32px] px-2.5 flex items-center gap-2.5 rounded-md text-[13px] font-[450] no-underline transition-colors duration-150 group ${
                         active
                           ? "text-white bg-white/[0.08] font-medium"
                           : parentActive
-                          ? "text-zinc-200 hover:text-white"
-                          : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]"
+                          ? "text-white"
+                          : "text-[#8a8f98] hover:text-white hover:bg-white/[0.04]"
                       }`}
                     >
+                      {page.icon && (
+                        <span
+                          className={`flex-shrink-0 transition-colors duration-150 ${
+                            active
+                              ? "text-white"
+                              : "text-[#70757e] group-hover:text-white"
+                          }`}
+                        >
+                          <LinearIcon name={page.icon} size={15} strokeWidth={1.5} />
+                        </span>
+                      )}
                       <span className="truncate flex-1">{page.title}</span>
                       {page.badge && (
-                        <span className="ml-auto text-[9.5px] px-1.5 py-0.5 rounded font-mono uppercase bg-white/[0.06] text-zinc-400 border border-white/5">
+                        <span className="ml-auto text-[9.5px] px-1.5 py-0.5 rounded font-mono uppercase bg-white/[0.06] text-[#8a8f98] border border-white/5">
                           {page.badge}
                         </span>
                       )}
@@ -145,7 +128,7 @@ export default function DocsNav({
 
                     {/* Nested Children Tree Lines */}
                     {page.children && page.children.length > 0 && (
-                      <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5 my-1">
+                      <div className="ml-[14px] pl-[14px] border-l border-white/10 space-y-0.5 my-1">
                         {page.children.map((child) => {
                           const childActive = isPageActive(child.slug);
                           return (
@@ -153,10 +136,10 @@ export default function DocsNav({
                               key={child.slug}
                               href={`/docs/${child.slug}`}
                               onClick={() => setMobileOpen(false)}
-                              className={`h-[26px] flex items-center px-2 rounded-md text-[11.5px] font-[450] no-underline transition-colors duration-150 relative ${
+                              className={`h-[28px] flex items-center px-2 rounded-md text-[12px] font-[450] no-underline transition-colors duration-150 ${
                                 childActive
                                   ? "text-white bg-white/[0.08] font-medium"
-                                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
+                                  : "text-[#8a8f98] hover:text-white hover:bg-white/[0.04]"
                               }`}
                             >
                               <span className="truncate">{child.title}</span>
@@ -171,6 +154,55 @@ export default function DocsNav({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Pinned Bottom Navigation (Matches Linear Docs Screenshot 3) */}
+      <div className="border-t border-white/[0.08] p-2 space-y-0.5 flex-shrink-0 bg-[#08090a]">
+        <Link
+          href="/docs"
+          onClick={() => setMobileOpen(false)}
+          className={`h-[32px] px-2.5 flex items-center gap-2.5 rounded-md text-[13px] no-underline transition-colors ${
+            isDocsActive
+              ? "text-white bg-white/[0.08] font-medium"
+              : "text-[#8a8f98] hover:text-white hover:bg-white/[0.04]"
+          }`}
+        >
+          <LinearIcon name="BookOpen" size={15} />
+          <span>Docs</span>
+        </Link>
+        <Link
+          href="/docs/developers"
+          onClick={() => setMobileOpen(false)}
+          className={`h-[32px] px-2.5 flex items-center gap-2.5 rounded-md text-[13px] no-underline transition-colors ${
+            isDevActive
+              ? "text-white bg-white/[0.08] font-medium"
+              : "text-[#8a8f98] hover:text-white hover:bg-white/[0.04]"
+          }`}
+        >
+          <LinearIcon name="Terminal" size={15} />
+          <span>Developers</span>
+        </Link>
+        <Link
+          href="/docs/api-reference"
+          onClick={() => setMobileOpen(false)}
+          className={`h-[32px] px-2.5 flex items-center gap-2.5 rounded-md text-[13px] no-underline transition-colors ${
+            isApiActive
+              ? "text-white bg-white/[0.08] font-medium"
+              : "text-[#8a8f98] hover:text-white hover:bg-white/[0.04]"
+          }`}
+        >
+          <LinearIcon name="Code2" size={15} />
+          <span>API Reference</span>
+        </Link>
+        <a
+          href="https://github.com/Sudharsanselvaraj/Token-Print"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="h-[32px] px-2.5 flex items-center gap-2.5 rounded-md text-[13px] text-[#8a8f98] hover:text-white hover:bg-white/[0.04] no-underline transition-colors"
+        >
+          <LinearIcon name="GitBranch" size={15} />
+          <span>GitHub</span>
+        </a>
       </div>
     </aside>
   );
@@ -187,12 +219,12 @@ export default function DocsNav({
             className="fixed inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative w-[280px] max-w-[85vw] h-full z-10 bg-[var(--docs-bg)] shadow-2xl flex flex-col">
+          <div className="relative w-[280px] max-w-[85vw] h-full z-10 bg-[#08090a] shadow-2xl flex flex-col">
             <div className="absolute top-3 right-3 z-20">
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-white/[0.06] cursor-pointer"
+                className="p-1.5 rounded-md text-[#8a8f98] hover:text-white hover:bg-white/[0.06] cursor-pointer"
               >
                 <X size={18} strokeWidth={1.5} />
               </button>

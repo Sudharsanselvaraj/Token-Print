@@ -92,55 +92,49 @@ export default function DocsOnThisPage() {
       className="w-full select-none"
       aria-label="Table of contents"
     >
-      <div className="space-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--docs-text-muted)]">
-          On this page
-        </p>
+      {/* Linear Docs TOC List (No uppercase header, clean direct list) */}
+      <div ref={navRef} className="relative border-l border-white/[0.08] py-0.5">
+        {indicatorHeight > 0 && (
+          <div
+            className="absolute -left-px w-[1.5px] bg-white rounded-full transition-all duration-150 pointer-events-none"
+            style={{
+              top: `${indicatorTop}px`,
+              height: `${indicatorHeight}px`,
+            }}
+          />
+        )}
 
-        {/* 1px track with subtle active bar */}
-        <div ref={navRef} className="relative border-l border-[var(--docs-border)] py-0.5">
-          {indicatorHeight > 0 && (
-            <div
-              className="absolute -left-px w-[1.5px] bg-[var(--docs-heading)] rounded-full transition-all duration-150 pointer-events-none"
-              style={{
-                top: `${indicatorTop}px`,
-                height: `${indicatorHeight}px`,
-              }}
-            />
-          )}
-
-          <ul className="space-y-0.5 list-none p-0 m-0">
-            {headings.map((h) => {
-              const active = activeId === h.id;
-              return (
-                <li key={h.id} className="list-none p-0 m-0">
-                  <a
-                    href={`#${h.id}`}
-                    data-heading-id={h.id}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const target = document.getElementById(h.id);
-                      if (target) {
-                        target.scrollIntoView({ behavior: "smooth", block: "start" });
-                        setActiveId(h.id);
-                        history.pushState(null, "", `#${h.id}`);
-                      }
-                    }}
-                    className={`block py-1 text-[11px] leading-snug no-underline transition-colors duration-150 ${
-                      h.level === 3 ? "pl-4 text-[10.5px]" : "pl-2.5"
-                    } ${
-                      active
-                        ? "text-[var(--docs-heading)] font-medium"
-                        : "text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)]"
-                    }`}
-                  >
-                    {h.text}
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <ul className="space-y-0.5 list-none p-0 m-0">
+          {headings.map((h) => {
+            const active = activeId === h.id;
+            return (
+              <li key={h.id} className="list-none p-0 m-0">
+                <a
+                  href={`#${h.id}`}
+                  data-heading-id={h.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const target = document.getElementById(h.id);
+                    if (target) {
+                      target.scrollIntoView({ behavior: "smooth", block: "start" });
+                      setActiveId(h.id);
+                      history.pushState(null, "", `#${h.id}`);
+                    }
+                  }}
+                  className={`block py-1 text-[12px] leading-snug no-underline transition-colors duration-150 ${
+                    h.level === 3 ? "pl-4 text-[11.5px]" : "pl-2.5"
+                  } ${
+                    active
+                      ? "text-white font-medium"
+                      : "text-[#8a8f98] hover:text-white"
+                  }`}
+                >
+                  {h.text}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </nav>
   );
