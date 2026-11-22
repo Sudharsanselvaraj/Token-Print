@@ -30,6 +30,7 @@ def run(command, cwd=ROOT, env=None):
 def available(port):
     with socket.socket() as sock:
         try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind(("127.0.0.1", port))
         except OSError as exc:
             raise RuntimeError(

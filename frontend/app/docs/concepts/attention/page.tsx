@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
+import ImagePanel from "@/components/docs/ImagePanel";
 
 export const metadata: Metadata = {
   title: "Attention",
@@ -10,15 +9,22 @@ export const metadata: Metadata = {
 export default function AttentionPage() {
   return (
     <>
-      <DocsBreadcrumb slug="concepts/attention" title="Attention" />
-      <h1>Attention</h1>
       <p className="docs-meta">Core Concepts</p>
+      <h1>Attention</h1>
 
-      <p>
+      <p className="docs-intro">
         <strong>Self-attention</strong> allows each token in a sequence to gather information from
         every other token. The result is that each token&apos;s representation is updated based on
         how much it &ldquo;attends&rdquo; to every other position.
       </p>
+
+      <ImagePanel
+        src="/docs/panels/panel-attention.webp"
+        alt="TokenPrint 24-layer Attention Matrix and GQA Geometry"
+        caption="Real forward-pass attention heatmap for Qwen2.5-0.5B across 24 transformer layers and 14 query heads."
+        annotation="[ 24 LAYERS · 14 QUERY HEADS · 2 KV GROUPS (GQA) ]"
+        priority
+      />
 
       <hr />
 
@@ -94,8 +100,6 @@ where:
         In Generation mode, the active head&apos;s attention weights animate as each token is
         produced, showing where the model is focusing to make each prediction.
       </p>
-
-      <DocsPrevNext slug="concepts/attention" />
     </>
   );
 }

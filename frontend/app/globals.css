@@ -6787,27 +6787,138 @@ select {
    Restrained Monochrome Editorial Layout (Arble composition)
    ============================================================ */
 
-/* ── Document-level scroll lock for docs ──────────────────── */
+/* ── Document-level scroll lock & dark theme enforcement ─────────── */
 html:has(.docs-shell),
 body:has(.docs-shell),
 html.docs-page-active,
 body.docs-page-active {
   overflow: hidden !important;
   height: 100vh !important;
-  background-color: #070707 !important;
+  background-color: #09090b !important;
+  color-scheme: dark !important;
+}
+
+/* ── TokenPrint Docs Centralized Dark-Only Design Tokens (Linear Style) ─────────── */
+:root {
+  --docs-bg: #08090a;
+  --docs-surface: #121316;
+  --docs-surface-elevated: #16171a;
+  --docs-surface-hover: #1c1d22;
+
+  --docs-border: rgba(255, 255, 255, 0.08);
+  --docs-border-strong: rgba(255, 255, 255, 0.16);
+
+  --docs-heading: #ffffff;
+  --docs-text: #c4c7cf;
+  --docs-text-secondary: #8a8f98;
+  --docs-text-muted: #70757e;
+
+  --docs-accent: #a78bfa;
+  --docs-accent-soft: rgba(167, 139, 250, 0.12);
+
+  /* Exact typography scale from calibration spec */
+  --font-doc-hero: 30px;
+  --font-doc-h1: 28px;
+  --font-doc-h2: 21px;
+  --font-doc-h3: 17px;
+  --font-doc-h4: 15px;
+
+  --font-doc-body: 14px;
+  --font-doc-secondary: 13px;
+  --font-doc-caption: 11px;
+
+  --font-sidebar-heading: 12px;
+  --font-sidebar-item: 12px;
+  --font-sidebar-nested: 11.5px;
+
+  --font-toolbar: 12px;
+  --font-breadcrumb: 11px;
+  --font-toc: 11px;
+
+  --font-card-title: 14px;
+  --font-card-description: 12px;
+
+  --font-code: 12px;
+
+  /* Semantic State Accents */
+  --docs-semantic-success: #34d399;
+  --docs-semantic-warning: #fbbf24;
+  --docs-semantic-danger: #f87171;
+  --docs-semantic-info: #60a5fa;
+
+  /* Legacy & Helper Aliases */
+  --bg: var(--docs-bg);
+  --sidebar: var(--docs-bg);
+  --card: var(--docs-surface);
+  --border: var(--docs-border);
+  --border-strong: var(--docs-border-strong);
+  --text: var(--docs-heading);
+  --body: var(--docs-text);
+  --muted: var(--docs-text-muted);
+  --faint: #52525b;
+  --accent: var(--docs-accent);
 }
 
 /* ── Main App Shell ───────────────────────────────────────── */
 .docs-shell {
-  margin-top: 60px;
-  height: calc(100vh - 60px);
-  width: 100vw;
-  overflow: hidden;
-  background: #070707;
-  color: #f5f5f5;
+  margin-top: 0 !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  overflow: hidden !important;
+  background: var(--docs-bg) !important;
+  color: var(--docs-text) !important;
   font-family: var(--font-sans, "Inter", system-ui, -apple-system, sans-serif);
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: row !important;
+}
+
+/* Reset button element styling inside docs shell to eliminate browser buttonface & outset */
+.docs-shell button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+  box-shadow: none;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Reset list element styling inside docs shell (Table of Contents, nav lists) */
+.docs-shell ul,
+.docs-shell ol {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.docs-shell li {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Hide Next.js dev indicator portal in dev mode */
+nextjs-portal,
+[data-nextjs-toast],
+[data-nextjs-dev-overlay],
+#nextjs-dev-overlay {
+  display: none !important;
+}
+
+/* Remove all underlines by default across documentation */
+.docs-shell a,
+.docs-shell a:hover,
+.docs-shell a:focus,
+.docs-nav a,
+.docs-header a,
+.doc-card,
+.doc-card a {
+  text-decoration: none !important;
 }
 
 /* ── Mobile-only sidebar toggle (below global header) ─────── */
@@ -7258,206 +7369,215 @@ body.docs-page-active {
   flex: 1;
   min-width: 0;
   width: min(100%, 740px);
+  max-width: 740px;
 }
 
-/* ── Typography & Rhythm ──────────────────────────────────── */
+/* ── TokenPrint Docs Typographic Hierarchy & Scale ──────────────── */
 .docs-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  color: #6f737a;
-  margin-bottom: 20px;
-}
-
-.docs-breadcrumb-link {
-  color: #6f737a;
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.docs-breadcrumb-link:hover {
-  color: #a0a3aa;
-}
-
-.docs-breadcrumb-sep {
-  color: #383a40;
-}
-
-.docs-breadcrumb-section {
-  color: #6f737a;
-}
-
-.docs-breadcrumb-current {
-  color: #a0a3aa;
+  display: none !important;
 }
 
 .docs-content h1 {
-  font-size: 40px;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
-  color: #f5f5f5;
+  font-size: var(--font-doc-h1, 28px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--docs-heading);
   margin: 0 0 10px;
 }
 
+@media (max-width: 640px) {
+  .docs-content h1 {
+    font-size: 24px;
+  }
+}
+
 .docs-content .docs-meta {
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #6f737a;
-  margin: 0 0 16px;
+  display: none !important;
 }
 
 .docs-content .docs-intro {
-  font-size: 16px;
+  font-size: var(--font-doc-body, 14px);
   line-height: 1.65;
-  color: #a0a3aa;
-  margin: 0 0 28px;
-  max-width: 680px;
+  color: var(--docs-text-secondary);
+  margin: 0 0 24px;
+  max-width: 720px;
 }
 
 .docs-content h2 {
-  font-size: 27px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.3;
-  color: #f5f5f5;
-  margin: 40px 0 14px;
-  padding-top: 28px;
-  border-top: 1px solid #1c1d21;
-  scroll-margin-top: 96px;
+  font-size: var(--font-doc-h2, 21px);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+  color: var(--docs-heading);
+  margin: 32px 0 10px;
+  padding-top: 0;
+  border-top: none;
+  scroll-margin-top: 76px;
 }
 
 .docs-content h3 {
-  font-size: 21px;
-  font-weight: 500;
+  font-size: var(--font-doc-h3, 17px);
+  font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.4;
-  color: #f5f5f5;
-  margin: 28px 0 10px;
-  scroll-margin-top: 96px;
+  color: var(--docs-heading);
+  margin: 24px 0 8px;
+  scroll-margin-top: 76px;
 }
 
 .docs-content h4 {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #6f737a;
-  margin: 24px 0 8px;
+  font-size: var(--font-doc-h4, 15px);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--docs-heading);
+  margin: 18px 0 6px;
 }
 
 .docs-content p {
-  font-size: 15px;
+  font-size: var(--font-doc-body, 14px);
+  font-weight: 400;
   line-height: 1.65;
-  color: #a0a3aa;
-  margin: 0 0 20px;
+  color: var(--docs-text);
+  margin: 0 0 16px;
 }
 
+@media (max-width: 640px) {
+  .docs-content p {
+    font-size: 13.5px;
+  }
+}
+
+/* ── Deliberate Link System: No Permanent Underlines ──────────── */
 .docs-content a {
-  color: #f5f5f5;
-  text-decoration: underline;
-  text-decoration-color: #383a40;
-  text-underline-offset: 3px;
-  transition: text-decoration-color 0.15s;
+  color: var(--docs-heading);
+  text-decoration: none !important;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
-.docs-content a:hover {
-  text-decoration-color: #f5f5f5;
+.docs-content p a,
+.docs-content li a,
+.docs-content td a {
+  color: var(--docs-heading);
+  text-decoration: none !important;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.docs-content p a:hover,
+.docs-content li a:hover,
+.docs-content td a:hover {
+  color: #ffffff;
+  border-bottom: 1px solid var(--docs-accent);
 }
 
 .docs-content ul,
 .docs-content ol {
-  margin: 0 0 24px 0;
+  margin: 0 0 18px 0;
   padding-left: 20px;
 }
 
 .docs-content li {
-  font-size: 15px;
-  line-height: 1.65;
-  color: #a0a3aa;
+  font-size: var(--font-doc-body, 14px);
+  line-height: 1.6;
+  color: var(--docs-text);
   margin-bottom: 5px;
 }
 
 .docs-content li::marker {
-  color: #6f737a;
+  color: var(--docs-text-muted);
 }
 
 .docs-content strong {
-  color: #f5f5f5;
+  color: var(--docs-heading);
   font-weight: 600;
 }
 
 .docs-content hr {
   border: none;
-  border-top: 1px solid #1c1d21;
-  margin: 40px 0;
+  border-top: 1px solid var(--docs-border);
+  margin: 32px 0;
 }
 
 .docs-content code {
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 13px;
-  background: #111215;
-  border: 1px solid #202225;
+  font-size: var(--font-code, 12px);
+  background: var(--docs-surface);
+  border: 1px solid var(--docs-border);
   border-radius: 4px;
-  padding: 2px 6px;
-  color: #e5e5e5;
+  padding: 1.5px 4.5px;
+  color: var(--docs-heading);
+}
+
+.docs-content .docs-equation {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  line-height: 1.55;
+  background: var(--docs-surface);
+  border: 1px solid var(--docs-border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 18px 0;
+  color: var(--docs-heading);
+  overflow-x: auto;
 }
 
 /* ── Code Blocks ──────────────────────────────────────────── */
 .docs-code-block {
-  border: 1px solid #1c1d21;
+  border: 1px solid var(--docs-border);
   border-radius: 8px;
   overflow: hidden;
-  margin: 24px 0 32px;
-  background: #0a0b0d;
+  margin: 20px 0 28px;
+  background: var(--docs-surface);
 }
 
 .docs-code-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  border-bottom: 1px solid #1c1d21;
-  background: #0d0e10;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--docs-border);
+  background: var(--docs-surface);
 }
 
 .docs-code-lang {
   font-size: 11px;
   font-family: var(--font-mono, monospace);
-  color: #6f737a;
+  color: var(--docs-text-muted);
   letter-spacing: 0.05em;
-  text-transform: lowercase;
+  text-transform: uppercase;
 }
 
 .docs-code-copy {
-  font-size: 11px;
-  font-family: var(--font-mono, monospace);
-  color: #6f737a;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-family: var(--font-sans, sans-serif);
+  color: var(--docs-text-muted);
   background: transparent;
-  border: 1px solid #202225;
-  border-radius: 4px;
-  padding: 2px 8px;
+  border: 1px solid var(--docs-border);
+  border-radius: 5px;
+  padding: 3px 8px;
   cursor: pointer;
-  transition: color 0.12s, border-color 0.12s;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
 }
 
 .docs-code-copy:hover {
-  color: #f5f5f5;
-  border-color: #383a40;
+  color: var(--docs-heading);
+  border-color: var(--docs-border-strong);
+  background: var(--docs-surface-hover);
 }
 
 .docs-code-pre {
   margin: 0;
-  padding: 20px 24px;
+  padding: 14px 16px;
   overflow-x: auto;
   font-family: var(--font-mono, monospace);
-  font-size: 13px;
-  line-height: 1.65;
-  color: #d4d4d4;
-  background: #0a0b0d;
+  font-size: var(--font-code, 12px);
+  line-height: 1.55;
+  color: var(--docs-text);
+  background: var(--docs-surface);
 }
 
 .docs-code-pre code {
@@ -7470,17 +7590,17 @@ body.docs-page-active {
 
 /* ── Editorial Images & Hero Visual Frames ────────────────── */
 .docs-image-frame {
-  background: #0d0e10;
-  border: 1px solid #202225;
+  background: var(--docs-surface);
+  border: 1px solid var(--docs-border);
   border-radius: 8px;
-  padding: 32px;
-  margin: 32px 0 12px;
+  padding: 20px;
+  margin: 20px 0 12px;
   text-align: center;
 }
 
 .docs-content .docs-image-caption {
-  font-size: 12px;
-  color: #6f737a;
+  font-size: var(--font-doc-caption, 11px);
+  color: var(--docs-text-muted);
   margin-top: 8px;
   text-align: center;
 }
@@ -7489,35 +7609,40 @@ body.docs-page-active {
 .docs-content table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
-  margin: 24px 0 32px;
+  font-size: 12.5px;
+  margin: 20px 0 24px;
 }
 
 .docs-content th {
   text-align: left;
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 500;
+  letter-spacing: normal;
   text-transform: uppercase;
-  color: #6f737a;
-  padding: 10px 14px;
-  border-bottom: 1px solid #202225;
+  color: var(--docs-text-muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--docs-border);
+  background: transparent;
 }
 
 .docs-content td {
-  padding: 12px 14px;
-  border-bottom: 1px solid #141518;
-  color: #a0a3aa;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--docs-border);
+  color: var(--docs-text);
   vertical-align: top;
   line-height: 1.5;
 }
 
 .docs-content tr:last-child td {
-  border-bottom: none;
+  border-bottom: 1px solid var(--docs-border);
 }
 
 .docs-content td code {
-  font-size: 12.5px;
+  font-size: 11.5px;
+}
+
+.docs-prevnext {
+  display: none !important;
 }
 
 /* ── On this page (Right Aside) ───────────────────────────── */
@@ -7581,65 +7706,9 @@ body.docs-page-active {
   font-weight: 500;
 }
 
-/* ── Prev / Next Navigation ───────────────────────────────── */
+/* ── Legacy Prev / Next Navigation Reset ───────────────────── */
 .docs-prevnext {
-  border-top: 1px solid #1c1d21;
-  margin-top: 56px;
-  padding-top: 28px;
-}
-
-.docs-prevnext-inner {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.docs-prevnext-link {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-decoration: none;
-  min-width: 0;
-  max-width: 48%;
-  padding: 16px 20px;
-  border: 1px solid #1c1d21;
-  border-radius: 8px;
-  background: #0a0b0d;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.docs-prevnext-link:hover {
-  border-color: #282a30;
-  background: #0f1013;
-}
-
-.docs-prevnext-link--next {
-  margin-left: auto;
-  text-align: right;
-}
-
-.docs-prevnext-dir {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #6f737a;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-.docs-prevnext-link--next .docs-prevnext-dir {
-  justify-content: flex-end;
-}
-
-.docs-prevnext-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #f5f5f5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: none !important;
 }
 
 /* ── Editorial Feature Grid & Callouts ────────────────────── */

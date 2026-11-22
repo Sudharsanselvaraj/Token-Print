@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
+import ImagePanel from "@/components/docs/ImagePanel";
 
 export const metadata: Metadata = {
   title: "Walkthrough",
@@ -10,16 +9,23 @@ export const metadata: Metadata = {
 export default function WalkthroughPage() {
   return (
     <>
-      <DocsBreadcrumb slug="using/walkthrough" title="Walkthrough" />
-      <h1>Walkthrough</h1>
       <p className="docs-meta">Using TokenPrint</p>
+      <h1>Walkthrough</h1>
 
-      <p>
+      <p className="docs-intro">
         Walkthrough mode is a chaptered, interactive explanation of a transformer forward pass.
         Clicking Walkthrough triggers a <code>POST /analyze</code> call on the example sentence
-        (<em>&ldquo;The cat sat on the mat.&rdquo;</em>) and uses the real results to populate
+        (<em>&ldquo;The cat sat on the mat.&rdquo;</em>) and uses real model telemetry to populate
         every chapter.
       </p>
+
+      <ImagePanel
+        src="/docs/panels/panel-walkthrough.webp"
+        alt="TokenPrint Walkthrough Mode & Prediction Timeline"
+        caption="Step-by-step autoregressive generation walkthrough with tokenization, embedding PCA, and top-k distributions."
+        annotation="[ AUTOREGRESSIVE GENERATION · TOP-K DISTRIBUTION ]"
+        priority
+      />
 
       <hr />
 
@@ -108,8 +114,6 @@ export default function WalkthroughPage() {
         scales proportionally. All numbers at each scale are derived from real model configurations,
         not interpolated.
       </p>
-
-      <DocsPrevNext slug="using/walkthrough" />
     </>
   );
 }

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
+import ImagePanel from "@/components/docs/ImagePanel";
 import DocsCallout from "@/components/docs/DocsCallout";
 
 export const metadata: Metadata = {
@@ -11,40 +10,19 @@ export const metadata: Metadata = {
 export default function ResearchDocsPage() {
   return (
     <>
-      <DocsBreadcrumb slug="research" title="Research & Background" />
-
-      <p className="docs-meta">GETTING STARTED</p>
       <h1>Research &amp; Theoretical Background</h1>
       <p className="docs-intro">
         TokenPrint is grounded in research on transformer mechanistic interpretability, real-time activation tracing, and high-dimensional tensor trajectory visualization.
       </p>
 
-      {/* Hero Diagram */}
-      <div className="docs-image-frame">
-        <svg width="100%" height="160" viewBox="0 0 680 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="0.5" y="0.5" width="679" height="159" rx="7.5" fill="#0A0B0D" stroke="#202225" />
-          <line x1="40" y1="40" x2="640" y2="40" stroke="#141518" strokeDasharray="4 4" />
-          <line x1="40" y1="80" x2="640" y2="80" stroke="#141518" strokeDasharray="4 4" />
-          <line x1="40" y1="120" x2="640" y2="120" stroke="#141518" strokeDasharray="4 4" />
-          
-          <circle cx="100" cy="80" r="24" fill="#141518" stroke="#4C86FF" strokeWidth="1.5" />
-          <text x="100" y="84" fill="#F5F5F5" fontSize="10" fontFamily="monospace" textAnchor="middle">Input X</text>
-
-          <path d="M 124 80 Q 200 40 280 80 T 440 80 T 580 80" fill="none" stroke="#383A40" strokeWidth="1.5" strokeDasharray="3 3" />
-
-          <rect x="230" y="60" width="100" height="40" rx="6" fill="#141518" stroke="#F5F5F5" strokeWidth="1.5" />
-          <text x="280" y="84" fill="#F5F5F5" fontSize="11" fontFamily="monospace" textAnchor="middle">Residual Stream</text>
-
-          <rect x="410" y="60" width="110" height="40" rx="6" fill="#141518" stroke="#383A40" />
-          <text x="465" y="84" fill="#F5F5F5" fontSize="11" fontFamily="monospace" textAnchor="middle">Attention &amp; MLP</text>
-
-          <circle cx="580" cy="80" r="24" fill="#141518" stroke="#10B981" strokeWidth="1.5" />
-          <text x="580" y="84" fill="#F5F5F5" fontSize="10" fontFamily="monospace" textAnchor="middle">Logits</text>
-        </svg>
-        <p className="docs-image-caption">
-          Conceptual diagram of residual stream propagation and activation flow across transformer layers.
-        </p>
-      </div>
+      {/* Large technical visual frame */}
+      <ImagePanel
+        src="/docs/panels/panel-space.png"
+        alt="Residual Stream Architecture and Forward-Pass Flow"
+        caption="Conceptual trajectory of residual stream propagation and activation flow across transformer layers."
+        annotation="[ RESEARCH · RESIDUAL STREAM FLOW · HIGH-DIMENSIONAL TRAJECTORY ]"
+        priority
+      />
 
       <hr />
 
@@ -123,8 +101,6 @@ export default function ResearchDocsPage() {
 }`}</code>
         </pre>
       </div>
-
-      <DocsPrevNext slug="research" />
     </>
   );
 }

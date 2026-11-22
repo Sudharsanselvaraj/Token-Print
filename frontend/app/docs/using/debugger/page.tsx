@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
 import DocsCallout from "@/components/docs/DocsCallout";
+import ImagePanel from "@/components/docs/ImagePanel";
 
 export const metadata: Metadata = {
   title: "Debugger",
@@ -11,15 +10,22 @@ export const metadata: Metadata = {
 export default function DebuggerPage() {
   return (
     <>
-      <DocsBreadcrumb slug="using/debugger" title="Debugger" />
-      <h1>Debugger</h1>
       <p className="docs-meta">Using TokenPrint</p>
+      <h1>Debugger</h1>
 
-      <p>
+      <p className="docs-intro">
         Debugger mode is a tiled engineer dashboard for deep model inspection. It is organized into
         panels that can be rearranged. All data comes from real model calls to{" "}
         <code>/debug/*</code> and <code>/ablate/analyze</code>.
       </p>
+
+      <ImagePanel
+        src="/docs/panels/panel-debugger.webp"
+        alt="TokenPrint Transformer Debugger & Ablation Lab"
+        caption="Causal intervention lab: attention head zeroing, activation patching, and logit lens unembedding."
+        annotation="[ ACTIVATION ABLATION · CAUSAL TRACING · LOGIT LENS ]"
+        priority
+      />
 
       <hr />
 
@@ -116,8 +122,6 @@ export default function DebuggerPage() {
           </a>.
         </p>
       </DocsCallout>
-
-      <DocsPrevNext slug="using/debugger" />
     </>
   );
 }

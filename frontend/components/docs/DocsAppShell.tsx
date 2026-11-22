@@ -1,14 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import DocsNav from "./DocsNav";
+import TopBar from "./TopBar";
 import DocsOnThisPage from "./DocsOnThisPage";
+import DocsSearchModal from "./DocsSearchModal";
+import SuggestedArticles from "./SuggestedArticles";
 
 export default function DocsAppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+
+  const cleanSlug = pathname.replace(/^\/docs\/?/, "").replace(/\/$/, "");
+  const isOverviewPage = !cleanSlug || cleanSlug === "docs" || cleanSlug === "developers";
 
   // Lock root html & body overflow so top header & sidebar remain fixed while main container scrolls
   useEffect(() => {
@@ -20,7 +26,6 @@ export default function DocsAppShell({ children }: { children: React.ReactNode }
 
     const prevHtmlOverflow = htmlEl.style.overflow;
     const prevBodyOverflow = bodyEl.style.overflow;
-    const prevBodyHeight = bodyEl.style.height;
 
     htmlEl.style.overflow = "hidden";
     bodyEl.style.overflow = "hidden";
@@ -31,7 +36,6 @@ export default function DocsAppShell({ children }: { children: React.ReactNode }
       bodyEl.classList.remove("docs-page-active");
       htmlEl.style.overflow = prevHtmlOverflow;
       bodyEl.style.overflow = prevBodyOverflow;
-      bodyEl.style.height = prevBodyHeight;
     };
   }, []);
 
@@ -45,52 +49,73 @@ export default function DocsAppShell({ children }: { children: React.ReactNode }
     }
   }, [pathname]);
 
-  // Keyboard shortcut Ctrl+K / ⌘K to focus search input
+  // Keyboard shortcut Ctrl+K / ⌘K and Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        const searchInput = document.querySelector(
-          ".docs-nav-search-input"
-        ) as HTMLInputElement;
-        if (searchInput) {
-          searchInput.focus();
-        }
+        setSearchModalOpen(true);
+      } else if (e.key === "Escape") {
+        setSearchModalOpen(false);
+        setMobileOpen(false);
       }
     };
+    const handleOpenSearch = () => setSearchModalOpen(true);
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("open-docs-search", handleOpenSearch);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("open-docs-search", handleOpenSearch);
+    };
   }, []);
 
   return (
-    <div className="docs-shell">
-      {/* Mobile-only sidebar toggle (global header handles site nav) */}
-      <button
-        className="docs-mobile-menu-btn"
-        aria-label="Open documentation sidebar"
-        onClick={() => setMobileOpen((v) => !v)}
-      >
-        <span className="docs-mobile-menu-icon" />
-      </button>
+    <div className="docs-shell flex h-screen w-screen overflow-hidden bg-[var(--docs-bg)] text-[var(--docs-text)]">
+      <DocsSearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+      />
 
-      {/* Main body flex container */}
-      <div className="docs-body-wrapper">
-        {/* Fixed left sidebar */}
-        <DocsNav
-          mobileOpen={mobileOpen}
-          setMobileOpen={setMobileOpen}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
+      {/* Left Sidebar (260px) */}
+      <DocsNav
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+        onOpenSearchModal={() => setSearchModalOpen(true)}
+      />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+        <TopBar
+          onToggleMobileNav={() => setMobileOpen((v) => !v)}
+          onOpenSearch={() => setSearchModalOpen(true)}
         />
 
-        {/* Independent main article scroll container */}
-        <main className="docs-main" id="docs-main-content">
-          <div className="docs-article-wrapper">
-            <article className="docs-content">{children}</article>
-            <aside className="docs-aside">
-              <DocsOnThisPage />
-            </aside>
-          </div>
+        <main
+          id="docs-main-content"
+          className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--docs-border)]"
+        >
+          {isOverviewPage ? (
+            /* Wide layout for Docs Home & Developers Home */
+            <div className="max-w-[1200px] mx-auto py-10 px-6 lg:px-10">
+              <article className="docs-content">{children}</article>
+            </div>
+          ) : (
+            /* Three-column layout for standard articles */
+            <div className="max-w-[1040px] mx-auto py-7 px-6 lg:px-8 flex gap-8 xl:gap-10 justify-between items-stretch">
+              <div className="flex-1 min-w-0 max-w-[740px]">
+                <article className="docs-content">{children}</article>
+                <SuggestedArticles />
+              </div>
+
+              {/* Right rail TOC — locked sticky while reading */}
+              <aside className="w-[190px] hidden xl:block flex-shrink-0 self-stretch">
+                <div className="sticky top-8">
+                  <DocsOnThisPage />
+                </div>
+              </aside>
+            </div>
+          )}
         </main>
       </div>
     </div>

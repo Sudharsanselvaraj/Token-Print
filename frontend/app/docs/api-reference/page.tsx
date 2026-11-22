@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
 import DocsCode from "@/components/docs/DocsCode";
 import DocsCallout from "@/components/docs/DocsCallout";
+import DocsApiExplorer from "@/components/docs/DocsApiExplorer";
+import ImagePanel from "@/components/docs/ImagePanel";
 
 export const metadata: Metadata = {
   title: "API Reference",
@@ -12,16 +12,21 @@ export const metadata: Metadata = {
 export default function ApiReferencePage() {
   return (
     <>
-      <DocsBreadcrumb slug="api-reference" title="API Reference" />
       <h1>API Reference</h1>
-      <p className="docs-meta">Reference</p>
 
-      <p>
-        Base URL (dev): <code>http://localhost:8000</code>. All responses are JSON. CORS is
-        restricted to the local dev origin (<code>http://localhost:3000</code>, configurable via{" "}
-        <code>TOKENPRINT_FRONTEND_PORT</code>) and the deployed frontend origins (
-        <code>sudharsanselvaraj.github.io</code>, <code>tokenprint.in</code>).
+      <p className="docs-intro">
+        Base URL (dev): <code>http://localhost:8000</code>. Production Hugging Face Space:{" "}
+        <code>https://sudharsan112321-tokenprint-backend.hf.space</code>. All responses are JSON.
       </p>
+
+      <ImagePanel
+        src="/docs/raw/api-card.png"
+        alt="FastAPI Backend and WebSocket Streaming Architecture"
+        caption="OpenAPI Swagger schema, WebSocket telemetry protocol, and ZeroGPU dynamic runner lifecycle."
+        annotation="[ FASTAPI REST · WEBSOCKET PROTOCOL · ZEROGPU RUNNER ]"
+      />
+
+      <DocsApiExplorer />
 
       <hr />
 
@@ -279,8 +284,6 @@ curl http://localhost:8000/gguf/list`} />
           inserting a new one, so repeated loads are fast without leaking memory.
         </p>
       </DocsCallout>
-
-      <DocsPrevNext slug="api-reference" />
     </>
   );
 }

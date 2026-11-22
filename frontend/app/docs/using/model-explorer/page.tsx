@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
 import DocsCallout from "@/components/docs/DocsCallout";
+import ImagePanel from "@/components/docs/ImagePanel";
 
 export const metadata: Metadata = {
   title: "Model Explorer",
@@ -11,15 +10,20 @@ export const metadata: Metadata = {
 export default function ModelExplorerPage() {
   return (
     <>
-      <DocsBreadcrumb slug="using/model-explorer" title="Model Explorer" />
       <h1>Model Explorer</h1>
-      <p className="docs-meta">Using TokenPrint</p>
-
-      <p>
-        <strong>Architecture mode</strong> (the default view) shows the complete tensor inventory
+      <p className="docs-intro">
+        Architecture mode (the default view) shows the complete tensor inventory
         of a model in a 3D point cloud. Each point is one tensor. The layout encodes layer depth
         on the Y-axis and tensor kind on the X-axis.
       </p>
+
+      <ImagePanel
+        src="/docs/raw/gguf-card.png"
+        alt="Model Explorer & Quantized GGUF Point Cloud"
+        caption="3D point cloud tensor inventory with layer-depth encoding and GGUF quantization diffs."
+        annotation="[ MODEL EXPLORER · 290 TENSORS · GGUF DEQUANTIZATION ]"
+        priority
+      />
 
       <hr />
 
@@ -84,8 +88,6 @@ export default function ModelExplorerPage() {
           <tr><td>Max tokens</td><td>40</td></tr>
         </tbody>
       </table>
-
-      <DocsPrevNext slug="using/model-explorer" />
     </>
   );
 }

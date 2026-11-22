@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
+import ImagePanel from "@/components/docs/ImagePanel";
 
 export const metadata: Metadata = {
   title: "Understanding the Interface",
@@ -10,15 +9,20 @@ export const metadata: Metadata = {
 export default function UnderstandingTheInterfacePage() {
   return (
     <>
-      <DocsBreadcrumb slug="understanding-the-interface" title="Understanding the Interface" />
       <h1>Understanding the Interface</h1>
-      <p className="docs-meta">Getting Started</p>
-
-      <p>
+      <p className="docs-intro">
         TokenPrint uses a docked-shell layout: a persistent top navigation bar, a central 3D
         canvas, and context-dependent side panels. The canvas is always present; panels and
         overlays appear based on the active mode.
       </p>
+
+      <ImagePanel
+        src="/docs/panels/hero-explorer.png"
+        alt="TokenPrint Docked Shell Interface"
+        caption="Docked-shell interface: persistent top navigation bar, central 3D canvas, and context-dependent telemetry HUD."
+        annotation="[ APP SHELL · 3D CANVAS · TELEMETRY HUD ]"
+        priority
+      />
 
       <hr />
 
@@ -122,8 +126,6 @@ export default function UnderstandingTheInterfacePage() {
           <tr><td><code>R</code></td><td>Reset camera to default position</td></tr>
         </tbody>
       </table>
-
-      <DocsPrevNext slug="understanding-the-interface" />
     </>
   );
 }

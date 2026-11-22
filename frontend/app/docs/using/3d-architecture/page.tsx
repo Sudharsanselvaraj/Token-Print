@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
+import ImagePanel from "@/components/docs/ImagePanel";
 
 export const metadata: Metadata = {
   title: "3D Architecture",
@@ -10,15 +9,20 @@ export const metadata: Metadata = {
 export default function ThreeDArchitecturePage() {
   return (
     <>
-      <DocsBreadcrumb slug="using/3d-architecture" title="3D Architecture" />
       <h1>3D Architecture</h1>
-      <p className="docs-meta">Using TokenPrint</p>
-
-      <p>
+      <p className="docs-intro">
         The 3D canvas renders a faithful geometric model of the transformer&apos;s structure.
         Every dimension, ratio, and component count reflects the actual model configuration — not
         a schematic.
       </p>
+
+      <ImagePanel
+        src="/docs/raw/real-explorer.png"
+        alt="TokenPrint 3D Transformer Viewport"
+        caption="Geometric mapping of transformer depth, QKV attention blades, and SwiGLU MLP funnels."
+        annotation="[ 3D DISTRICT GEOMETRY · 24 LAYERS · LIVE TELEMETRY ]"
+        priority
+      />
 
       <hr />
 
@@ -96,8 +100,6 @@ export default function ThreeDArchitecturePage() {
       <p>
         See <a href="/docs/using/camera-system">Camera System</a> for the full control reference.
       </p>
-
-      <DocsPrevNext slug="using/3d-architecture" />
     </>
   );
 }

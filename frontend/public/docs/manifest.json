@@ -1,0 +1,155 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2026-11-22T06:20:00Z",
+  "design_system": "Linear Docs Style (Dark #0a0a0b, Card #111113, Border #1f1f23, Accent #2dd4bf)",
+  "cards": [
+    {
+      "id": "attention-card",
+      "type": "Type A (Real Product UI)",
+      "source_view": "/app?mode=explorer",
+      "png": "/docs/raw/attention-card.png",
+      "webp": "/docs/raw/attention-card.webp",
+      "dimensions": "600x340",
+      "caption": "Multi-head attention matrix, QKV dot products, and GQA geometry clustering."
+    },
+    {
+      "id": "gguf-card",
+      "type": "Type A (Real Product UI)",
+      "source_view": "/docs/using/model-explorer",
+      "png": "/docs/raw/gguf-card.png",
+      "webp": "/docs/raw/gguf-card.webp",
+      "dimensions": "600x340",
+      "caption": "Client-side quantized GGUF parsing, metadata discovery, and offline inspection."
+    },
+    {
+      "id": "walkthrough-card",
+      "type": "Type A (Real Product UI)",
+      "source_view": "/app?mode=walkthrough",
+      "png": "/docs/raw/walkthrough-card.png",
+      "webp": "/docs/raw/walkthrough-card.webp",
+      "dimensions": "600x340",
+      "caption": "Step-by-step token decoding, KV cache expansion, and real top-k probability distributions."
+    },
+    {
+      "id": "debugger-card",
+      "type": "Type A (Real Product UI)",
+      "source_view": "/app?mode=debugger",
+      "png": "/docs/raw/debugger-card.png",
+      "webp": "/docs/raw/debugger-card.webp",
+      "dimensions": "600x340",
+      "caption": "Activation breakpoints, attention head ablation, and causal logit shift measurement."
+    },
+    {
+      "id": "model-card",
+      "type": "Type A (Real Product UI)",
+      "source_view": "/docs/loading-a-model",
+      "png": "/docs/raw/model-card.png",
+      "webp": "/docs/raw/model-card.webp",
+      "dimensions": "600x340",
+      "caption": "Supported Hugging Face Hub models: Qwen 2.5, Llama 3, Gemma 2, and Mistral."
+    },
+    {
+      "id": "matrix-card",
+      "type": "Type C (Dense UI Card)",
+      "source_view": "/docs/compatibility-matrix",
+      "png": "/docs/raw/matrix-card.png",
+      "webp": "/docs/raw/matrix-card.webp",
+      "dimensions": "600x340",
+      "caption": "Six-stage verification status across architecture discovery, inference, and hooks."
+    },
+    {
+      "id": "logits-card",
+      "type": "Type A (Real Product UI)",
+      "source_view": "/docs/concepts/logits",
+      "png": "/docs/raw/logits-card.png",
+      "webp": "/docs/raw/logits-card.webp",
+      "dimensions": "600x340",
+      "caption": "Logit lens unembedding and intermediate layer token distribution."
+    },
+    {
+      "id": "space-card",
+      "type": "Type A (Real Product UI)",
+      "source_view": "deploy/hf_space/console_ui.py",
+      "png": "/docs/raw/space-card.png",
+      "webp": "/docs/raw/space-card.webp",
+      "dimensions": "600x340",
+      "caption": "ZeroGPU dynamic slicing, ASGI reverse proxy, and CPU failover telemetry."
+    },
+    {
+      "id": "api-card",
+      "type": "Type C (Dense UI Card)",
+      "source_view": "/docs/developers",
+      "png": "/docs/raw/api-card.png",
+      "webp": "/docs/raw/api-card.webp",
+      "dimensions": "600x340",
+      "caption": "FastAPI OpenAPI contracts, streaming WebSocket endpoints, and cURL snippets."
+    },
+    {
+      "id": "community-card",
+      "type": "Type C (Dense UI Card)",
+      "source_view": "/docs/contributing",
+      "png": "/docs/raw/community-card.png",
+      "webp": "/docs/raw/community-card.webp",
+      "dimensions": "600x340",
+      "caption": "Development workflow, verified PR guidelines, Discord, and CI verification."
+    }
+  ],
+  "panels": [
+    {
+      "id": "panel-attention",
+      "type": "Type A (Framed Linear Panel)",
+      "png": "/docs/panels/panel-attention.png",
+      "webp": "/docs/panels/panel-attention.webp",
+      "dimensions": "1600x900",
+      "bracket_annotation": "[ 24 LAYERS \u00b7 14 QUERY HEADS \u00b7 2 KV GROUPS (GQA) ]"
+    },
+    {
+      "id": "panel-walkthrough",
+      "type": "Type A (Framed Linear Panel)",
+      "png": "/docs/panels/panel-walkthrough.png",
+      "webp": "/docs/panels/panel-walkthrough.webp",
+      "dimensions": "1600x900",
+      "bracket_annotation": "[ AUTOREGRESSIVE GENERATION \u00b7 TOP-K DISTRIBUTION ]"
+    },
+    {
+      "id": "panel-debugger",
+      "type": "Type A (Framed Linear Panel)",
+      "png": "/docs/panels/panel-debugger.png",
+      "webp": "/docs/panels/panel-debugger.webp",
+      "dimensions": "1600x900",
+      "bracket_annotation": "[ ACTIVATION ABLATION \u00b7 CAUSAL TRACING \u00b7 LOGIT LENS ]"
+    },
+    {
+      "id": "panel-architecture",
+      "type": "Type A (Framed Linear Panel)",
+      "png": "/docs/panels/panel-architecture.png",
+      "webp": "/docs/panels/panel-architecture.webp",
+      "dimensions": "1600x900",
+      "bracket_annotation": "[ 290 TENSORS \u00b7 SAFETENSORS \u00b7 ZERO-FAKE-DATA HARNESS ]"
+    },
+    {
+      "id": "panel-space",
+      "type": "Type A (Framed Linear Panel)",
+      "png": "/docs/panels/panel-space.png",
+      "webp": "/docs/panels/panel-space.webp",
+      "dimensions": "1600x900",
+      "bracket_annotation": "[ HUGGING FACE SPACES \u00b7 ZEROGPU DYNAMIC SLICING \u00b7 GRADIO ]"
+    },
+    {
+      "id": "panel-matrix",
+      "type": "Type A (Framed Linear Panel)",
+      "png": "/docs/panels/panel-matrix.png",
+      "webp": "/docs/panels/panel-matrix.webp",
+      "dimensions": "1600x900",
+      "bracket_annotation": "[ 6-STAGE VERIFICATION GATEWAY \u00b7 COMPATIBILITY REGISTRY ]"
+    },
+    {
+      "id": "panel-api",
+      "type": "Type A (Framed Linear Panel)",
+      "png": "/docs/panels/panel-api.png",
+      "webp": "/docs/panels/panel-api.webp",
+      "dimensions": "1600x900",
+      "bracket_annotation": "[ FASTAPI OPENAPI 3.1.0 \u00b7 WEBSOCKET STREAMING ENGINE ]"
+    }
+  ]
+}
