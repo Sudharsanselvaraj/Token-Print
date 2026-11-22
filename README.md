@@ -14,7 +14,7 @@
   <a href="docs/README.md"><b>Docs</b></a> &nbsp;·&nbsp;
   <a href="wiki/Home.md"><b>Wiki</b></a> &nbsp;·&nbsp;
   <a href="ROADMAP.md"><b>Roadmap</b></a> &nbsp;·&nbsp;
-  <a href="https://discord.gg/6Cv4v8x9j"><b>Discord</b></a>
+  <a href="https://discord.gg/RbxZBq2Gh"><b>Discord</b></a>
 </p>
 <p align="center">
   <a href="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml"><img src="https://github.com/Sudharsanselvaraj/Token-Print/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
@@ -22,7 +22,7 @@
   <a href="https://github.com/Sudharsanselvaraj/Token-Print/stargazers"><img src="https://img.shields.io/github/stars/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a" alt="Stars" /></a>
   <a href="https://github.com/Sudharsanselvaraj/Token-Print/commits/main"><img src="https://img.shields.io/github/last-commit/Sudharsanselvaraj/Token-Print?style=flat&color=0a0a0a" alt="Last commit" /></a>
   <a href="https://huggingface.co/spaces/sudharsan112321/tokenprint-backend"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Space-tokenprint--backend-yellow" alt="Hugging Face Space" /></a>
-  <a href="https://discord.gg/6Cv4v8x9j"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2F6Cv4v8x9j%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Discord&color=5865F2&suffix=%20members" alt="Discord" /></a>
+  <a href="https://discord.gg/RbxZBq2Gh"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2FRbxZBq2Gh%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Discord&color=5865F2&suffix=%20members" alt="Discord" /></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-22c55e.svg" alt="PRs welcome" /></a>
 </p>
 <p align="center">
@@ -101,7 +101,7 @@ python3 scripts/start.py
  
 The launcher installs dependencies, downloads `Qwen2.5-0.5B-Instruct` with progress, starts the backend and frontend, and waits until the model is ready. Then open <http://localhost:3000>.
  
-No GPU or no time? Choose **Try a recorded demo** on the home page to replay a real trace offline. Stuck on setup? See [local setup and troubleshooting](docs/local-setup.md) or ask in the [Discord](https://discord.gg/6Cv4v8x9j).
+No GPU or no time? Choose **Try a recorded demo** on the home page to replay a real trace offline. Stuck on setup? See [local setup and troubleshooting](docs/local-setup.md) or ask in the [Discord](https://discord.gg/RbxZBq2Gh).
  
 <details>
 <summary>Manual setup</summary>
@@ -182,13 +182,13 @@ deploy/      Self-hosting scripts
 ## Community
 
 <div align="center">
-  <a href="https://discord.gg/6Cv4v8x9j">
+  <a href="https://discord.gg/RbxZBq2Gh">
     <img src="https://cdn.simpleicons.org/discord/5865F2" width="56" alt="Discord" />
   </a>
-  <h3><a href="https://discord.gg/6Cv4v8x9j">Join the TokenPrint community on Discord</a></h3>
+  <h3><a href="https://discord.gg/RbxZBq2Gh">Join the TokenPrint community on Discord</a></h3>
   <sub>Questions · Bug reports · Shared traces · Feature ideas · Show and tell</sub>
   <br /><br />
-  <a href="https://discord.gg/6Cv4v8x9j"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2F6Cv4v8x9j%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Join%20Discord&color=5865F2&suffix=%20members&style=for-the-badge" alt="Join the Discord" /></a>
+  <a href="https://discord.gg/RbxZBq2Gh"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2FRbxZBq2Gh%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Join%20Discord&color=5865F2&suffix=%20members&style=for-the-badge" alt="Join the Discord" /></a>
 </div>
 
 ## Contributing
