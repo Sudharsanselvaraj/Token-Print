@@ -63,6 +63,7 @@ The deployed Hugging Face Space (`sudharsan112321/tokenprint-backend`) is organi
 tokenprint-backend/
 ├── README.md               # Space metadata (sdk: gradio, python: 3.11, ZeroGPU)
 ├── app.py                  # ASGI entrypoint mounting Gradio console onto FastAPI
+├── console_ui.py           # Gradio 6 console UI (telemetry grids, token chips, custom theme)
 ├── requirements.txt        # Pinned, ZeroGPU-compatible Python dependencies
 ├── .gitignore              # Ignores pycache, .DS_Store, and binary artifacts
 ├── app/                    # Complete backend implementation package
