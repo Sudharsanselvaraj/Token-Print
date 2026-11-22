@@ -91,27 +91,22 @@ def hf_space_generate_steps(
 ):
     """Execute autoregressive generation on NVIDIA ZeroGPU and collect streamed frames."""
     eng = _require_engine()
-    collector: list[dict] = []
-
-    def _sync_sink(payload: dict):
-        collector.append(payload)
-
-    eng.generate_stream_sync(
-        prompt=prompt,
-        max_new_tokens=max_new_tokens,
-        top_k=top_k,
-        use_chat_template=use_chat_template,
-        include_catalog=include_catalog,
-        decoding_mode=decoding_mode,
-        window_size=window_size,
-        draft_gamma=draft_gamma,
-        needle=needle,
-        temperature=temperature,
-        top_p=top_p,
-        seed=seed,
-        sink=_sync_sink,
+    return list(
+        eng.generate_steps(
+            prompt=prompt,
+            max_new_tokens=max_new_tokens,
+            top_k=top_k,
+            use_chat_template=use_chat_template,
+            include_catalog=include_catalog,
+            decoding_mode=decoding_mode,
+            window_size=window_size,
+            draft_gamma=draft_gamma,
+            needle=needle,
+            temperature=temperature,
+            top_p=top_p,
+            seed=seed,
+        )
     )
-    return collector
 
 
 # Apply ZeroGPU acceleration decorator when running in ZeroGPU container
