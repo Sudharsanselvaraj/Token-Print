@@ -31,18 +31,27 @@ DOCS_PATH = "/docs"  # FastAPI Swagger UI
 
 def _load_icon_b64() -> str:
     """Load TokenPrint logo as base64 string from local filesystem if available."""
+    current_dir = Path(__file__).resolve().parent
     candidate_paths = [
-        Path(__file__).resolve().parent / "tokenprint-logo.png",
-        Path(__file__).resolve().parents[2] / ".github" / "assets" / "tokenprint-logo.png",
-        Path(__file__).resolve().parents[2] / "frontend" / "public" / "tokenprint-logo.png",
+        current_dir / "icon.png",
+        current_dir / "tokenprint-logo.png",
     ]
+    # Check parent directory hierarchy safely without assuming directory depth
+    try:
+        for parent in current_dir.parents:
+            candidate_paths.append(parent / "frontend" / "app" / "icon.png")
+            candidate_paths.append(parent / ".github" / "assets" / "tokenprint-logo.png")
+            candidate_paths.append(parent / "frontend" / "public" / "tokenprint-logo.png")
+    except Exception:
+        pass
+
     for p in candidate_paths:
-        if p.is_file():
-            try:
+        try:
+            if p.is_file():
                 with open(p, "rb") as f:
                     return base64.b64encode(f.read()).decode("ascii")
-            except Exception:
-                pass
+        except Exception:
+            pass
     return ""
 
 
