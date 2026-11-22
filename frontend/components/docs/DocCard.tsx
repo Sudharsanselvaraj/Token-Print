@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import LinearIcon from "./LinearIcon";
 
 interface DocCardProps {
@@ -18,68 +17,34 @@ export default function DocCard({
   href,
   title,
   description,
-  imageSrc,
-  iconName,
+  iconName = "FileText",
   tag,
 }: DocCardProps) {
   return (
     <Link
       href={href}
-      className="group flex flex-col rounded-[10px] border border-[var(--docs-border)] bg-[var(--docs-surface)] overflow-hidden transition-all duration-150 hover:border-[var(--docs-border-strong)] hover:bg-[var(--docs-surface-hover)] no-underline"
+      className="min-h-[185px] p-5 rounded-xl bg-[#141518] border border-white/[0.08] hover:border-white/20 transition-all no-underline flex flex-col justify-between group cursor-pointer"
     >
-      {/* 16:9 Thumbnail Image Area */}
-      <div className="relative aspect-[16/9] w-full max-h-[140px] bg-[#09090b] overflow-hidden flex-shrink-0">
-        {/* Category icon tag in top-left */}
-        {iconName && (
-          <div className="absolute top-2.5 left-2.5 z-10 w-6 h-6 rounded bg-[var(--docs-surface-elevated)]/90 border border-[var(--docs-border)] flex items-center justify-center text-[var(--docs-text-muted)] group-hover:text-[var(--docs-heading)] transition-colors">
-            <LinearIcon name={iconName} size={13} strokeWidth={1.5} />
-          </div>
-        )}
-
-        {/* Optional tag badge in top-right */}
+      {/* Top row: Icon and optional tag badge */}
+      <div className="flex items-center justify-between">
+        <div className="text-[#8a8f98] group-hover:text-white transition-colors">
+          <LinearIcon name={iconName} size={18} strokeWidth={1.5} />
+        </div>
         {tag && (
-          <div className="absolute top-2.5 right-2.5 z-10 px-1.5 py-0.5 rounded text-[9.5px] font-mono uppercase bg-[var(--docs-surface-elevated)]/90 border border-[var(--docs-border)] text-[var(--docs-text-muted)]">
+          <span className="text-[9.5px] px-1.5 py-0.5 rounded font-mono uppercase bg-white/[0.06] text-[#8a8f98] border border-white/5">
             {tag}
-          </div>
-        )}
-
-        {imageSrc ? (
-          <div className="w-full h-full relative">
-            <Image
-              src={imageSrc}
-              alt={title}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-              className="object-cover object-top opacity-85 group-hover:opacity-100 transition-opacity duration-200"
-            />
-          </div>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-[var(--docs-surface)]">
-            <div className="w-8 h-8 rounded border border-[var(--docs-border)] bg-[var(--docs-surface-elevated)] flex items-center justify-center text-[var(--docs-text-muted)]">
-              <LinearIcon name={iconName || "FileText"} size={14} strokeWidth={1.5} />
-            </div>
-          </div>
+          </span>
         )}
       </div>
 
-      {/* 1px separator */}
-      <div className="w-full h-px bg-[var(--docs-border)]" />
-
-      {/* Content Area */}
-      <div className="p-3.5 flex flex-col justify-between flex-1">
-        <div>
-          <h3 className="text-[14px] font-semibold text-[var(--docs-heading)] tracking-tight mb-1 line-clamp-1 group-hover:text-white transition-colors no-underline">
-            {title}
-          </h3>
-          <p className="text-[12px] leading-relaxed text-[var(--docs-text-secondary)] line-clamp-2">
-            {description}
-          </p>
+      {/* Bottom area: Title & Full Description */}
+      <div className="pt-6">
+        <div className="text-[14.5px] font-semibold text-white tracking-tight mb-1 group-hover:text-white transition-colors">
+          {title}
         </div>
-
-        <div className="pt-2.5 mt-auto flex items-center gap-1 text-[11px] font-medium text-[var(--docs-text-muted)] group-hover:text-[var(--docs-accent)] transition-colors">
-          <span>Explore</span>
-          <span>&rarr;</span>
-        </div>
+        <p className="text-[12.5px] text-[#8a8f98] leading-[1.5] group-hover:text-[#a1a1aa] transition-colors m-0">
+          {description}
+        </p>
       </div>
     </Link>
   );

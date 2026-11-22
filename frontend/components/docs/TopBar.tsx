@@ -97,20 +97,20 @@ export default function TopBar({ onToggleMobileNav }: TopBarProps) {
   };
 
   return (
-    <header className="h-[52px] px-4 lg:px-8 border-b border-white/[0.07] bg-[#08090a]/95 backdrop-blur-sm sticky top-0 z-20 flex items-center justify-between select-none">
+    <header className="h-[48px] px-4 lg:px-7 border-b border-white/[0.07] bg-[#08090a]/95 backdrop-blur-sm sticky top-0 z-20 flex items-center justify-between select-none">
       {/* Left: Mobile hamburger & Linear-style Breadcrumbs */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-2.5 min-w-0">
         <button
           type="button"
           onClick={onToggleMobileNav}
           className="lg:hidden text-[#8a8f98] hover:text-white transition-colors p-1 cursor-pointer"
           aria-label="Toggle navigation menu"
         >
-          <Menu size={16} strokeWidth={1.5} />
+          <Menu size={15} strokeWidth={1.5} />
         </button>
 
-        {/* Breadcrumbs matching Linear Docs (Image 1, 2, 4) */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[12px] truncate">
+        {/* Breadcrumbs matching Linear Docs */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[11.5px] truncate">
           {isDocsHome ? (
             <span className="text-white font-medium">Home</span>
           ) : isDevHome ? (
@@ -140,71 +140,72 @@ export default function TopBar({ onToggleMobileNav }: TopBarProps) {
         </nav>
       </div>
 
-      {/* Right controls matching Linear Docs (Screenshot 1, 2, 4) */}
-      <div className="flex items-center gap-3 flex-shrink-0">
-        {/* Copy Page Split Button (Only on non-home pages like Linear Screenshot 2 & 4) */}
+      {/* Right controls matching Linear Docs */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Compact Copy Page Split Button */}
         {!isDocsHome && (
           <div className="relative" ref={dropdownRef}>
-            <div className="inline-flex items-center h-8 rounded-md bg-[#16171a] border border-white/10 hover:border-white/20 text-[#d0d5dd] hover:text-white transition-colors">
+            <div className="inline-flex items-center h-[26px] rounded-[5px] bg-[#16171a] border border-white/10 hover:border-white/20 text-[#c4c7cf] hover:text-white transition-colors">
               <button
                 type="button"
                 onClick={handleCopyMarkdown}
-                className="h-full px-2.5 flex items-center gap-1.5 text-[12px] font-medium text-inherit bg-transparent border-0 cursor-pointer"
+                className="h-full px-2 flex items-center gap-1.5 text-[11px] font-[450] text-inherit bg-transparent border-0 cursor-pointer"
+                title="Copy page as Markdown"
               >
                 {copied ? (
-                  <Check size={12} className="text-emerald-400" />
+                  <Check size={11} className="text-emerald-400" />
                 ) : (
-                  <Copy size={12} strokeWidth={1.5} />
+                  <Copy size={11} strokeWidth={1.5} />
                 )}
                 <span>{copied ? "Copied" : "Copy page"}</span>
               </button>
-              <div className="h-3.5 w-px bg-white/10" />
+              <div className="h-3 w-px bg-white/10" />
               <button
                 type="button"
                 onClick={() => setDropdownOpen((v) => !v)}
-                className="h-full px-1.5 flex items-center justify-center text-[#8a8f98] hover:text-white bg-transparent border-0 cursor-pointer"
+                className="h-full px-1 flex items-center justify-center text-[#8a8f98] hover:text-white bg-transparent border-0 cursor-pointer"
                 aria-label="Copy options"
               >
-                <ChevronDown size={11} strokeWidth={1.5} />
+                <ChevronDown size={9} strokeWidth={1.5} />
               </button>
             </div>
 
             {/* Dropdown Menu */}
             {dropdownOpen && (
-              <div className="absolute right-0 mt-1.5 w-40 rounded-lg border border-white/10 bg-[#16171a] shadow-2xl p-1 z-50 animate-in fade-in duration-100">
+              <div className="absolute right-0 mt-1.5 w-36 rounded-md border border-white/10 bg-[#16171a] shadow-2xl p-1 z-50 animate-in fade-in duration-100">
                 <button
                   type="button"
                   onClick={handleCopyMarkdown}
-                  className="w-full text-left px-2.5 py-1.5 text-[12px] text-[#d0d5dd] hover:text-white hover:bg-white/[0.06] rounded-md flex items-center justify-between cursor-pointer"
+                  className="w-full text-left px-2 py-1 text-[11px] text-[#c4c7cf] hover:text-white hover:bg-white/[0.06] rounded flex items-center justify-between cursor-pointer"
                 >
                   <span>Markdown</span>
-                  <span className="text-[10px] text-[#8a8f98] font-mono">.md</span>
+                  <span className="text-[9.5px] text-[#8a8f98] font-mono">.md</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleOpenClaude}
-                  className="w-full text-left px-2.5 py-1.5 text-[12px] text-[#d0d5dd] hover:text-white hover:bg-white/[0.06] rounded-md flex items-center justify-between cursor-pointer"
+                  className="w-full text-left px-2 py-1 text-[11px] text-[#c4c7cf] hover:text-white hover:bg-white/[0.06] rounded flex items-center justify-between cursor-pointer"
                 >
                   <span>Ask Claude</span>
-                  <ExternalLink size={11} strokeWidth={1.5} className="text-[#8a8f98]" />
+                  <ExternalLink size={10} strokeWidth={1.5} className="text-[#8a8f98]" />
                 </button>
                 <button
                   type="button"
                   onClick={handleOpenChatGPT}
-                  className="w-full text-left px-2.5 py-1.5 text-[12px] text-[#d0d5dd] hover:text-white hover:bg-white/[0.06] rounded-md flex items-center justify-between cursor-pointer"
+                  className="w-full text-left px-2 py-1 text-[11px] text-[#c4c7cf] hover:text-white hover:bg-white/[0.06] rounded flex items-center justify-between cursor-pointer"
                 >
                   <span>Ask ChatGPT</span>
-                  <ExternalLink size={11} strokeWidth={1.5} className="text-[#8a8f98]" />
+                  <ExternalLink size={10} strokeWidth={1.5} className="text-[#8a8f98]" />
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Open App Button (Dark rounded pill matching Linear Docs Screenshot 1, 2, 4) */}
+        {/* Compact Open App Button */}
         <a
           href="/"
-          className="h-8 px-3.5 rounded-full border border-white/10 hover:border-white/25 bg-[#16171a] hover:bg-[#202227] text-white text-[12.5px] font-medium inline-flex items-center transition-colors no-underline"
+          className="h-[26px] px-2.5 rounded-full border border-white/10 hover:border-white/25 bg-[#16171a] hover:bg-[#202227] text-white text-[11px] font-medium inline-flex items-center transition-colors no-underline"
         >
           <span>Open app</span>
         </a>

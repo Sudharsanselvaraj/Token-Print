@@ -11,52 +11,50 @@ export const metadata: Metadata = {
 
 export default function DevelopersPage() {
   return (
-    <div className="space-y-10">
+    <div className="space-y-12 w-full max-w-[1240px]">
       {/* Hero Header */}
       <div>
-        <h1 className="text-[28px] font-semibold tracking-[-0.02em] text-[#f4f4f5] mb-2">
+        <h1 className="text-[34px] font-semibold tracking-[-0.02em] text-white mb-2.5">
           TokenPrint Developers
         </h1>
-        <p className="text-[14px] text-[#a1a1aa] font-normal max-w-xl leading-relaxed mb-6">
+        <p className="text-[15px] text-[#8a8f98] font-normal max-w-2xl leading-relaxed">
           Build integrations with TokenPrint REST endpoints, streaming WebSocket channels, and model inspection hooks.
         </p>
       </div>
 
       {/* Getting Started Section */}
       <section>
-        <div className="flex items-center justify-between mb-3.5">
-          <h2 className="text-[17px] font-semibold text-[#f4f4f5] tracking-tight">
-            Getting Started
-          </h2>
-        </div>
+        <h2 className="text-[17px] font-semibold text-white tracking-tight mb-4">
+          Getting Started
+        </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <DocCard
             href="/docs/api-reference"
             title="API Overview"
             description="Complete interactive reference covering all FastAPI endpoints with cURL, Python, and JavaScript snippets."
-            iconName="TerminalWindow"
+            iconName="Terminal"
             tag="REST"
           />
           <DocCard
             href="/docs/api-reference"
             title="Model Inference"
             description="POST /analyze extracts attention tensors, 3D PCA projections, and hidden state norms across 24 layers."
-            iconName="Graph"
+            iconName="Network"
             tag="Inference"
           />
           <DocCard
             href="/docs/api-reference"
             title="WebSocket Streaming"
             description="Real-time autoregressive token generation with backpressure and client-driven queue streaming over /ws/generate."
-            iconName="Lightning"
+            iconName="Zap"
             tag="WS"
           />
           <DocCard
             href="/openapi.json"
             title="OpenAPI Spec"
             description="Download the raw OpenAPI 3.1.0 JSON contract directly to generate client libraries or SDK bindings."
-            iconName="DownloadSimple"
+            iconName="FileCode"
             tag="JSON"
           />
         </div>
@@ -64,13 +62,11 @@ export default function DevelopersPage() {
 
       {/* Developer Guides */}
       <section>
-        <div className="flex items-center justify-between mb-3.5">
-          <h2 className="text-[17px] font-semibold text-[#f4f4f5] tracking-tight">
-            Guides &amp; Tooling
-          </h2>
-        </div>
+        <h2 className="text-[17px] font-semibold text-white tracking-tight mb-4">
+          Guides &amp; Tooling
+        </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <DocCard
             href="/docs/trace-schema"
             title="Trace Recording & Replay"
@@ -81,27 +77,28 @@ export default function DevelopersPage() {
             href="/docs/using/model-explorer"
             title="Quantized GGUF Loading"
             description="Upload and parse local .gguf models with llama.cpp quantization metadata client-side."
-            iconName="Cube"
+            iconName="Boxes"
           />
           <DocCard
             href="/docs/verification"
             title="Verification Suite"
             description="Continuous integration test harness verifying zero Math.random or simulated values reach app code."
-            iconName="ShieldCheck"
+            iconName="Shield"
           />
         </div>
       </section>
 
       {/* Interactive API Explorer */}
-      <section className="pt-6 border-t border-[var(--docs-border)]">
+      <section className="pt-8 border-t border-white/[0.08]">
         <div className="mb-4">
-          <h2 className="text-[17px] font-semibold text-[#f4f4f5] tracking-tight mb-1">
+          <h2 className="text-[17px] font-semibold text-white tracking-tight mb-1">
             API Explorer
           </h2>
-          <p className="text-[13px] text-[#a1a1aa]">
-            Explore live request contracts and response schemas directly against your local backend.
+          <p className="text-[13px] text-[#8a8f98]">
+            Interactive testing harness for TokenPrint backend routes.
           </p>
         </div>
+
         <DocsApiExplorer />
       </section>
     </div>
