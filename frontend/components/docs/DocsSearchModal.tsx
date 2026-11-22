@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, FileText, ArrowRight, X, Command } from "lucide-react";
+import { MagnifyingGlass, FileText, ArrowRight, X, Command } from "@phosphor-icons/react";
 import { ALL_DOC_PAGES, getSectionForSlug } from "@/lib/docsNav";
+import LinearIcon from "./LinearIcon";
 
 interface DocsSearchModalProps {
   isOpen: boolean;
@@ -64,19 +65,23 @@ export default function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProp
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, searchResults, activeIndex, onClose, router]);
+  }, [isOpen, searchResults, activeIndex, router, onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 select-none">
+      {/* Backdrop */}
       <div
-        className="relative w-full max-w-xl rounded-xl border border-slate-800 bg-[#0c101a] shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Modal Card */}
+      <div className="relative w-full max-w-2xl rounded-[14px] border border-[var(--border-strong)] bg-[var(--card)] shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150">
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800/80 bg-[#0f1422]">
-          <Search size={18} className="text-cyan-400" />
+        <div className="flex items-center px-4 py-3.5 border-b border-[var(--border)] gap-3 bg-[var(--sidebar)]">
+          <MagnifyingGlass size={18} weight="bold" className="text-[var(--muted)]" />
           <input
             ref={inputRef}
             type="text"
@@ -85,72 +90,73 @@ export default function DocsSearchModal({ isOpen, onClose }: DocsSearchModalProp
               setQuery(e.target.value);
               setActiveIndex(0);
             }}
-            placeholder="Search documentation (e.g. attention, ablation, API, Qwen)..."
-            className="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+            placeholder="Search documentation, guides, and API endpoints..."
+            className="flex-1 bg-transparent border-none text-[15px] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none"
           />
           <button
             onClick={onClose}
-            className="p-1 rounded text-slate-500 hover:text-slate-300 transition-colors"
-            title="Close"
+            className="text-[var(--muted)] hover:text-[var(--text)] transition-colors p-1"
+            aria-label="Close search modal"
           >
-            <X size={16} />
+            <X size={16} weight="bold" />
           </button>
         </div>
 
         {/* Results List */}
-        <div className="p-2 max-h-80 overflow-y-auto divide-y divide-slate-800/40">
+        <div className="max-h-[380px] overflow-y-auto p-2 scrollbar-none">
           {searchResults.length === 0 ? (
-            <div className="py-8 text-center text-xs font-mono text-slate-500">
-              No documentation pages found matching &ldquo;{query}&rdquo;
+            <div className="py-12 text-center text-[14px] text-[var(--muted)]">
+              No matching pages found for &ldquo;{query}&rdquo;
             </div>
           ) : (
-            searchResults.map((page, idx) => {
-              const section = getSectionForSlug(page.slug);
-              const isSelected = activeIndex === idx;
-              return (
-                <div
-                  key={page.slug}
-                  onMouseEnter={() => setActiveIndex(idx)}
-                  onClick={() => {
-                    onClose();
-                    router.push(`/docs/${page.slug}`);
-                  }}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
-                    isSelected
-                      ? "bg-cyan-500/10 text-cyan-200 border border-cyan-500/30"
-                      : "text-slate-300 hover:bg-slate-900/60 border border-transparent"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <FileText size={15} className={isSelected ? "text-cyan-400" : "text-slate-500"} />
-                    <div>
-                      <div className="text-xs font-medium">{page.title}</div>
+            <div className="space-y-1">
+              {searchResults.map((page, idx) => {
+                const active = idx === activeIndex;
+                const section = getSectionForSlug(page.slug);
+
+                return (
+                  <button
+                    key={page.slug + idx}
+                    onClick={() => {
+                      onClose();
+                      router.push(`/docs/${page.slug}`);
+                    }}
+                    onMouseEnter={() => setActiveIndex(idx)}
+                    className={`w-full text-left px-3.5 py-2.5 rounded-lg flex items-center justify-between text-[14px] transition-colors ${
+                      active
+                        ? "bg-[var(--border)] text-[var(--text)]"
+                        : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 truncate">
+                      <span className={active ? "text-white" : "text-[var(--muted)]"}>
+                        <LinearIcon name={page.icon} size={16} weight="fill" />
+                      </span>
+                      <span className="font-medium truncate">{page.title}</span>
                       {section && (
-                        <div className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                          {section}
-                        </div>
+                        <span className="text-[12px] text-[var(--faint)] truncate">
+                          in {section}
+                        </span>
                       )}
                     </div>
-                  </div>
-                  <ArrowRight size={13} className={isSelected ? "text-cyan-400" : "text-slate-600"} />
-                </div>
-              );
-            })
+                    {active && <ArrowRight size={14} weight="bold" className="text-[var(--muted)] flex-shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
 
-        {/* Modal Footer */}
-        <div className="px-4 py-2 border-t border-slate-800/80 bg-[#080b12] flex items-center justify-between text-[11px] font-mono text-slate-500">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-400">
-              <Command size={10} /> K
-            </span>
-            <span>to open anytime</span>
-          </div>
+        {/* Footer shortcuts */}
+        <div className="px-4 py-2.5 border-t border-[var(--border)] bg-[var(--sidebar)] flex items-center justify-between text-[12px] font-mono text-[var(--muted)]">
           <div className="flex items-center gap-3">
-            <span>↑↓ to navigate</span>
-            <span>↵ to select</span>
-            <span>esc to close</span>
+            <span>&uarr;&darr; Navigate</span>
+            <span>&crarr; Select</span>
+            <span>ESC Close</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Command size={12} weight="bold" />
+            <span>K</span>
           </div>
         </div>
       </div>

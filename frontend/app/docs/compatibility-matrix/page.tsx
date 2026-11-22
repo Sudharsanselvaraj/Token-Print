@@ -12,9 +12,7 @@ export const metadata: Metadata = {
 export default function CompatibilityMatrixPage() {
   return (
     <>
-      <DocsBreadcrumb slug="compatibility-matrix" title="Compatibility Matrix" />
-
-      <p className="docs-meta">MODEL ECOSYSTEM</p>
+      <p className="docs-meta">Model Ecosystem</p>
       <h1>Model Compatibility Matrix</h1>
       <p className="docs-intro">
         TokenPrint enforces an evidence-first verification doctrine. No model family is marked as supported without demonstrable adapter logic, tensor extraction proofs, and runtime validation.

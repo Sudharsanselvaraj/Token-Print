@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
 import DocsCallout from "@/components/docs/DocsCallout";
 import DocsMermaid from "@/components/docs/DocsMermaid";
+import ImagePanel from "@/components/docs/ImagePanel";
 
 export const metadata: Metadata = {
   title: "System Architecture",
@@ -82,13 +81,19 @@ const INSTRUMENTATION_FLOW_CHART = `flowchart LR
 export default function ArchitectureDocsPage() {
   return (
     <>
-      <DocsBreadcrumb slug="architecture" title="System Architecture" />
-
-      <p className="docs-meta">DEVELOPER &amp; ARCHITECTURE</p>
+      <p className="docs-meta">System &amp; Infrastructure</p>
       <h1>System Architecture</h1>
       <p className="docs-intro">
         TokenPrint is split into a static client-side Next.js frontend and an asynchronous Python backend built with FastAPI, PyTorch, and ZeroGPU sandboxing.
       </p>
+
+      <ImagePanel
+        src="/docs/panels/panel-space.webp"
+        alt="TokenPrint Hugging Face Spaces & ZeroGPU Deployment"
+        caption="ZeroGPU dynamic slicing container, ASGI proxy mounting, and automatic CPU failover."
+        annotation="[ HUGGING FACE SPACES · ZEROGPU DYNAMIC SLICING · GRADIO ]"
+        priority
+      />
 
       <DocsCallout variant="note" title="Zero Fabrication Guarantee">
         Every component, pipeline, and diagram shown on this page traces to exact implementation code in <code>backend/app/</code> and <code>frontend/</code>.
@@ -127,8 +132,6 @@ export default function ArchitectureDocsPage() {
           <strong>Client-Side WebGPU Inference</strong>: GPT-2 is compiled to ONNX and runs entirely inside a dedicated Web Worker via <code>onnxruntime-web</code> with WebGPU acceleration.
         </li>
       </ul>
-
-      <DocsPrevNext slug="architecture" />
     </>
   );
 }

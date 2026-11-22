@@ -13,9 +13,8 @@ export const metadata: Metadata = {
 export default function ApiReferencePage() {
   return (
     <>
-      <DocsBreadcrumb slug="api-reference" title="API Reference" />
+      <p className="docs-meta">Developer &amp; Reference</p>
       <h1>API Reference</h1>
-      <p className="docs-meta">DEVELOPER &amp; REFERENCE</p>
 
       <p>
         Base URL (dev): <code>http://localhost:8000</code>. Production Hugging Face Space:{" "}

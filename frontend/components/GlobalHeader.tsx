@@ -35,6 +35,7 @@ function GlobalHeaderInner() {
   const close = () => setOpen(false);
 
   if (searchParams?.get("embed") === "true") return null;
+  if (pathname.startsWith("/docs")) return null;
 
   return (
     <header

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useId } from "react";
-import { Copy, Check, ZoomIn, ZoomOut, RotateCcw, AlertTriangle } from "lucide-react";
+import React, { useEffect, useRef, useState, useId } from "react";
+import { Copy, Check, MagnifyingGlassPlus, MagnifyingGlassMinus, ArrowClockwise, Warning } from "@phosphor-icons/react";
 
 interface DocsMermaidProps {
   chart: string;
@@ -29,14 +29,14 @@ export default function DocsMermaid({ chart, title, className = "" }: DocsMermai
           theme: "dark",
           themeVariables: {
             darkMode: true,
-            background: "#080b11",
-            primaryColor: "#1e293b",
-            primaryTextColor: "#f1f5f9",
-            primaryBorderColor: "#334155",
-            lineColor: "#64748b",
-            secondaryColor: "#0f172a",
-            tertiaryColor: "#111827",
-            edgeLabelBackground: "#0b0f19",
+            background: "#0a0a0b",
+            primaryColor: "#111113",
+            primaryTextColor: "#ededef",
+            primaryBorderColor: "#1f1f23",
+            lineColor: "#2a2a30",
+            secondaryColor: "#18181b",
+            tertiaryColor: "#111113",
+            edgeLabelBackground: "#111113",
             fontSize: "13px",
             fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
           },
@@ -50,109 +50,98 @@ export default function DocsMermaid({ chart, title, className = "" }: DocsMermai
         }
       } catch (err: unknown) {
         if (isMounted) {
-          console.error("Mermaid rendering failed:", err);
           setError(err instanceof Error ? err.message : String(err));
         }
       }
     }
 
     renderChart();
-
     return () => {
       isMounted = false;
     };
   }, [chart, diagramId]);
 
-  const handleCopy = async () => {
+  const handleCopySource = async () => {
     try {
       await navigator.clipboard.writeText(chart.trim());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
+      // ignore
     }
   };
 
-  const handleZoomIn = () => setScale((s) => Math.min(s + 0.2, 2.5));
-  const handleZoomOut = () => setScale((s) => Math.max(s - 0.2, 0.5));
+  const handleZoomIn = () => setScale((s) => Math.min(s + 0.15, 2.0));
+  const handleZoomOut = () => setScale((s) => Math.max(s - 0.15, 0.5));
   const handleResetZoom = () => setScale(1);
 
   return (
-    <div className={`my-6 rounded-xl border border-slate-800 bg-[#090d16] overflow-hidden shadow-2xl ${className}`}>
-      {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800/80 bg-[#0d121f]">
-        <div className="flex items-center gap-2">
-          <span className="inline-block w-2 h-2 rounded-full bg-cyan-400/80 shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
-          <span className="text-xs font-mono font-medium text-slate-300">
-            {title || "Architectural Flow Diagram"}
-          </span>
-        </div>
+    <div className={`my-8 rounded-[12px] border border-[var(--border)] bg-[var(--card)] overflow-hidden ${className}`}>
+      {/* Title & Toolbar */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)] bg-[var(--sidebar)] text-[13px]">
+        <span className="font-mono text-[var(--muted)] font-normal">
+          {title || "Architecture Diagram"}
+        </span>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <button
-            type="button"
             onClick={handleZoomIn}
-            className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors"
-            title="Zoom in"
-            aria-label="Zoom in"
+            className="p-1 rounded text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            title="Zoom In"
+            aria-label="Zoom in diagram"
           >
-            <ZoomIn size={14} />
+            <MagnifyingGlassPlus size={16} weight="bold" />
           </button>
           <button
-            type="button"
             onClick={handleZoomOut}
-            className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors"
-            title="Zoom out"
-            aria-label="Zoom out"
+            className="p-1 rounded text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            title="Zoom Out"
+            aria-label="Zoom out diagram"
           >
-            <ZoomOut size={14} />
+            <MagnifyingGlassMinus size={16} weight="bold" />
           </button>
           <button
-            type="button"
             onClick={handleResetZoom}
-            className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors"
-            title="Reset zoom"
+            className="p-1 rounded text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            title="Reset Zoom"
             aria-label="Reset zoom"
           >
-            <RotateCcw size={14} />
+            <ArrowClockwise size={16} weight="bold" />
           </button>
-          <div className="h-3 w-px bg-slate-800 mx-1" />
+
+          <div className="w-px h-3.5 bg-[var(--border)] mx-1" />
+
           <button
-            type="button"
-            onClick={handleCopy}
-            className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors"
-            title="Copy diagram source"
+            onClick={handleCopySource}
+            className="flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-mono text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            title="Copy Mermaid Code"
+            aria-label="Copy diagram source"
           >
-            {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            {copied ? <Check size={13} weight="bold" /> : <Copy size={13} weight="fill" />}
             <span>{copied ? "Copied" : "Source"}</span>
           </button>
         </div>
       </div>
 
-      {/* Diagram Canvas */}
-      <div className="relative p-6 overflow-auto max-h-[500px] flex items-center justify-center bg-radial from-[#0e1626]/50 to-[#070a12]">
+      {/* SVG Canvas Container */}
+      <div
+        ref={containerRef}
+        className="p-6 overflow-x-auto flex items-center justify-center min-h-[180px] bg-[var(--bg)]"
+      >
         {error ? (
-          <div className="w-full p-4 rounded-lg border border-amber-900/40 bg-amber-950/20 text-xs font-mono text-amber-300">
-            <div className="flex items-center gap-2 mb-2 font-semibold">
-              <AlertTriangle size={15} />
-              <span>Diagram Rendering Notice</span>
-            </div>
-            <p className="text-amber-400/80 mb-3">{error}</p>
-            <pre className="p-3 rounded bg-slate-950/80 border border-slate-900 overflow-x-auto text-[11px] text-slate-300">
-              {chart}
-            </pre>
+          <div className="flex items-center gap-2 p-3 rounded-lg border border-red-900/30 bg-red-950/20 text-red-400 text-xs font-mono">
+            <Warning size={16} weight="fill" />
+            <span>Mermaid Render Error: {error}</span>
           </div>
         ) : svgContent ? (
           <div
-            ref={containerRef}
-            style={{ transform: `scale(${scale})`, transformOrigin: "center center", transition: "transform 0.15s ease-out" }}
-            className="w-full flex justify-center [&_svg]:max-w-full [&_svg]:h-auto"
+            className="transition-transform duration-150 origin-center max-w-full"
+            style={{ transform: `scale(${scale})` }}
             dangerouslySetInnerHTML={{ __html: svgContent }}
           />
         ) : (
-          <div className="flex items-center gap-2 py-8 text-xs font-mono text-slate-500">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-            <span>Compiling diagram vector...</span>
+          <div className="text-[13px] font-mono text-[var(--muted)] animate-pulse">
+            Rendering diagram...
           </div>
         )}
       </div>
