@@ -1,9 +1,11 @@
 <a name="top"></a>
+<p align="center">
+  <img src=".github/assets/tokenprint-logo.png" alt="TokenPrint logo" width="110" />
+</p>
 <h1 align="center">TokenPrint</h1>
 <p align="center">
   <b>Watch your model think.</b><br />
-  A 3D visual debugger for transformers: run a real forward pass and inspect attention, RoPE,
-  the KV cache and the residual stream as they happen.
+  An open-source 3D visual debugger for transformers: run a real forward pass and inspect attention, RoPE, the KV cache and the residual stream as they happen.
 </p>
 <p align="center">
   <a href="https://tokenprint.in"><b>Live demo</b></a> &nbsp;·&nbsp;
@@ -24,6 +26,18 @@
   <a href="https://discord.gg/6Cv4v8x9j"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2F6Cv4v8x9j%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Discord&color=5865F2&suffix=%20members" alt="Discord" /></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-22c55e.svg" alt="PRs welcome" /></a>
 </p>
+<p align="center">
+  <sub><b>BUILT WITH</b></sub><br /><br />
+  <img src=".github/assets/logos/huggingface.svg?v=2" height="28" alt="Hugging Face" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/pytorch.svg?v=2" height="28" alt="PyTorch" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/llamacpp.svg?v=2" height="28" alt="llama.cpp" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/onnxruntime.svg?v=2" height="28" alt="ONNX Runtime" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/webgpu.svg?v=2" height="28" alt="WebGPU" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/threejs.svg?v=2" height="28" alt="Three.js" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/fastapi.svg?v=2" height="28" alt="FastAPI" />&nbsp;&nbsp;&nbsp;
+  <img src=".github/assets/logos/nextjs.svg?v=2" height="28" alt="Next.js" />
+</p>
+
 ---
  
 ## Why TokenPrint
@@ -111,7 +125,7 @@ For quantized GGUF execution: `pip install -r backend/requirements-gguf.txt`. To
 
 ## Hosted deployment: Hugging Face Spaces + ZeroGPU
  
-The public site at [tokenprint.in](https://tokenprint.in) is a static Next.js export on GitHub Pages. It talks to a FastAPI backend running as a [Hugging Face Space](https://huggingface.co/spaces/sudharsan112321/tokenprint-backend) with ZeroGPU.
+The public site at [tokenprint.in](https://tokenprint.in/) is a static Next.js export on GitHub Pages. It talks to a FastAPI backend running as a [Hugging Face Space](https://huggingface.co/spaces/sudharsan112321/tokenprint-backend) with ZeroGPU.
  
 ```mermaid
 flowchart LR
@@ -167,9 +181,17 @@ deploy/      Self-hosting scripts
 [Architecture](docs/architecture.md) · [API reference](docs/api.md) · [Visual mapping](docs/visual-mapping.md) · [GGUF format](docs/gguf-format.md) · [Browser inference](docs/browser-inference.md) · [Experiments](docs/experiments.md) · [Development](docs/development.md) · [Deployment](docs/deployment.md) · [Roadmap](ROADMAP.md)
  
 ## Community
- 
-Questions, bug reports, shared traces and feature ideas are all welcome in the [Discord](https://discord.gg/6Cv4v8x9j).
- 
+
+<div align="center">
+  <a href="https://discord.gg/6Cv4v8x9j">
+    <img src="https://cdn.simpleicons.org/discord/5865F2" width="56" alt="Discord" />
+  </a>
+  <h3><a href="https://discord.gg/6Cv4v8x9j">Join the TokenPrint community on Discord</a></h3>
+  <sub>Questions · Bug reports · Shared traces · Feature ideas · Show and tell</sub>
+  <br /><br />
+  <a href="https://discord.gg/6Cv4v8x9j"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2F6Cv4v8x9j%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Join%20Discord&color=5865F2&suffix=%20members&style=for-the-badge" alt="Join the Discord" /></a>
+</div>
+
 ## Contributing
  
 First-timers are welcome. Pick a task from [GOOD_FIRST_ISSUES.md](GOOD_FIRST_ISSUES.md) or the [open issues](https://github.com/Sudharsanselvaraj/Token-Print/issues), read [CONTRIBUTING.md](CONTRIBUTING.md), and open a PR. Working examples to copy from are in [docs/contributor-examples.md](docs/contributor-examples.md).
