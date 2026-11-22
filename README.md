@@ -1,8 +1,7 @@
 <a name="top"></a>
 <p align="center">
-  <img src=".github/assets/tokenprint-logo.png" alt="TokenPrint logo" width="110" />
+  <img src=".github/assets/tokenprint-logo.png" alt="TokenPrint logo" width="210" />
 </p>
-<h1 align="center">TokenPrint</h1>
 <p align="center">
   <b>Watch your model think.</b><br />
   An open-source 3D visual debugger for transformers: run a real forward pass and inspect attention, RoPE, the KV cache and the residual stream as they happen.
