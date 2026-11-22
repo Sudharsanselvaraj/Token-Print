@@ -1,21 +1,15 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import {
-  Search,
-  ChevronDown,
-  ChevronRight,
-  X,
-} from "lucide-react";
+import { Search, X } from "lucide-react";
 import {
   DOCS_SECTIONS,
   DocSection,
   DocPage,
 } from "@/lib/docsNav";
-import LinearIcon from "./LinearIcon";
 
 interface DocsNavProps {
   mobileOpen: boolean;
@@ -31,45 +25,6 @@ export default function DocsNav({
   const pathname = usePathname();
   const activeItemRef = useRef<HTMLAnchorElement | null>(null);
 
-  // Collapsible groups state persisted in localStorage
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("tp_docs_collapsed_groups");
-      if (stored) {
-        setCollapsedGroups(JSON.parse(stored));
-      }
-    } catch {
-      // ignore storage errors
-    }
-  }, []);
-
-  // Ensure active group is expanded on route change
-  useEffect(() => {
-    const cleanPath = pathname.replace(/^\/docs\/?/, "").replace(/\/$/, "");
-    for (const section of DOCS_SECTIONS) {
-      const hasActiveChild = section.pages.some(
-        (p) => p.slug === cleanPath || p.children?.some((c) => c.slug === cleanPath)
-      );
-      if (hasActiveChild && collapsedGroups[section.id]) {
-        setCollapsedGroups((prev) => ({ ...prev, [section.id]: false }));
-      }
-    }
-  }, [pathname]);
-
-  const toggleGroup = (groupId: string) => {
-    setCollapsedGroups((prev) => {
-      const next = { ...prev, [groupId]: !prev[groupId] };
-      try {
-        localStorage.setItem("tp_docs_collapsed_groups", JSON.stringify(next));
-      } catch {
-        // ignore storage errors
-      }
-      return next;
-    });
-  };
-
   const isPageActive = (slug: string) => {
     const cleanPath = pathname.replace(/^\/docs\/?/, "").replace(/\/$/, "");
     return cleanPath === slug;
@@ -84,54 +39,55 @@ export default function DocsNav({
   const isDevSection = pathname.includes("/developers") || pathname.includes("/api-reference");
 
   const navContent = (
-    <aside className="w-[260px] h-full flex flex-col bg-[var(--docs-bg)] border-r border-[var(--docs-border)] select-none">
+    <aside className="w-[248px] h-full flex flex-col bg-[var(--docs-bg)] border-r border-[var(--docs-border)] select-none">
       {/* Top Bar: Brand + Search trigger */}
-      <div className="h-[56px] px-4 flex items-center justify-between border-b border-[var(--docs-border)] flex-shrink-0">
+      <div className="h-[52px] px-3.5 flex items-center justify-between border-b border-[var(--docs-border)] flex-shrink-0">
         <Link
           href="/docs"
-          className="flex items-center gap-2.5 group no-underline"
+          className="flex items-center gap-2 group no-underline"
           aria-label="TokenPrint Docs Home"
         >
-          <div className="w-5 h-5 relative flex-shrink-0">
+          <div className="w-[18px] h-[18px] relative flex-shrink-0">
             <Image
               src="/icon.png"
               alt="TokenPrint"
-              width={20}
-              height={20}
+              width={18}
+              height={18}
               className="object-contain"
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[14.5px] font-semibold text-white tracking-tight">
+            <span className="text-[13.5px] font-semibold text-white tracking-tight">
               TokenPrint
             </span>
-            <span className="text-[var(--docs-border-strong)] text-sm font-light">/</span>
-            <span className="text-[13px] text-[var(--docs-text-secondary)] font-medium">
+            <span className="text-zinc-600 text-xs font-light">/</span>
+            <span className="text-[12px] text-zinc-400 font-medium">
               Docs
             </span>
           </div>
         </Link>
 
         <button
+          type="button"
           onClick={onOpenSearchModal}
-          className="w-8 h-8 rounded-md border border-[var(--docs-border)] bg-transparent flex items-center justify-center text-[var(--docs-text-muted)] hover:text-white hover:border-[var(--docs-border-strong)] transition-colors duration-150"
+          className="w-7 h-7 rounded-md border border-[var(--docs-border)] bg-transparent flex items-center justify-center text-zinc-400 hover:text-white hover:border-[var(--docs-border-strong)] transition-colors duration-150 cursor-pointer"
           aria-label="Search documentation (⌘K)"
           title="Search (⌘K)"
         >
-          <Search size={14} strokeWidth={1.5} />
+          <Search size={13} strokeWidth={1.5} />
         </button>
       </div>
 
       {/* Mode Switcher Segmented Control (Lori / Linear Docs Style) */}
-      <div className="px-3 pt-3 pb-2.5 border-b border-[var(--docs-border)]">
+      <div className="px-2.5 pt-2.5 pb-2 border-b border-[var(--docs-border)]">
         <div className="flex items-center p-0.5 rounded-lg bg-[var(--docs-surface)] border border-[var(--docs-border)]">
           <Link
             href="/docs"
             onClick={() => setMobileOpen(false)}
-            className={`flex-1 py-1.5 text-center rounded-[6px] text-[12px] font-medium transition-all no-underline ${
+            className={`flex-1 py-1 text-center rounded-[6px] text-[11.5px] font-medium transition-all no-underline ${
               !isDevSection
                 ? "bg-[var(--docs-surface-hover)] text-white shadow-sm"
-                : "text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)]"
+                : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
             Guides
@@ -139,10 +95,10 @@ export default function DocsNav({
           <Link
             href="/docs/developers"
             onClick={() => setMobileOpen(false)}
-            className={`flex-1 py-1.5 text-center rounded-[6px] text-[12px] font-medium transition-all no-underline ${
+            className={`flex-1 py-1 text-center rounded-[6px] text-[11.5px] font-medium transition-all no-underline ${
               isDevSection
                 ? "bg-[var(--docs-surface-hover)] text-white shadow-sm"
-                : "text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)]"
+                : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
             Developers &amp; API
@@ -150,94 +106,71 @@ export default function DocsNav({
         </div>
       </div>
 
-      {/* Scrolling Navigation Tree */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5 scrollbar-thin scrollbar-thumb-[var(--docs-border)]">
-        {DOCS_SECTIONS.map((section: DocSection) => {
-          const isCollapsed = !!collapsedGroups[section.id];
+      {/* Scrolling Navigation Tree (Lori / Linear Docs Typography-First Style) */}
+      <div className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-4 scrollbar-thin scrollbar-thumb-[var(--docs-border)]">
+        {DOCS_SECTIONS.map((section: DocSection) => (
+          <div key={section.id} className="space-y-0.5">
+            {/* Clean Section Heading without accordion button or chevrons */}
+            <div className="px-2 pt-2.5 pb-1 text-[12px] font-medium text-zinc-400 select-none tracking-tight">
+              {section.label}
+            </div>
 
-          return (
-            <div key={section.id} className="space-y-1">
-              {/* Section Header (Clean sentence case, collapsible) */}
-              <button
-                type="button"
-                onClick={() => toggleGroup(section.id)}
-                className="w-full px-2 py-1.5 flex items-center justify-between text-[11.5px] font-medium text-[var(--docs-text-muted)] hover:text-white transition-colors duration-150 text-left bg-transparent border-0 select-none"
-              >
-                <span>{section.label}</span>
-                <span className="text-[var(--docs-text-muted)]">
-                  {isCollapsed ? (
-                    <ChevronRight size={12} strokeWidth={1.5} />
-                  ) : (
-                    <ChevronDown size={12} strokeWidth={1.5} />
-                  )}
-                </span>
-              </button>
+            {/* Items in section */}
+            <div className="space-y-0.5">
+              {section.pages.map((page: DocPage) => {
+                const active = isPageActive(page.slug);
+                const parentActive = isParentActive(page);
 
-              {/* Items in section */}
-              {!isCollapsed && (
-                <div className="space-y-0.5 pt-0.5">
-                  {section.pages.map((page: DocPage) => {
-                    const active = isPageActive(page.slug);
-                    const parentActive = isParentActive(page);
+                return (
+                  <div key={page.slug}>
+                    <Link
+                      href={`/docs/${page.slug}`}
+                      ref={active ? activeItemRef : null}
+                      onClick={() => setMobileOpen(false)}
+                      className={`h-[28px] px-2.5 flex items-center justify-between rounded-md text-[12px] font-[450] no-underline transition-colors duration-150 ${
+                        active
+                          ? "text-white bg-white/[0.08] font-medium"
+                          : parentActive
+                          ? "text-zinc-200 hover:text-white"
+                          : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <span className="truncate flex-1">{page.title}</span>
+                      {page.badge && (
+                        <span className="ml-auto text-[9.5px] px-1.5 py-0.5 rounded font-mono uppercase bg-white/[0.06] text-zinc-400 border border-white/5">
+                          {page.badge}
+                        </span>
+                      )}
+                    </Link>
 
-                    return (
-                      <div key={page.slug}>
-                        <Link
-                          href={`/docs/${page.slug}`}
-                          ref={active ? activeItemRef : null}
-                          onClick={() => setMobileOpen(false)}
-                          className={`h-[32px] px-2.5 flex items-center gap-2.5 rounded-md text-[13px] font-[450] no-underline transition-colors duration-150 ${
-                            active
-                              ? "text-white bg-[var(--docs-surface-hover)] font-medium"
-                              : parentActive
-                              ? "text-[var(--docs-heading)]"
-                              : "text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] hover:bg-[var(--docs-surface-hover)]/60"
-                          }`}
-                        >
-                          {page.icon && (
-                            <span
-                              className={`flex-shrink-0 transition-colors duration-150 ${
-                                active
-                                  ? "text-[var(--docs-accent)]"
-                                  : "text-[var(--docs-text-muted)] group-hover:text-[var(--docs-heading)]"
+                    {/* Nested Children Tree Lines */}
+                    {page.children && page.children.length > 0 && (
+                      <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5 my-1">
+                        {page.children.map((child) => {
+                          const childActive = isPageActive(child.slug);
+                          return (
+                            <Link
+                              key={child.slug}
+                              href={`/docs/${child.slug}`}
+                              onClick={() => setMobileOpen(false)}
+                              className={`h-[26px] flex items-center px-2 rounded-md text-[11.5px] font-[450] no-underline transition-colors duration-150 relative ${
+                                childActive
+                                  ? "text-white bg-white/[0.08] font-medium"
+                                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
                               }`}
                             >
-                              <LinearIcon name={page.icon} size={15} strokeWidth={1.5} />
-                            </span>
-                          )}
-                          <span className="truncate">{page.title}</span>
-                        </Link>
-
-                        {/* Nested Children Tree Lines */}
-                        {page.children && page.children.length > 0 && (
-                          <div className="ml-[14px] pl-[14px] border-l border-[var(--docs-border)] space-y-0.5 my-0.5">
-                            {page.children.map((child) => {
-                              const childActive = isPageActive(child.slug);
-                              return (
-                                <Link
-                                  key={child.slug}
-                                  href={`/docs/${child.slug}`}
-                                  onClick={() => setMobileOpen(false)}
-                                  className={`h-[28px] flex items-center px-2 rounded-md text-[12.5px] font-[450] no-underline transition-colors duration-150 relative ${
-                                    childActive
-                                      ? "text-[var(--docs-heading)] bg-[var(--docs-surface-elevated)] font-medium"
-                                      : "text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] hover:bg-[var(--docs-surface-hover)]"
-                                  }`}
-                                >
-                                  <span className="truncate">{child.title}</span>
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        )}
+                              <span className="truncate">{child.title}</span>
+                            </Link>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </aside>
   );
@@ -257,8 +190,9 @@ export default function DocsNav({
           <div className="relative w-[280px] max-w-[85vw] h-full z-10 bg-[var(--docs-bg)] shadow-2xl flex flex-col">
             <div className="absolute top-3 right-3 z-20">
               <button
+                type="button"
                 onClick={() => setMobileOpen(false)}
-                className="p-1.5 rounded-md text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] hover:bg-[var(--docs-surface-hover)]"
+                className="p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-white/[0.06] cursor-pointer"
               >
                 <X size={18} strokeWidth={1.5} />
               </button>

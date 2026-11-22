@@ -92,8 +92,8 @@ export default function DocsOnThisPage() {
       className="w-full select-none"
       aria-label="Table of contents"
     >
-      <div className="space-y-2.5">
-        <p className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-[var(--docs-text-muted)]">
+      <div className="space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--docs-text-muted)]">
           On this page
         </p>
 
@@ -101,7 +101,7 @@ export default function DocsOnThisPage() {
         <div ref={navRef} className="relative border-l border-[var(--docs-border)] py-0.5">
           {indicatorHeight > 0 && (
             <div
-              className="absolute -left-px w-[2px] bg-[var(--docs-heading)] rounded-full transition-all duration-150 pointer-events-none"
+              className="absolute -left-px w-[1.5px] bg-[var(--docs-heading)] rounded-full transition-all duration-150 pointer-events-none"
               style={{
                 top: `${indicatorTop}px`,
                 height: `${indicatorHeight}px`,
@@ -126,8 +126,8 @@ export default function DocsOnThisPage() {
                         history.pushState(null, "", `#${h.id}`);
                       }
                     }}
-                    className={`block py-1 text-[13px] leading-snug no-underline transition-colors duration-150 ${
-                      h.level === 3 ? "pl-5 text-[12px]" : "pl-3"
+                    className={`block py-1 text-[11px] leading-snug no-underline transition-colors duration-150 ${
+                      h.level === 3 ? "pl-4 text-[10.5px]" : "pl-2.5"
                     } ${
                       active
                         ? "text-[var(--docs-heading)] font-medium"

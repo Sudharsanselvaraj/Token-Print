@@ -27,8 +27,8 @@ export default function ImagePanel({
       <div className="relative w-full rounded-lg bg-[var(--docs-surface)] border border-[var(--docs-border)] overflow-hidden p-2 sm:p-3">
         {/* Monospace bracket annotation */}
         {annotation && (
-          <div className="px-2 py-1 mb-2 flex items-center gap-2">
-            <span className="font-mono text-[11px] text-[var(--docs-text-muted)] tracking-wider">
+          <div className="px-1.5 py-0.5 mb-1.5 flex items-center gap-2">
+            <span className="font-mono text-[10.5px] text-[var(--docs-text-muted)] tracking-wider">
               {annotation}
             </span>
           </div>
@@ -49,7 +49,7 @@ export default function ImagePanel({
       </div>
 
       {caption && (
-        <figcaption className="mt-2 text-center text-[12px] text-[var(--docs-text-muted)]">
+        <figcaption className="mt-2 text-center text-[11px] text-[var(--docs-text-muted)]">
           {caption}
         </figcaption>
       )}

@@ -11,29 +11,26 @@ export const metadata: Metadata = {
 
 export default function DevelopersPage() {
   return (
-    <div className="space-y-14">
+    <div className="space-y-10">
       {/* Hero Header */}
       <div>
-        <div className="text-[11.5px] uppercase font-mono tracking-wider text-[var(--docs-accent)] mb-2 font-medium">
-          DEVELOPER DOCUMENTATION
-        </div>
-        <h1 className="text-[40px] leading-[1.1] font-semibold tracking-[-0.02em] text-[var(--docs-heading)] mb-3">
+        <h1 className="text-[28px] font-semibold tracking-[-0.02em] text-[#f4f4f5] mb-2">
           TokenPrint Developers
         </h1>
-        <p className="text-[15px] text-[var(--docs-text-secondary)] font-normal max-w-2xl leading-relaxed">
+        <p className="text-[14px] text-[#a1a1aa] font-normal max-w-xl leading-relaxed mb-6">
           Build integrations with TokenPrint REST endpoints, streaming WebSocket channels, and model inspection hooks.
         </p>
       </div>
 
       {/* Getting Started Section */}
       <section>
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-[20px] font-semibold text-[var(--docs-heading)] tracking-tight">
+        <div className="flex items-center justify-between mb-3.5">
+          <h2 className="text-[17px] font-semibold text-[#f4f4f5] tracking-tight">
             Getting Started
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           <DocCard
             href="/docs/api-reference"
             title="API Overview"
@@ -67,13 +64,13 @@ export default function DevelopersPage() {
 
       {/* Developer Guides */}
       <section>
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-[20px] font-semibold text-[var(--docs-heading)] tracking-tight">
-            Guides & Tooling
+        <div className="flex items-center justify-between mb-3.5">
+          <h2 className="text-[17px] font-semibold text-[#f4f4f5] tracking-tight">
+            Guides &amp; Tooling
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           <DocCard
             href="/docs/trace-schema"
             title="Trace Recording & Replay"
@@ -96,12 +93,12 @@ export default function DevelopersPage() {
       </section>
 
       {/* Interactive API Explorer */}
-      <section className="pt-8 border-t border-[var(--docs-border)]">
-        <div className="mb-6">
-          <h2 className="text-[24px] font-semibold text-[var(--docs-heading)] tracking-tight mb-2">
+      <section className="pt-6 border-t border-[var(--docs-border)]">
+        <div className="mb-4">
+          <h2 className="text-[17px] font-semibold text-[#f4f4f5] tracking-tight mb-1">
             API Explorer
           </h2>
-          <p className="text-[15px] text-[var(--docs-text-secondary)]">
+          <p className="text-[13px] text-[#a1a1aa]">
             Explore live request contracts and response schemas directly against your local backend.
           </p>
         </div>

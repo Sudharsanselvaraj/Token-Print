@@ -187,27 +187,27 @@ export default function DocsApiExplorer() {
   return (
     <div className="my-8 rounded-[12px] border border-[var(--border)] bg-[var(--card)] overflow-hidden">
       {/* Top Header */}
-      <div className="px-5 py-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--sidebar)]">
+      <div className="px-4 py-2.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--sidebar)]">
         <div className="flex items-center gap-2">
-          <Globe size={16} className="text-[var(--muted)]" strokeWidth={1.5} />
-          <h3 className="text-[13px] font-medium text-[var(--text)] tracking-tight">
+          <Globe size={14} className="text-[var(--muted)]" strokeWidth={1.5} />
+          <h3 className="text-[12px] font-medium text-[var(--text)] tracking-tight">
             FastAPI Live Route Explorer
           </h3>
         </div>
-        <span className="text-[12px] font-mono text-[var(--muted)]">
+        <span className="text-[11px] font-mono text-[var(--muted)]">
           Source: backend/app/main.py
         </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[460px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[440px]">
         {/* Left endpoint list */}
-        <div className="lg:col-span-4 border-r border-[var(--border)] p-2 overflow-y-auto max-h-[500px]">
-          <div className="space-y-1">
+        <div className="lg:col-span-4 border-r border-[var(--border)] p-1.5 overflow-y-auto max-h-[480px]">
+          <div className="space-y-0.5">
             {API_ENDPOINTS.map((ep, idx) => (
               <button
                 key={ep.path + ep.method}
                 onClick={() => setSelectedIdx(idx)}
-                className={`w-full text-left p-2.5 rounded-md text-[13px] font-mono transition-colors flex items-center gap-2.5 ${
+                className={`w-full text-left p-2 rounded-md text-[11.5px] font-mono transition-colors flex items-center gap-2 ${
                   selectedIdx === idx
                     ? "bg-[var(--border)] text-[var(--text)] font-medium"
                     : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--border)]/40"
@@ -221,28 +221,28 @@ export default function DocsApiExplorer() {
         </div>
 
         {/* Right details pane */}
-        <div className="lg:col-span-8 p-6 flex flex-col justify-between bg-[var(--bg)]">
+        <div className="lg:col-span-8 p-5 flex flex-col justify-between bg-[var(--bg)]">
           <div>
-            <div className="flex items-center gap-2.5 mb-2">
+            <div className="flex items-center gap-2 mb-1.5">
               {renderBadge(endpoint.method)}
-              <code className="text-[14px] font-mono font-semibold text-[var(--text)]">{endpoint.path}</code>
+              <code className="text-[12.5px] font-mono font-semibold text-[var(--text)]">{endpoint.path}</code>
             </div>
-            <h4 className="text-[16px] font-medium text-[var(--text)] mb-1">
+            <h4 className="text-[14px] font-semibold text-[var(--text)] mb-1">
               {endpoint.summary}
             </h4>
-            <p className="text-[14px] leading-relaxed text-[var(--muted)] mb-5">
+            <p className="text-[12px] leading-relaxed text-[var(--muted)] mb-4">
               {endpoint.description}
             </p>
 
             {/* Request tabs */}
-            <div className="border border-[var(--border)] rounded-[10px] overflow-hidden bg-[var(--card)] mb-5">
-              <div className="flex items-center justify-between border-b border-[var(--border)] px-3 py-1.5 bg-[var(--sidebar)]">
+            <div className="border border-[var(--border)] rounded-[8px] overflow-hidden bg-[var(--card)] mb-4">
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-3 py-1 bg-[var(--sidebar)]">
                 <div className="flex gap-1">
                   {(["curl", "python", "js"] as const).map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`px-2.5 py-1 text-[12px] font-mono rounded transition-colors ${
+                      className={`px-2 py-0.5 text-[11px] font-mono rounded transition-colors ${
                         activeTab === tab
                           ? "bg-[var(--border)] text-[var(--text)] font-medium"
                           : "text-[var(--muted)] hover:text-[var(--text)]"
@@ -254,23 +254,23 @@ export default function DocsApiExplorer() {
                 </div>
                 <button
                   onClick={() => handleCopy(currentCode)}
-                  className="text-[var(--muted)] hover:text-[var(--text)] p-1 text-[12px] flex items-center gap-1"
+                  className="text-[var(--muted)] hover:text-[var(--text)] p-0.5 text-[11px] flex items-center gap-1"
                 >
-                  {copied ? <Check size={12} strokeWidth={2} /> : <Copy size={12} strokeWidth={1.5} />}
+                  {copied ? <Check size={11} strokeWidth={2} /> : <Copy size={11} strokeWidth={1.5} />}
                   <span>{copied ? "Copied" : "Copy"}</span>
                 </button>
               </div>
-              <pre className="p-4 text-[12.5px] font-mono text-[var(--text)] overflow-x-auto">
+              <pre className="p-3.5 text-[12px] font-mono text-[var(--text)] overflow-x-auto">
                 <code>{currentCode}</code>
               </pre>
             </div>
 
             {/* Response Preview */}
-            <div className="border border-[var(--border)] rounded-[10px] overflow-hidden bg-[var(--card)]">
-              <div className="px-3.5 py-2 border-b border-[var(--border)] text-[12px] font-mono text-[var(--muted)] bg-[var(--sidebar)]">
+            <div className="border border-[var(--border)] rounded-[8px] overflow-hidden bg-[var(--card)]">
+              <div className="px-3 py-1.5 border-b border-[var(--border)] text-[11px] font-mono text-[var(--muted)] bg-[var(--sidebar)]">
                 Sample JSON Response (200 OK)
               </div>
-              <pre className="p-4 text-[12px] font-mono text-[var(--muted)] overflow-x-auto max-h-[160px]">
+              <pre className="p-3.5 text-[11.5px] font-mono text-[var(--muted)] overflow-x-auto max-h-[160px]">
                 <code>{endpoint.responseBody}</code>
               </pre>
             </div>

@@ -9,18 +9,16 @@ const ROUTES = [
   { path: "/docs", name: "01_docs_home" },
   { path: "/docs/introduction", name: "02_introduction" },
   { path: "/docs/concepts/tokens", name: "03_concepts_tokens" },
-  { path: "/docs/concepts/qkv", name: "04_concepts_qkv" },
-  { path: "/docs/concepts/attention", name: "05_concepts_attention" },
-  { path: "/docs/using/model-explorer", name: "06_model_explorer" },
-  { path: "/docs/loading-a-model", name: "07_loading_a_model" },
-  { path: "/docs/architecture", name: "08_architecture" },
-  { path: "/docs/api-reference", name: "09_api_reference" },
-  { path: "/docs/developers", name: "10_developers" },
+  { path: "/docs/using/debugger", name: "04_using_debugger" },
+  { path: "/docs/developers", name: "05_developers" },
+  { path: "/docs/api-reference", name: "06_api_reference" },
 ];
 
 const VIEWPORTS = [
-  { name: "desktop", width: 1440, height: 900 },
-  { name: "mobile", width: 390, height: 844 },
+  { name: "desktop_1440", width: 1440, height: 900 },
+  { name: "laptop_1280", width: 1280, height: 800 },
+  { name: "tablet_1024", width: 1024, height: 768 },
+  { name: "mobile_390", width: 390, height: 844 },
 ];
 
 async function main() {
@@ -43,37 +41,40 @@ async function main() {
       const response = await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
       const status = response ? response.status() : "null";
 
-      // Allow animations and fonts to settle
-      await page.waitForTimeout(500);
+      // Allow typography, layout, and hydration to settle
+      await page.waitForTimeout(600);
 
-      // Perform QA assertions
-      const qaReport = await page.evaluate(() => {
-        const bodyBg = window.getComputedStyle(document.body).backgroundColor;
-        const htmlTheme = document.documentElement.getAttribute("data-theme");
-        const bodyTheme = document.body.getAttribute("data-theme");
+      // Extract computed font sizes and layout properties
+      const metrics = await page.evaluate(() => {
+        const h1 = document.querySelector("h1");
+        const h2 = document.querySelector("article.docs-content h2");
+        const h3 = document.querySelector("article.docs-content h3");
+        const p = document.querySelector("article.docs-content p");
+        const sidebarLink = document.querySelector("aside a");
+        const breadcrumb = document.querySelector("nav[aria-label='Breadcrumb'] span");
+        const topSearch = document.querySelector("header button span");
+        const tocLink = document.querySelector("aside[aria-label='Table of contents'] a, nav[aria-label='Table of contents'] a");
 
         // Check for permanent underlines on navigation and cards
-        const navLinks = Array.from(document.querySelectorAll(".docs-nav a, .doc-card, nav a"));
+        const navLinks = Array.from(document.querySelectorAll("aside a, nav a, .doc-card"));
         const underlinedNavLinks = navLinks.filter(el => {
           const textDec = window.getComputedStyle(el).textDecorationLine;
           return textDec && textDec.includes("underline");
         }).length;
 
-        // Check H1 styling
-        const h1 = document.querySelector("h1");
-        const h1Size = h1 ? window.getComputedStyle(h1).fontSize : null;
-        const h1Weight = h1 ? window.getComputedStyle(h1).fontWeight : null;
-
-        // Check theme toggle existence
         const themeToggle = document.querySelector("[data-testid='theme-toggle'], button[aria-label*='theme' i], button[aria-label*='dark' i]");
 
         return {
-          bodyBg,
-          htmlTheme,
-          bodyTheme,
+          h1FontSize: h1 ? window.getComputedStyle(h1).fontSize : null,
+          h2FontSize: h2 ? window.getComputedStyle(h2).fontSize : null,
+          h3FontSize: h3 ? window.getComputedStyle(h3).fontSize : null,
+          pFontSize: p ? window.getComputedStyle(p).fontSize : null,
+          pLineHeight: p ? window.getComputedStyle(p).lineHeight : null,
+          sidebarItemFontSize: sidebarLink ? window.getComputedStyle(sidebarLink).fontSize : null,
+          breadcrumbFontSize: breadcrumb ? window.getComputedStyle(breadcrumb).fontSize : null,
+          topSearchFontSize: topSearch ? window.getComputedStyle(topSearch).fontSize : null,
+          tocFontSize: tocLink ? window.getComputedStyle(tocLink).fontSize : null,
           underlinedNavLinks,
-          h1Size,
-          h1Weight,
           hasThemeToggle: !!themeToggle,
         };
       });
@@ -89,7 +90,7 @@ async function main() {
         viewport: vp.name,
         status,
         screenshot: filename,
-        ...qaReport,
+        ...metrics,
       });
     }
 
@@ -98,12 +99,12 @@ async function main() {
 
   await browser.close();
 
-  const reportPath = path.join(OUT_DIR, "qa-results.json");
-  fs.writeFileSync(reportPath, JSON.stringify(results, null, 2));
-  console.log(`[QA] Completed! Screenshots and report written to ${OUT_DIR}`);
+  const reportPath = path.join(OUT_DIR, "qa-typography-audit.json");
+  fs.writeFileSync(reportPath, JSON.stringify(results, null, 2), "utf8");
+  console.log(`[QA] Typography and layout audit saved to ${reportPath}`);
 }
 
-main().catch(err => {
-  console.error(err);
+main().catch((err) => {
+  console.error("[QA] Error during test:", err);
   process.exit(1);
 });

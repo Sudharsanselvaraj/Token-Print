@@ -6816,6 +6816,30 @@ body.docs-page-active {
   --docs-accent: #a78bfa;
   --docs-accent-soft: rgba(167, 139, 250, 0.12);
 
+  /* Exact typography scale from calibration spec */
+  --font-doc-hero: 30px;
+  --font-doc-h1: 28px;
+  --font-doc-h2: 21px;
+  --font-doc-h3: 17px;
+  --font-doc-h4: 15px;
+
+  --font-doc-body: 14px;
+  --font-doc-secondary: 13px;
+  --font-doc-caption: 11px;
+
+  --font-sidebar-heading: 12px;
+  --font-sidebar-item: 12px;
+  --font-sidebar-nested: 11.5px;
+
+  --font-toolbar: 12px;
+  --font-breadcrumb: 11px;
+  --font-toc: 11px;
+
+  --font-card-title: 14px;
+  --font-card-description: 12px;
+
+  --font-code: 12px;
+
   /* Semantic State Accents */
   --docs-semantic-success: #34d399;
   --docs-semantic-warning: #fbbf24;
@@ -7345,6 +7369,7 @@ nextjs-portal,
   flex: 1;
   min-width: 0;
   width: min(100%, 740px);
+  max-width: 740px;
 }
 
 /* ── TokenPrint Docs Typographic Hierarchy & Scale ──────────────── */
@@ -7353,17 +7378,17 @@ nextjs-portal,
 }
 
 .docs-content h1 {
-  font-size: 36px;
+  font-size: var(--font-doc-h1, 28px);
   font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.25;
   color: var(--docs-heading);
-  margin: 0 0 12px;
+  margin: 0 0 10px;
 }
 
 @media (max-width: 640px) {
   .docs-content h1 {
-    font-size: 28px;
+    font-size: 24px;
   }
 }
 
@@ -7372,53 +7397,54 @@ nextjs-portal,
 }
 
 .docs-content .docs-intro {
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: var(--font-doc-body, 14px);
+  line-height: 1.65;
   color: var(--docs-text-secondary);
-  margin: 0 0 28px;
+  margin: 0 0 24px;
   max-width: 720px;
 }
 
 .docs-content h2 {
-  font-size: 26px;
+  font-size: var(--font-doc-h2, 21px);
   font-weight: 600;
   letter-spacing: -0.015em;
-  line-height: 1.3;
+  line-height: 1.35;
   color: var(--docs-heading);
-  margin: 40px 0 12px;
+  margin: 32px 0 10px;
   padding-top: 0;
   border-top: none;
   scroll-margin-top: 76px;
 }
 
 .docs-content h3 {
-  font-size: 20px;
+  font-size: var(--font-doc-h3, 17px);
   font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: 1.35;
+  line-height: 1.4;
   color: var(--docs-heading);
-  margin: 28px 0 8px;
+  margin: 24px 0 8px;
   scroll-margin-top: 76px;
 }
 
 .docs-content h4 {
-  font-size: 17px;
+  font-size: var(--font-doc-h4, 15px);
   font-weight: 600;
+  line-height: 1.4;
   color: var(--docs-heading);
-  margin: 20px 0 6px;
+  margin: 18px 0 6px;
 }
 
 .docs-content p {
-  font-size: 15px;
+  font-size: var(--font-doc-body, 14px);
   font-weight: 400;
   line-height: 1.65;
   color: var(--docs-text);
-  margin: 0 0 18px;
+  margin: 0 0 16px;
 }
 
 @media (max-width: 640px) {
   .docs-content p {
-    font-size: 14.5px;
+    font-size: 13.5px;
   }
 }
 
@@ -7426,7 +7452,7 @@ nextjs-portal,
 .docs-content a {
   color: var(--docs-heading);
   text-decoration: none !important;
-  transition: color 0.15s ease, text-decoration 0.15s ease;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .docs-content p a,
@@ -7434,7 +7460,7 @@ nextjs-portal,
 .docs-content td a {
   color: var(--docs-heading);
   text-decoration: none !important;
-  border-bottom: 1px solid var(--docs-border-strong);
+  border-bottom: 1px solid transparent;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
@@ -7442,20 +7468,20 @@ nextjs-portal,
 .docs-content li a:hover,
 .docs-content td a:hover {
   color: #ffffff;
-  border-bottom-color: var(--docs-accent);
+  border-bottom: 1px solid var(--docs-accent);
 }
 
 .docs-content ul,
 .docs-content ol {
-  margin: 0 0 20px 0;
+  margin: 0 0 18px 0;
   padding-left: 20px;
 }
 
 .docs-content li {
-  font-size: 15px;
-  line-height: 1.65;
+  font-size: var(--font-doc-body, 14px);
+  line-height: 1.6;
   color: var(--docs-text);
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .docs-content li::marker {
@@ -7470,28 +7496,28 @@ nextjs-portal,
 .docs-content hr {
   border: none;
   border-top: 1px solid var(--docs-border);
-  margin: 36px 0;
+  margin: 32px 0;
 }
 
 .docs-content code {
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 13px;
+  font-size: var(--font-code, 12px);
   background: var(--docs-surface);
   border: 1px solid var(--docs-border);
   border-radius: 4px;
-  padding: 2px 5px;
+  padding: 1.5px 4.5px;
   color: var(--docs-heading);
 }
 
 .docs-content .docs-equation {
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.55;
   background: var(--docs-surface);
   border: 1px solid var(--docs-border);
-  border-radius: 8px;
-  padding: 16px 18px;
-  margin: 20px 0;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 18px 0;
   color: var(--docs-heading);
   overflow-x: auto;
 }
@@ -7545,11 +7571,11 @@ nextjs-portal,
 
 .docs-code-pre {
   margin: 0;
-  padding: 16px 18px;
+  padding: 14px 16px;
   overflow-x: auto;
   font-family: var(--font-mono, monospace);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--font-code, 12px);
+  line-height: 1.55;
   color: var(--docs-text);
   background: var(--docs-surface);
 }
@@ -7567,13 +7593,13 @@ nextjs-portal,
   background: var(--docs-surface);
   border: 1px solid var(--docs-border);
   border-radius: 8px;
-  padding: 24px;
-  margin: 24px 0 12px;
+  padding: 20px;
+  margin: 20px 0 12px;
   text-align: center;
 }
 
 .docs-content .docs-image-caption {
-  font-size: 12px;
+  font-size: var(--font-doc-caption, 11px);
   color: var(--docs-text-muted);
   margin-top: 8px;
   text-align: center;
@@ -7583,28 +7609,28 @@ nextjs-portal,
 .docs-content table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
-  margin: 24px 0 28px;
+  font-size: 12.5px;
+  margin: 20px 0 24px;
 }
 
 .docs-content th {
   text-align: left;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: normal;
   text-transform: uppercase;
   color: var(--docs-text-muted);
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--docs-border);
   background: transparent;
 }
 
 .docs-content td {
-  padding: 11px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--docs-border);
   color: var(--docs-text);
   vertical-align: top;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .docs-content tr:last-child td {
@@ -7612,11 +7638,7 @@ nextjs-portal,
 }
 
 .docs-content td code {
-  font-size: 12.5px;
-}
-
-.docs-content td code {
-  font-size: 13.5px;
+  font-size: 11.5px;
 }
 
 .docs-prevnext {
