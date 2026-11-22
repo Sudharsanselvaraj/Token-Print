@@ -8,6 +8,7 @@ export interface DocPage {
   slug: string; // relative to /docs/ or full slug
   icon?: string; // Lucide icon identifier
   description?: string;
+  badge?: string; // Subtle pill tag like "GGUF", "WebGPU", "Live", "Verified"
   children?: DocChildItem[];
 }
 
@@ -20,7 +21,7 @@ export interface DocSection {
 /** Complete 8-tier documentation navigation tree */
 export const DOCS_SECTIONS: DocSection[] = [
   {
-    label: "GETTING STARTED",
+    label: "Getting Started",
     id: "getting-started",
     pages: [
       {
@@ -62,13 +63,14 @@ export const DOCS_SECTIONS: DocSection[] = [
     ],
   },
   {
-    label: "INSPECT",
+    label: "Inspect Internals",
     id: "inspect",
     pages: [
       {
         title: "Attention",
         slug: "concepts/attention",
         icon: "Network",
+        badge: "Core",
         description: "Multi-head attention matrices and query-key dot products.",
         children: [
           { title: "Q / K / V", slug: "concepts/qkv" },
@@ -97,13 +99,14 @@ export const DOCS_SECTIONS: DocSection[] = [
     ],
   },
   {
-    label: "EXPERIMENT",
+    label: "Mechanistic Labs",
     id: "experiment",
     pages: [
       {
         title: "Debugger",
         slug: "using/debugger",
         icon: "Bug",
+        badge: "Interactive",
         description: "Set activation breakpoints and zero self-attention heads.",
       },
       {
@@ -116,18 +119,20 @@ export const DOCS_SECTIONS: DocSection[] = [
         title: "Trace Schema",
         slug: "trace-schema",
         icon: "FileCode",
+        badge: "JSON",
         description: "JSON specification for reproducible forward-pass recordings.",
       },
     ],
   },
   {
-    label: "MODEL ECOSYSTEM",
+    label: "Model Ecosystem",
     id: "model-ecosystem",
     pages: [
       {
         title: "Model Explorer",
         slug: "using/model-explorer",
         icon: "Boxes",
+        badge: "GGUF",
         description: "Client-side quantized GGUF parsing and metadata discovery.",
       },
       {
@@ -140,12 +145,14 @@ export const DOCS_SECTIONS: DocSection[] = [
         title: "Compatibility Matrix",
         slug: "compatibility-matrix",
         icon: "Table",
+        badge: "Verified",
         description: "Six-stage verification status across candidate architectures.",
       },
       {
         title: "Browser GPT-2",
         slug: "using/browser-inference",
         icon: "Server",
+        badge: "WebGPU",
         description: "Client-side ONNX Runtime Web execution with WebGPU acceleration.",
       },
       {
@@ -157,13 +164,14 @@ export const DOCS_SECTIONS: DocSection[] = [
     ],
   },
   {
-    label: "GENERATION",
+    label: "Generation & Decoding",
     id: "generation",
     pages: [
       {
         title: "Walkthrough",
         slug: "using/walkthrough",
         icon: "Play",
+        badge: "Live",
         description: "Chaptered step-by-step transformer execution walkthrough.",
       },
       {
@@ -187,13 +195,14 @@ export const DOCS_SECTIONS: DocSection[] = [
     ],
   },
   {
-    label: "INTEGRATIONS",
+    label: "Integrations & Cloud",
     id: "integrations",
     pages: [
       {
         title: "Hugging Face Spaces",
         slug: "architecture",
         icon: "Server",
+        badge: "ZeroGPU",
         description: "ZeroGPU dynamic slicing container and automatic CPU failover.",
       },
       {
@@ -205,7 +214,7 @@ export const DOCS_SECTIONS: DocSection[] = [
     ],
   },
   {
-    label: "DEVELOPERS",
+    label: "Developers & API",
     id: "developers-section",
     pages: [
       {
@@ -224,6 +233,7 @@ export const DOCS_SECTIONS: DocSection[] = [
         title: "API Reference",
         slug: "api-reference",
         icon: "Code2",
+        badge: "FastAPI",
         description: "FastAPI OpenAPI 3.1.0 interactive endpoint reference with code snippets.",
       },
       {
@@ -235,7 +245,7 @@ export const DOCS_SECTIONS: DocSection[] = [
     ],
   },
   {
-    label: "RESOURCES",
+    label: "Resources & Community",
     id: "resources",
     pages: [
       {

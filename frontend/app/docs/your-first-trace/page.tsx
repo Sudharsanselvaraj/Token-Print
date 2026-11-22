@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
 import DocsCallout from "@/components/docs/DocsCallout";
+import ImagePanel from "@/components/docs/ImagePanel";
 
 export const metadata: Metadata = {
   title: "Your First Trace",
@@ -11,15 +10,20 @@ export const metadata: Metadata = {
 export default function YourFirstTracePage() {
   return (
     <>
-      <DocsBreadcrumb slug="your-first-trace" title="Your First Trace" />
       <h1>Your First Trace</h1>
-      <p className="docs-meta">Getting Started</p>
-
-      <p>
-        A <strong>trace</strong> is a full record of a single forward pass — every operation in
+      <p className="docs-intro">
+        A trace is a full record of a single forward pass — every operation in
         every layer, in order. TokenPrint records traces in real time as the model runs and
         replays them as 3D animations.
       </p>
+
+      <ImagePanel
+        src="/docs/raw/real-debugger.png"
+        alt="Transformer Trace Execution and Step Replay"
+        caption="Step-by-step forward pass trace showing operation ordering, tensor outputs, and phase state."
+        annotation="[ FORWARD PASS TRACE · STEP REPLAY · TELEMETRY STREAM ]"
+        priority
+      />
 
       <hr />
 
@@ -124,8 +128,6 @@ export default function YourFirstTracePage() {
         <a href="/docs/using/browser-inference">Browser GPT-2</a> engine can still produce a real
         trace entirely client-side.
       </p>
-
-      <DocsPrevNext slug="your-first-trace" />
     </>
   );
 }

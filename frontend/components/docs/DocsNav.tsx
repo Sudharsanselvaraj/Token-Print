@@ -81,6 +81,8 @@ export default function DocsNav({
     return page.children?.some((child) => child.slug === cleanPath) || false;
   };
 
+  const isDevSection = pathname.includes("/developers") || pathname.includes("/api-reference");
+
   const navContent = (
     <aside className="w-[260px] h-full flex flex-col bg-[var(--docs-bg)] border-r border-[var(--docs-border)] select-none">
       {/* Top Bar: Brand + Search trigger */}
@@ -99,19 +101,53 @@ export default function DocsNav({
               className="object-contain"
             />
           </div>
-          <span className="text-[15px] font-semibold text-[var(--docs-heading)] tracking-tight">
-            Docs
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[14.5px] font-semibold text-white tracking-tight">
+              TokenPrint
+            </span>
+            <span className="text-[var(--docs-border-strong)] text-sm font-light">/</span>
+            <span className="text-[13px] text-[var(--docs-text-secondary)] font-medium">
+              Docs
+            </span>
+          </div>
         </Link>
 
         <button
           onClick={onOpenSearchModal}
-          className="w-8 h-8 rounded-md border border-[var(--docs-border)] bg-transparent flex items-center justify-center text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] hover:border-[var(--docs-border-strong)] transition-colors duration-150"
+          className="w-8 h-8 rounded-md border border-[var(--docs-border)] bg-transparent flex items-center justify-center text-[var(--docs-text-muted)] hover:text-white hover:border-[var(--docs-border-strong)] transition-colors duration-150"
           aria-label="Search documentation (⌘K)"
           title="Search (⌘K)"
         >
           <Search size={14} strokeWidth={1.5} />
         </button>
+      </div>
+
+      {/* Mode Switcher Segmented Control (Lori / Linear Docs Style) */}
+      <div className="px-3 pt-3 pb-2.5 border-b border-[var(--docs-border)]">
+        <div className="flex items-center p-0.5 rounded-lg bg-[var(--docs-surface)] border border-[var(--docs-border)]">
+          <Link
+            href="/docs"
+            onClick={() => setMobileOpen(false)}
+            className={`flex-1 py-1.5 text-center rounded-[6px] text-[12px] font-medium transition-all no-underline ${
+              !isDevSection
+                ? "bg-[var(--docs-surface-hover)] text-white shadow-sm"
+                : "text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)]"
+            }`}
+          >
+            Guides
+          </Link>
+          <Link
+            href="/docs/developers"
+            onClick={() => setMobileOpen(false)}
+            className={`flex-1 py-1.5 text-center rounded-[6px] text-[12px] font-medium transition-all no-underline ${
+              isDevSection
+                ? "bg-[var(--docs-surface-hover)] text-white shadow-sm"
+                : "text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)]"
+            }`}
+          >
+            Developers &amp; API
+          </Link>
+        </div>
       </div>
 
       {/* Scrolling Navigation Tree */}
@@ -121,11 +157,11 @@ export default function DocsNav({
 
           return (
             <div key={section.id} className="space-y-1">
-              {/* Section Header (12px uppercase, collapsible) */}
+              {/* Section Header (Clean sentence case, collapsible) */}
               <button
                 type="button"
                 onClick={() => toggleGroup(section.id)}
-                className="w-full px-2 py-1.5 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--docs-text-muted)] hover:text-[var(--docs-heading)] transition-colors duration-150 text-left bg-transparent border-0 select-none"
+                className="w-full px-2 py-1.5 flex items-center justify-between text-[11.5px] font-medium text-[var(--docs-text-muted)] hover:text-white transition-colors duration-150 text-left bg-transparent border-0 select-none"
               >
                 <span>{section.label}</span>
                 <span className="text-[var(--docs-text-muted)]">

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
 import DocsCallout from "@/components/docs/DocsCallout";
 import DocsCode from "@/components/docs/DocsCode";
+import ImagePanel from "@/components/docs/ImagePanel";
 
 export const metadata: Metadata = {
   title: "Loading a Model",
@@ -12,16 +11,21 @@ export const metadata: Metadata = {
 export default function LoadingAModelPage() {
   return (
     <>
-      <DocsBreadcrumb slug="loading-a-model" title="Loading a Model" />
       <h1>Loading a Model</h1>
-      <p className="docs-meta">Getting Started</p>
-
-      <p>
-        TokenPrint supports three model paths: a <strong>PyTorch model</strong> loaded by the
-        backend (via Hugging Face), a <strong>GGUF binary file</strong> parsed client-side in the
-        browser, and the <strong>in-browser GPT-2</strong> engine that runs generation entirely in
+      <p className="docs-intro">
+        TokenPrint supports three model paths: a PyTorch model loaded by the
+        backend (via Hugging Face), a GGUF binary file parsed client-side in the
+        browser, and the in-browser GPT-2 engine that runs generation entirely in
         the browser.
       </p>
+
+      <ImagePanel
+        src="/docs/raw/model-card.png"
+        alt="Hugging Face Hub and GGUF Architecture Discovery"
+        caption="Automated architecture detection, parameter profiling, and memory allocation across Qwen, LLaMA, and Gemma."
+        annotation="[ ARCHITECTURE DISCOVERY · PYTORCH & GGUF ]"
+        priority
+      />
 
       <hr />
 
@@ -121,8 +125,6 @@ export default function LoadingAModelPage() {
         <code>/gguf/*</code> API for running quantized llama.cpp models server-side — see{" "}
         <a href="/docs/api-reference">API Reference</a>.
       </p>
-
-      <DocsPrevNext slug="loading-a-model" />
     </>
   );
 }

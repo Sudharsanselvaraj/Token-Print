@@ -60,8 +60,14 @@ export default function DocsAppShell({ children }: { children: React.ReactNode }
         setMobileOpen(false);
       }
     };
+    const handleOpenSearch = () => setSearchModalOpen(true);
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("open-docs-search", handleOpenSearch);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("open-docs-search", handleOpenSearch);
+    };
   }, []);
 
   return (

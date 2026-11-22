@@ -7368,13 +7368,7 @@ nextjs-portal,
 }
 
 .docs-content .docs-meta {
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--docs-accent);
-  margin: 0 0 10px;
+  display: none !important;
 }
 
 .docs-content .docs-intro {
@@ -7690,65 +7684,9 @@ nextjs-portal,
   font-weight: 500;
 }
 
-/* ── Prev / Next Navigation ───────────────────────────────── */
+/* ── Legacy Prev / Next Navigation Reset ───────────────────── */
 .docs-prevnext {
-  border-top: 1px solid #1c1d21;
-  margin-top: 56px;
-  padding-top: 28px;
-}
-
-.docs-prevnext-inner {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.docs-prevnext-link {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-decoration: none;
-  min-width: 0;
-  max-width: 48%;
-  padding: 16px 20px;
-  border: 1px solid #1c1d21;
-  border-radius: 8px;
-  background: #0a0b0d;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.docs-prevnext-link:hover {
-  border-color: #282a30;
-  background: #0f1013;
-}
-
-.docs-prevnext-link--next {
-  margin-left: auto;
-  text-align: right;
-}
-
-.docs-prevnext-dir {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #6f737a;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-.docs-prevnext-link--next .docs-prevnext-dir {
-  justify-content: flex-end;
-}
-
-.docs-prevnext-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #f5f5f5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: none !important;
 }
 
 /* ── Editorial Feature Grid & Callouts ────────────────────── */

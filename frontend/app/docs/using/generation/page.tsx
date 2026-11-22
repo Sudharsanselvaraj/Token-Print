@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import DocsBreadcrumb from "@/components/docs/DocsBreadcrumb";
-import DocsPrevNext from "@/components/docs/DocsPrevNext";
 import DocsCallout from "@/components/docs/DocsCallout";
+import ImagePanel from "@/components/docs/ImagePanel";
 
 export const metadata: Metadata = {
   title: "Generation",
@@ -11,15 +10,20 @@ export const metadata: Metadata = {
 export default function GenerationPage() {
   return (
     <>
-      <DocsBreadcrumb slug="using/generation" title="Generation" />
       <h1>Generation</h1>
-      <p className="docs-meta">Using TokenPrint</p>
-
-      <p>
+      <p className="docs-intro">
         Generation mode runs a real autoregressive forward pass and replays the result as a 3D
         animation. Each operation in the computation graph lights up the corresponding 3D
         component as it executes.
       </p>
+
+      <ImagePanel
+        src="/docs/raw/walkthrough-card.png"
+        alt="Generation Forward Pass and KV Cache Expansion"
+        caption="Real-time autoregressive token generation with WebSocket streaming and step-by-step op replay."
+        annotation="[ AUTOREGRESSIVE GENERATION · KV CACHE STREAMING ]"
+        priority
+      />
 
       <p>
         Three engine options are available, selected via the{" "}
@@ -141,8 +145,6 @@ export default function GenerationPage() {
         <a href="/docs/concepts/decoding">Decoding Strategies</a> concept page for what each mode
         does and what its options mean.
       </p>
-
-      <DocsPrevNext slug="using/generation" />
     </>
   );
 }
