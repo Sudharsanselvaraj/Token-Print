@@ -15,7 +15,8 @@
         "refactor",
         "revert",
         "style",
-        "test"
+        "test",
+        "assets"
       ]
     ],
     "subject-case": [0, "never"]
